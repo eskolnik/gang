@@ -28,44 +28,44 @@ export class TheGangGame extends Scene {
     this.roundTrackerContainer = this.add.container(width - 20, 20);
     this.roundTrackerContainer.setPosition(width - 150, 30);
 
-    // Player circle will be drawn here
-    this.playerCircleContainer = this.add.container(width / 2, height / 2);
-
-    // Community cards area
-    this.add.text(width / 2, 200, 'Community Cards', {
+    // Community cards area (top)
+    this.add.text(width / 2, 120, 'Community Cards', {
       fontFamily: 'Arial Black',
       fontSize: 24,
       color: '#ffffff'
     }).setOrigin(0.5);
 
-    this.communityCardsContainer = this.add.container(width / 2, 250);
+    this.communityCardsContainer = this.add.container(width / 2, 170);
 
-    // My pocket cards area
-    this.add.text(width / 2, height - 250, 'My Hand', {
-      fontFamily: 'Arial Black',
-      fontSize: 24,
-      color: '#ffffff'
-    }).setOrigin(0.5);
+    // Player circle (center, smaller radius to avoid overlap)
+    this.playerCircleContainer = this.add.container(width / 2, 350);
 
-    this.pocketCardsContainer = this.add.container(width / 2, height - 200);
-
-    // Hand evaluation display
-    this.handEvalText = this.add.text(width / 2, height - 120, '', {
+    // Token selection area (below player circle)
+    this.add.text(width / 2, 550, 'Token Selection', {
       fontFamily: 'Arial Black',
       fontSize: 20,
+      color: '#ffffff'
+    }).setOrigin(0.5);
+
+    this.tokensContainer = this.add.container(width / 2, 590);
+
+    // My pocket cards area (bottom - always visible)
+    this.add.text(width / 2, height - 150, 'My Hand', {
+      fontFamily: 'Arial Black',
+      fontSize: 24,
+      color: '#ffffff'
+    }).setOrigin(0.5);
+
+    this.pocketCardsContainer = this.add.container(width / 2, height - 100);
+
+    // Hand evaluation display (at very bottom)
+    this.handEvalText = this.add.text(width / 2, height - 30, '', {
+      fontFamily: 'Arial Black',
+      fontSize: 18,
       color: '#ffff00',
       stroke: '#000000',
       strokeThickness: 4
     }).setOrigin(0.5);
-
-    // Token selection area
-    this.add.text(width / 2, height / 2, 'Token Selection', {
-      fontFamily: 'Arial Black',
-      fontSize: 24,
-      color: '#ffffff'
-    }).setOrigin(0.5);
-
-    this.tokensContainer = this.add.container(width / 2, height / 2 + 50);
 
     // Action buttons
     this.startButton = this.createButton(width / 2, height - 80, 'Start Game', () => {
@@ -307,7 +307,7 @@ export class TheGangGame extends Scene {
 
     const players = this.gameState.players;
     const playerCount = players.length;
-    const radius = 200;
+    const radius = 150; // Smaller radius to avoid overlap
 
     players.forEach((player, i) => {
       const angle = (i / playerCount) * Math.PI * 2 - Math.PI / 2;
@@ -350,13 +350,13 @@ export class TheGangGame extends Scene {
       }
     });
 
-    // Token history at bottom
+    // Token history below player circle (compact)
     if (this.gameState.bettingRoundHistory && this.gameState.bettingRoundHistory.length > 0) {
-      const historyY = 280;
+      const historyY = 180;
       this.gameState.bettingRoundHistory.forEach((round, roundIdx) => {
-        const roundLabel = this.add.text(-150, historyY + roundIdx * 30, `R${roundIdx + 1}:`, {
+        const roundLabel = this.add.text(-180, historyY + roundIdx * 25, `R${roundIdx + 1}:`, {
           fontFamily: 'Arial',
-          fontSize: 14,
+          fontSize: 12,
           color: '#cccccc'
         }).setOrigin(1, 0.5);
         this.playerCircleContainer.add(roundLabel);
@@ -364,15 +364,15 @@ export class TheGangGame extends Scene {
         players.forEach((player, playerIdx) => {
           const token = round.tokenAssignments[player.id];
           if (token !== undefined) {
-            const x = -100 + playerIdx * 50;
-            const y = historyY + roundIdx * 30;
-            const miniToken = this.add.circle(x, y, 12, ROUND_COLORS[round.phase] || 0xcccccc);
+            const x = -140 + playerIdx * 40;
+            const y = historyY + roundIdx * 25;
+            const miniToken = this.add.circle(x, y, 10, ROUND_COLORS[round.phase] || 0xcccccc);
             miniToken.setStrokeStyle(1, 0x000000);
             this.playerCircleContainer.add(miniToken);
 
             const tokenText = this.add.text(x, y, token.toString(), {
               fontFamily: 'Arial',
-              fontSize: 12,
+              fontSize: 10,
               color: '#000000'
             }).setOrigin(0.5);
             this.playerCircleContainer.add(tokenText);
