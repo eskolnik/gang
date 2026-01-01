@@ -67,6 +67,11 @@ export class NetworkManager {
       console.log('🎊 Game complete:', result.success ? 'WIN' : 'LOSS');
       this.emit('gameComplete', result);
     });
+
+    this.socket.on('roomListUpdate', (roomList) => {
+      console.log('📋 Room list update:', roomList.length, 'rooms');
+      this.emit('roomListUpdate', roomList);
+    });
   }
 
   /**
@@ -140,6 +145,28 @@ export class NetworkManager {
   }
 
   /**
+   * Get list of available rooms
+   */
+  getRoomList() {
+    return new Promise((resolve, reject) => {
+      if (!this.connected) {
+        reject(new Error('Not connected to server'));
+        return;
+      }
+
+      this.socket.emit('getRoomList', (response) => {
+        if (response.success) {
+          console.log('✅ Got room list:', response.rooms.length, 'rooms');
+          resolve(response.rooms);
+        } else {
+          console.error('❌ Failed to get room list:', response.error);
+          reject(new Error(response.error));
+        }
+      });
+    });
+  }
+
+  /**
    * Start the game
    */
   startGame() {
@@ -155,6 +182,28 @@ export class NetworkManager {
           resolve(response);
         } else {
           console.error('❌ Failed to start game:', response.error);
+          reject(new Error(response.error));
+        }
+      });
+    });
+  }
+
+  /**
+   * Restart the game with same players
+   */
+  restartGame() {
+    return new Promise((resolve, reject) => {
+      if (!this.connected) {
+        reject(new Error('Not connected to server'));
+        return;
+      }
+
+      this.socket.emit('restartGame', (response) => {
+        if (response.success) {
+          console.log('✅ Game restarted');
+          resolve(response);
+        } else {
+          console.error('❌ Failed to restart game:', response.error);
           reject(new Error(response.error));
         }
       });

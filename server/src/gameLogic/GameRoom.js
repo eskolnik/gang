@@ -112,6 +112,34 @@ export class GameRoom {
   }
 
   /**
+   * Restart the game with same players (from any phase)
+   */
+  restartGame() {
+    if (this.players.size < this.minPlayers) {
+      throw new Error('Not enough players to restart');
+    }
+
+    // Reset game state
+    this.deck.reset();
+    this.deck.shuffle();
+    this.communityCards = [];
+    this.tokenAssignments = {};
+    this.bettingRoundHistory = [];
+    this.playerReadyStatus = {};
+
+    // Deal pocket cards to each player
+    this.phase = GAME_PHASES.INITIAL_DEAL;
+    for (const [playerId, player] of this.players) {
+      player.pocketCards = this.deck.dealMultiple(2);
+      player.ready = false;
+      this.playerReadyStatus[playerId] = false;
+    }
+
+    // Start first betting round
+    this.startBettingRound(GAME_PHASES.BETTING_1);
+  }
+
+  /**
    * Initialize a betting round
    */
   startBettingRound(phase) {
@@ -168,6 +196,15 @@ export class GameRoom {
 
     // Assign token to player
     this.tokenAssignments[playerId] = tokenNumber;
+
+    // Un-ready all players when a token is claimed
+    for (const pid of this.players.keys()) {
+      this.playerReadyStatus[pid] = false;
+      const player = this.players.get(pid);
+      if (player) {
+        player.ready = false;
+      }
+    }
 
     // Move to next player's turn
     this.advanceTurn();
@@ -278,6 +315,18 @@ export class GameRoom {
   }
 
   /**
+   * Check if all players have tokens assigned
+   */
+  allPlayersHaveTokens() {
+    for (const playerId of this.players.keys()) {
+      if (this.tokenAssignments[playerId] === undefined) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
    * Get public game state (for broadcasting to all players)
    */
   getPublicState() {
@@ -294,7 +343,8 @@ export class GameRoom {
       tokenPool: this.tokenPool,
       tokenAssignments: this.tokenAssignments,
       currentTurn: this.currentTurn,
-      bettingRoundHistory: this.bettingRoundHistory
+      bettingRoundHistory: this.bettingRoundHistory,
+      allPlayersHaveTokens: this.allPlayersHaveTokens()
     };
   }
 
@@ -310,6 +360,20 @@ export class GameRoom {
     return {
       ...this.getPublicState(),
       myPocketCards: player.pocketCards
+    };
+  }
+
+  /**
+   * Get lobby info (for displaying in room list)
+   */
+  getLobbyInfo() {
+    return {
+      roomId: this.roomId,
+      playerCount: this.players.size,
+      maxPlayers: this.maxPlayers,
+      players: Array.from(this.players.values()).map(p => p.name),
+      isStarted: this.phase !== GAME_PHASES.WAITING,
+      isJoinable: this.phase === GAME_PHASES.WAITING && this.players.size < this.maxPlayers
     };
   }
 }
