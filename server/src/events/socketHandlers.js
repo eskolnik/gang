@@ -15,6 +15,18 @@ function generatePlayerId() {
 }
 
 /**
+ * Helper function to broadcast private game state to all players in a room
+ */
+function broadcastGameState(io, room) {
+  for (const [playerId, player] of room.players) {
+    const playerSocket = io.sockets.sockets.get(player.socketId);
+    if (playerSocket) {
+      playerSocket.emit('gameStateUpdate', room.getPlayerState(playerId));
+    }
+  }
+}
+
+/**
  * Set up all Socket.io event handlers
  */
 export function setupSocketHandlers(io, gameRooms) {
@@ -66,8 +78,8 @@ export function setupSocketHandlers(io, gameRooms) {
 
         console.log('  Callback called, broadcasting state update...');
 
-        // Broadcast room update to all players
-        io.to(roomId).emit('gameStateUpdate', room.getPublicState());
+        // Broadcast room update to all players (with private pocket cards)
+        broadcastGameState(io, room);
         console.log('  State update broadcasted');
       } catch (error) {
         console.error('Error creating room:', error);
@@ -103,8 +115,8 @@ export function setupSocketHandlers(io, gameRooms) {
           gameState: room.getPlayerState(playerId)
         });
 
-        // Broadcast room update to all players
-        io.to(roomId).emit('gameStateUpdate', room.getPublicState());
+        // Broadcast room update to all players (with private pocket cards)
+        broadcastGameState(io, room);
       } catch (error) {
         console.error('Error joining room:', error);
         callback({ success: false, error: error.message });
@@ -165,8 +177,8 @@ export function setupSocketHandlers(io, gameRooms) {
 
         callback({ success: true, ...result });
 
-        // Broadcast updated state to all players
-        io.to(currentRoomId).emit('gameStateUpdate', room.getPublicState());
+        // Broadcast updated state to all players (with private pocket cards)
+        broadcastGameState(io, room);
       } catch (error) {
         console.error('Error claiming token:', error);
         callback({ success: false, error: error.message });
@@ -208,13 +220,8 @@ export function setupSocketHandlers(io, gameRooms) {
             io.to(currentRoomId).emit('gameComplete', result);
           }
 
-          // Send updated states to all players (including new pocket cards if dealt)
-          for (const [playerId, player] of room.players) {
-            const playerSocket = io.sockets.sockets.get(player.socketId);
-            if (playerSocket) {
-              playerSocket.emit('gameStateUpdate', room.getPlayerState(playerId));
-            }
-          }
+          // Broadcast updated state with new cards
+          broadcastGameState(io, room);
         }
       } catch (error) {
         console.error('Error setting player ready:', error);
@@ -265,7 +272,7 @@ export function setupSocketHandlers(io, gameRooms) {
             console.log(`🗑️  Room ${currentRoomId} deleted (empty)`);
           } else {
             // Broadcast updated state to remaining players
-            io.to(currentRoomId).emit('gameStateUpdate', room.getPublicState());
+            broadcastGameState(io, room);
           }
         }
       }

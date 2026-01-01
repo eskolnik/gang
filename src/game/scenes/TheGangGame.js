@@ -185,7 +185,10 @@ export class TheGangGame extends Scene {
   updatePocketCards() {
     this.pocketCardsContainer.removeAll(true);
 
+    console.log('updatePocketCards - myPocketCards:', this.gameState?.myPocketCards);
+
     if (!this.gameState.myPocketCards || this.gameState.myPocketCards.length === 0) {
+      console.log('No pocket cards to display!');
       this.handEvalText.setText('');
       return;
     }
