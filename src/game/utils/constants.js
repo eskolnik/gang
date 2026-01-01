@@ -42,11 +42,23 @@ export const COLORS = {
   CARD_FRONT: 0xffffff,      // White
   TOKEN: 0xffd700,           // Gold
   TOKEN_SELECTED: 0xff6b35,  // Orange
+  TOKEN_ROUND_1: 0xffffff,   // White (pre-flop)
+  TOKEN_ROUND_2: 0xffff00,   // Yellow (flop)
+  TOKEN_ROUND_3: 0xff9900,   // Orange (turn)
+  TOKEN_ROUND_4: 0xff0000,   // Red (river)
   TEXT: 0xffffff,            // White
   TEXT_DARK: 0x000000,       // Black
   BUTTON: 0x4a90e2,          // Blue
   BUTTON_HOVER: 0x6ba3e8,    // Light blue
   DISABLED: 0x888888         // Gray
+};
+
+// Round colors for tokens
+export const ROUND_COLORS = {
+  [GAME_PHASES.BETTING_1]: 0xffffff,  // White
+  [GAME_PHASES.BETTING_2]: 0xffff00,  // Yellow
+  [GAME_PHASES.BETTING_3]: 0xff9900,  // Orange
+  [GAME_PHASES.BETTING_4]: 0xff0000   // Red
 };
 
 // UI Layout

@@ -1,6 +1,7 @@
 import { Scene } from 'phaser';
 import NetworkManager from '../core/NetworkManager.js';
-import { COLORS, SCENES, GAME_PHASES } from '../utils/constants.js';
+import { COLORS, SCENES, GAME_PHASES, ROUND_COLORS } from '../utils/constants.js';
+import { HandEvaluator } from '../utils/handEvaluator.js';
 
 export class TheGangGame extends Scene {
   constructor() {
@@ -23,18 +24,12 @@ export class TheGangGame extends Scene {
       color: '#ffffff'
     });
 
-    this.phaseText = this.add.text(width - 20, 20, '', {
-      fontFamily: 'Arial',
-      fontSize: 20,
-      color: '#ffff00'
-    }).setOrigin(1, 0);
+    // Round tracker
+    this.roundTrackerContainer = this.add.container(width - 20, 20);
+    this.roundTrackerContainer.setPosition(width - 150, 30);
 
-    // Player list area
-    this.playerListText = this.add.text(20, 60, '', {
-      fontFamily: 'Arial',
-      fontSize: 16,
-      color: '#ffffff'
-    });
+    // Player circle will be drawn here
+    this.playerCircleContainer = this.add.container(width / 2, height / 2);
 
     // Community cards area
     this.add.text(width / 2, 200, 'Community Cards', {
@@ -53,6 +48,15 @@ export class TheGangGame extends Scene {
     }).setOrigin(0.5);
 
     this.pocketCardsContainer = this.add.container(width / 2, height - 200);
+
+    // Hand evaluation display
+    this.handEvalText = this.add.text(width / 2, height - 120, '', {
+      fontFamily: 'Arial Black',
+      fontSize: 20,
+      color: '#ffff00',
+      stroke: '#000000',
+      strokeThickness: 4
+    }).setOrigin(0.5);
 
     // Token selection area
     this.add.text(width / 2, height / 2, 'Token Selection', {
@@ -134,19 +138,12 @@ export class TheGangGame extends Scene {
   updateUI() {
     if (!this.gameState) return;
 
-    // Update room code and phase
+    // Update room code and round tracker
     this.roomCodeText.setText(`Room: ${NetworkManager.roomId}`);
-    this.phaseText.setText(`Phase: ${this.gameState.phase}`);
+    this.updateRoundTracker();
 
-    // Update player list
-    let playerListStr = 'Players:\n';
-    this.gameState.players.forEach(player => {
-      const token = this.gameState.tokenAssignments[player.id];
-      const tokenStr = token ? ` [${token}]` : '';
-      const readyStr = player.ready ? ' ✓' : '';
-      playerListStr += `  ${player.name}${tokenStr}${readyStr}\n`;
-    });
-    this.playerListText.setText(playerListStr);
+    // Update player circle
+    this.updatePlayerCircle();
 
     // Update community cards
     this.updateCommunityCards();
@@ -168,11 +165,18 @@ export class TheGangGame extends Scene {
       return;
     }
 
+    // Get current best hand for highlighting
+    const evaluation = this.gameState.myPocketCards ? HandEvaluator.evaluateHand(
+      this.gameState.myPocketCards,
+      this.gameState.communityCards
+    ) : null;
+
     const spacing = 90;
     const startX = -(this.gameState.communityCards.length - 1) * spacing / 2;
 
     this.gameState.communityCards.forEach((card, i) => {
-      const cardObj = this.createCardDisplay(card);
+      const isInBestHand = evaluation && HandEvaluator.isCardInBestHand(card, evaluation.cards);
+      const cardObj = this.createCardDisplay(card, isInBestHand);
       cardObj.setPosition(startX + i * spacing, 0);
       this.communityCardsContainer.add(cardObj);
     });
@@ -182,14 +186,27 @@ export class TheGangGame extends Scene {
     this.pocketCardsContainer.removeAll(true);
 
     if (!this.gameState.myPocketCards || this.gameState.myPocketCards.length === 0) {
+      this.handEvalText.setText('');
       return;
+    }
+
+    // Evaluate best hand
+    const evaluation = HandEvaluator.evaluateHand(
+      this.gameState.myPocketCards,
+      this.gameState.communityCards || []
+    );
+
+    if (evaluation) {
+      this.handEvalText.setText(evaluation.description);
+      this.currentBestHand = evaluation.cards;
     }
 
     const spacing = 90;
     const startX = -(this.gameState.myPocketCards.length - 1) * spacing / 2;
 
     this.gameState.myPocketCards.forEach((card, i) => {
-      const cardObj = this.createCardDisplay(card);
+      const isInBestHand = evaluation && HandEvaluator.isCardInBestHand(card, evaluation.cards);
+      const cardObj = this.createCardDisplay(card, isInBestHand);
       cardObj.setPosition(startX + i * spacing, 0);
       this.pocketCardsContainer.add(cardObj);
     });
@@ -232,7 +249,7 @@ export class TheGangGame extends Scene {
 
       console.log(`Token ${tokenNum}: myToken=${isMyToken}, available=${isAvailable}, myTurn=${isMyTurn}`);
 
-      const tokenObj = this.createTokenDisplay(tokenNum, isMyToken, isAvailable);
+      const tokenObj = this.createTokenDisplay(tokenNum, isMyToken, isAvailable, this.gameState.phase);
       tokenObj.setPosition(startX + i * spacing, 0);
 
       // Make interactive if it's my turn
@@ -247,6 +264,122 @@ export class TheGangGame extends Scene {
 
       this.tokensContainer.add(tokenObj);
     });
+  }
+
+  updateRoundTracker() {
+    this.roundTrackerContainer.removeAll(true);
+
+    // Determine current round (1-4)
+    let currentRound = 0;
+    if (this.gameState.phase === GAME_PHASES.BETTING_1) currentRound = 1;
+    else if (this.gameState.phase === GAME_PHASES.BETTING_2) currentRound = 2;
+    else if (this.gameState.phase === GAME_PHASES.BETTING_3) currentRound = 3;
+    else if (this.gameState.phase === GAME_PHASES.BETTING_4) currentRound = 4;
+
+    if (currentRound > 0) {
+      // Round text (e.g., "2/4")
+      const roundText = this.add.text(0, 0, `${currentRound}/4`, {
+        fontFamily: 'Arial Black',
+        fontSize: 24,
+        color: '#ffffff'
+      }).setOrigin(0, 0.5);
+      this.roundTrackerContainer.add(roundText);
+
+      // Four colored circles
+      const circleSpacing = 25;
+      const startX = 80;
+      for (let i = 1; i <= 4; i++) {
+        const color = [0xffffff, 0xffff00, 0xff9900, 0xff0000][i - 1];
+        const circle = this.add.circle(startX + (i - 1) * circleSpacing, 0, 8, color);
+        circle.setStrokeStyle(2, i === currentRound ? 0xffffff : 0x666666);
+        if (i === currentRound) {
+          circle.setScale(1.3);
+        }
+        this.roundTrackerContainer.add(circle);
+      }
+    }
+  }
+
+  updatePlayerCircle() {
+    this.playerCircleContainer.removeAll(true);
+
+    if (!this.gameState || !this.gameState.players) return;
+
+    const players = this.gameState.players;
+    const playerCount = players.length;
+    const radius = 200;
+
+    players.forEach((player, i) => {
+      const angle = (i / playerCount) * Math.PI * 2 - Math.PI / 2;
+      const x = Math.cos(angle) * radius;
+      const y = Math.sin(angle) * radius;
+
+      // Player name
+      const nameText = this.add.text(x, y - 40, player.name, {
+        fontFamily: 'Arial',
+        fontSize: 16,
+        color: '#ffffff',
+        backgroundColor: '#000000',
+        padding: { x: 8, y: 4 }
+      }).setOrigin(0.5);
+
+      this.playerCircleContainer.add(nameText);
+
+      // Current token (if assigned)
+      const currentToken = this.gameState.tokenAssignments[player.id];
+      if (currentToken !== undefined) {
+        const tokenObj = this.createTokenDisplay(currentToken, false, false, this.gameState.phase);
+        tokenObj.setPosition(x, y);
+        this.playerCircleContainer.add(tokenObj);
+      }
+
+      // Ready indicator
+      if (player.ready && this.gameState.phase.includes('betting')) {
+        const readyText = this.add.text(x, y + 40, '✓', {
+          fontFamily: 'Arial',
+          fontSize: 24,
+          color: '#00ff00'
+        }).setOrigin(0.5);
+        this.playerCircleContainer.add(readyText);
+      }
+
+      // Turn arrow
+      if (this.gameState.currentTurn === player.id && this.gameState.phase.includes('betting')) {
+        const arrow = this.add.triangle(x, y - 60, 0, 20, 10, 0, -10, 0, 0xffff00);
+        this.playerCircleContainer.add(arrow);
+      }
+    });
+
+    // Token history at bottom
+    if (this.gameState.bettingRoundHistory && this.gameState.bettingRoundHistory.length > 0) {
+      const historyY = 280;
+      this.gameState.bettingRoundHistory.forEach((round, roundIdx) => {
+        const roundLabel = this.add.text(-150, historyY + roundIdx * 30, `R${roundIdx + 1}:`, {
+          fontFamily: 'Arial',
+          fontSize: 14,
+          color: '#cccccc'
+        }).setOrigin(1, 0.5);
+        this.playerCircleContainer.add(roundLabel);
+
+        players.forEach((player, playerIdx) => {
+          const token = round.tokenAssignments[player.id];
+          if (token !== undefined) {
+            const x = -100 + playerIdx * 50;
+            const y = historyY + roundIdx * 30;
+            const miniToken = this.add.circle(x, y, 12, ROUND_COLORS[round.phase] || 0xcccccc);
+            miniToken.setStrokeStyle(1, 0x000000);
+            this.playerCircleContainer.add(miniToken);
+
+            const tokenText = this.add.text(x, y, token.toString(), {
+              fontFamily: 'Arial',
+              fontSize: 12,
+              color: '#000000'
+            }).setOrigin(0.5);
+            this.playerCircleContainer.add(tokenText);
+          }
+        });
+      });
+    }
   }
 
   updateButtons() {
@@ -273,12 +406,13 @@ export class TheGangGame extends Scene {
     }
   }
 
-  createCardDisplay(card) {
+  createCardDisplay(card, isInBestHand = false) {
     const container = this.add.container(0, 0);
 
-    // Card background
-    const bg = this.add.rectangle(0, 0, 80, 112, COLORS.CARD_FRONT);
-    bg.setStrokeStyle(2, 0x000000);
+    // Card background with highlight if in best hand
+    const bgColor = isInBestHand ? 0xffffcc : COLORS.CARD_FRONT;
+    const bg = this.add.rectangle(0, 0, 80, 112, bgColor);
+    bg.setStrokeStyle(isInBestHand ? 4 : 2, isInBestHand ? 0xffaa00 : 0x000000);
     container.add(bg);
 
     // Card text (e.g., "A♠")
@@ -296,15 +430,28 @@ export class TheGangGame extends Scene {
     return container;
   }
 
-  createTokenDisplay(number, isSelected, isAvailable) {
+  createTokenDisplay(number, isSelected, isAvailable, round = null) {
     const container = this.add.container(0, 0);
 
+    // Determine color based on round
     let color = COLORS.TOKEN;
-    if (isSelected) color = COLORS.TOKEN_SELECTED;
-    if (!isAvailable && !isSelected) color = COLORS.DISABLED;
+    if (round && ROUND_COLORS[round]) {
+      color = ROUND_COLORS[round];
+    }
+    if (isSelected) {
+      // Brighten selected tokens slightly
+      color = Phaser.Display.Color.GetColor(
+        Math.min(255, Phaser.Display.Color.IntegerToRGB(color).r + 40),
+        Math.min(255, Phaser.Display.Color.IntegerToRGB(color).g + 40),
+        Math.min(255, Phaser.Display.Color.IntegerToRGB(color).b + 40)
+      );
+    }
+    if (!isAvailable && !isSelected) {
+      color = COLORS.DISABLED;
+    }
 
     const circle = this.add.circle(0, 0, 30, color);
-    circle.setStrokeStyle(3, 0x000000);
+    circle.setStrokeStyle(isSelected ? 5 : 3, isSelected ? 0x000000 : 0x333333);
     container.add(circle);
 
     const text = this.add.text(0, 0, number.toString(), {
