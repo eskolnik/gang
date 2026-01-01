@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Socket.io Test</title>
+    <script src="https://cdn.socket.io/4.8.3/socket.io.min.js"></script>
+</head>
+<body>
+    <h1>Socket.io Connection Test</h1>
+    <div id="status">Connecting...</div>
+    <button id="pingBtn" disabled>Send Ping</button>
+    <button id="createBtn" disabled>Create Room</button>
+    <pre id="output"></pre>
+
+    <script>
+        const socket = io('http://localhost:3000', {
+            transports: ['polling'],  // Use polling only, no websocket upgrade
+            upgrade: false
+        });
+        const status = document.getElementById('status');
+        const output = document.getElementById('output');
+        const pingBtn = document.getElementById('pingBtn');
+        const createBtn = document.getElementById('createBtn');
+
+        function log(msg) {
+            output.textContent += msg + '\n';
+            console.log(msg);
+        }
+
+        socket.on('connect', () => {
+            status.textContent = '✅ Connected: ' + socket.id;
+            status.style.color = 'green';
+            pingBtn.disabled = false;
+            createBtn.disabled = false;
+            log('Connected with ID: ' + socket.id);
+        });
+
+        socket.on('disconnect', () => {
+            status.textContent = '❌ Disconnected';
+            status.style.color = 'red';
+            pingBtn.disabled = true;
+            createBtn.disabled = true;
+        });
+
+        socket.on('gameStateUpdate', (state) => {
+            log('📢 Game State Update:');
+            log(JSON.stringify(state, null, 2));
+        });
+
+        pingBtn.onclick = () => {
+            log('\n→ Sending ping...');
+            socket.emit('ping', (response) => {
+                log('← Got ping response: ' + JSON.stringify(response));
+            });
+        };
+
+        createBtn.onclick = () => {
+            log('\n→ Creating room...');
+            socket.emit('createRoom', {
+                playerName: 'BrowserTest',
+                maxPlayers: 4,
+                minPlayers: 2
+            }, (response) => {
+                log('← Got createRoom response:');
+                log(JSON.stringify(response, null, 2));
+            });
+        };
+    </script>
+</body>
+</html>
