@@ -233,6 +233,28 @@ export class NetworkManager {
   }
 
   /**
+   * Pass turn (keep current token)
+   */
+  passTurn() {
+    return new Promise((resolve, reject) => {
+      if (!this.connected) {
+        reject(new Error('Not connected to server'));
+        return;
+      }
+
+      this.socket.emit('passTurn', (response) => {
+        if (response.success) {
+          console.log('✅ Passed turn');
+          resolve(response);
+        } else {
+          console.error('❌ Failed to pass turn:', response.error);
+          reject(new Error(response.error));
+        }
+      });
+    });
+  }
+
+  /**
    * Mark player as ready
    */
   setReady() {

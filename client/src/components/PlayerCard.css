@@ -1,0 +1,68 @@
+.player-card {
+  background-color: #2a5a3a;
+  border: 2px solid #666666;
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  min-width: 90px;
+  transition: border-color 0.3s;
+}
+
+.player-card-me {
+  background-color: #3a6a4a;
+  min-width: 200px;
+  padding: 15px;
+}
+
+.player-card-active {
+  border-color: #ffff00;
+  border-width: 3px;
+}
+
+.player-name {
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  color: #ffffff;
+  font-weight: bold;
+  text-align: center;
+}
+
+.player-card-me .player-name {
+  font-size: 14px;
+}
+
+.player-cards {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+}
+
+.player-card-me .player-cards {
+  gap: 10px;
+}
+
+.player-token-outside {
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.player-token-inside {
+  display: flex;
+  justify-content: center;
+  margin-top: 5px;
+}
+
+.hand-evaluation {
+  font-size: 12px;
+  color: #ffff00;
+  text-align: center;
+  margin-top: 5px;
+  font-style: italic;
+}

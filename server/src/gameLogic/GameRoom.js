@@ -217,6 +217,26 @@ export class GameRoom {
   }
 
   /**
+   * Pass turn (keep current token)
+   */
+  passTurn(playerId) {
+    if (this.currentTurn !== playerId) {
+      throw new Error('Not your turn');
+    }
+
+    if (this.tokenAssignments[playerId] === undefined) {
+      throw new Error('Cannot pass without a token');
+    }
+
+    // Just advance to next player without changing tokens
+    this.advanceTurn();
+
+    return {
+      currentTurn: this.currentTurn
+    };
+  }
+
+  /**
    * Advance to next player's turn
    */
   advanceTurn() {

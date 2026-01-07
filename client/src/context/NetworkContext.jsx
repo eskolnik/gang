@@ -1,0 +1,126 @@
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import networkManager from '../game/core/NetworkManager.js';
+
+const NetworkContext = createContext(null);
+
+export const NetworkProvider = ({ children }) => {
+  const [connected, setConnected] = useState(false);
+  const [gameState, setGameState] = useState(null);
+  const [roomId, setRoomId] = useState(null);
+  const [playerId, setPlayerId] = useState(null);
+  const [playerName, setPlayerName] = useState(null);
+  const [roomList, setRoomList] = useState([]);
+
+  useEffect(() => {
+    // Connect to server on mount
+    networkManager.connect();
+
+    // Set up event listeners
+    const handleConnected = () => {
+      setConnected(true);
+    };
+
+    const handleDisconnected = () => {
+      setConnected(false);
+    };
+
+    const handleGameStateUpdate = (state) => {
+      setGameState(state);
+    };
+
+    const handleRoomListUpdate = (rooms) => {
+      setRoomList(rooms);
+    };
+
+    networkManager.on('connected', handleConnected);
+    networkManager.on('disconnected', handleDisconnected);
+    networkManager.on('gameStateUpdate', handleGameStateUpdate);
+    networkManager.on('roomListUpdate', handleRoomListUpdate);
+
+    // Clean up on unmount
+    return () => {
+      networkManager.off('connected', handleConnected);
+      networkManager.off('disconnected', handleDisconnected);
+      networkManager.off('gameStateUpdate', handleGameStateUpdate);
+      networkManager.off('roomListUpdate', handleRoomListUpdate);
+      networkManager.disconnect();
+    };
+  }, []);
+
+  // Wrapper methods that update local state after NetworkManager calls
+  const createRoom = useCallback(async (playerName, maxPlayers = 6, minPlayers = 2) => {
+    const response = await networkManager.createRoom(playerName, maxPlayers, minPlayers);
+    setRoomId(networkManager.roomId);
+    setPlayerId(networkManager.playerId);
+    setPlayerName(networkManager.playerName);
+    setGameState(networkManager.gameState);
+    return response;
+  }, []);
+
+  const joinRoom = useCallback(async (roomId, playerName) => {
+    const response = await networkManager.joinRoom(roomId, playerName);
+    setRoomId(networkManager.roomId);
+    setPlayerId(networkManager.playerId);
+    setPlayerName(networkManager.playerName);
+    setGameState(networkManager.gameState);
+    return response;
+  }, []);
+
+  const getRoomList = useCallback(async () => {
+    const rooms = await networkManager.getRoomList();
+    setRoomList(rooms);
+    return rooms;
+  }, []);
+
+  const startGame = useCallback(async () => {
+    return await networkManager.startGame();
+  }, []);
+
+  const restartGame = useCallback(async () => {
+    return await networkManager.restartGame();
+  }, []);
+
+  const claimToken = useCallback(async (tokenNumber) => {
+    return await networkManager.claimToken(tokenNumber);
+  }, []);
+
+  const passTurn = useCallback(async () => {
+    return await networkManager.passTurn();
+  }, []);
+
+  const setReady = useCallback(async () => {
+    return await networkManager.setReady();
+  }, []);
+
+  const value = {
+    connected,
+    gameState,
+    roomId,
+    playerId,
+    playerName,
+    roomList,
+    createRoom,
+    joinRoom,
+    getRoomList,
+    startGame,
+    restartGame,
+    claimToken,
+    passTurn,
+    setReady,
+    networkManager // Expose the raw manager for advanced use cases
+  };
+
+  return (
+    <NetworkContext.Provider value={value}>
+      {children}
+    </NetworkContext.Provider>
+  );
+};
+
+export const useNetwork = () => {
+  const context = useContext(NetworkContext);
+  if (!context) {
+    throw new Error('useNetwork must be used within a NetworkProvider');
+  }
+  return context;
+};

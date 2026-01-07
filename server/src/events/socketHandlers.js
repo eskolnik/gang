@@ -248,10 +248,38 @@ export function setupSocketHandlers(io, gameRooms) {
 
         callback({ success: true, ...result });
 
-        // Broadcast updated state to all players (with private pocket cards)
+        // Broadcast updated state to all players
         broadcastGameState(io, room);
       } catch (error) {
         console.error('Error claiming token:', error);
+        callback({ success: false, error: error.message });
+      }
+    });
+
+    /**
+     * Pass turn (keep current token)
+     */
+    socket.on('passTurn', (callback) => {
+      try {
+        if (!currentRoomId || !currentPlayerId) {
+          return callback({ success: false, error: 'Not in a game' });
+        }
+
+        const room = gameRooms.get(currentRoomId);
+        if (!room) {
+          return callback({ success: false, error: 'Room not found' });
+        }
+
+        const result = room.passTurn(currentPlayerId);
+
+        console.log(`⏭️ Player ${currentPlayerId} passed turn in room ${currentRoomId}`);
+
+        callback({ success: true, ...result });
+
+        // Broadcast updated state to all players (with private pocket cards)
+        broadcastGameState(io, room);
+      } catch (error) {
+        console.error('Error passing turn:', error);
         callback({ success: false, error: error.message });
       }
     });
