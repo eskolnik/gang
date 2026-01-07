@@ -8,20 +8,28 @@
   box-sizing: border-box;
 }
 
-/* Main table layout - wider to use more screen space */
+/* Main table layout */
 .table-layout {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 15px;
   width: 100%;
   max-width: 1400px;
   align-items: center;
 }
 
-/* Middle section with left seats, table, right seats */
+/* Seat rows (top and bottom) */
+.seat-row {
+  display: flex;
+  gap: 40px;
+  justify-content: center;
+  min-height: 140px;
+}
+
+/* Middle section with left seat, table, right seat */
 .table-middle {
   display: flex;
-  gap: 30px;
+  gap: 20px;
   align-items: center;
   justify-content: center;
   width: 100%;
@@ -33,23 +41,21 @@
   justify-content: center;
   align-items: center;
   min-width: 180px;
-  min-height: 160px;
 }
 
-.seat-column {
-  display: flex;
-  flex-direction: column;
-  gap: 40px;
+.seat-left,
+.seat-right {
+  min-width: 180px;
 }
 
-/* Table surface - rectangular poker table */
+/* Table surface - horizontal rectangular poker table */
 .table-surface {
   position: relative;
   background-color: #2a5a3a;
   border: 8px solid #1a472a;
   border-radius: 40px;
-  width: 700px;
-  height: 450px;
+  width: 900px;
+  height: 320px;
   display: flex;
   flex-direction: column;
   padding: 20px;
@@ -63,10 +69,10 @@
   align-items: center;
 }
 
-/* Community cards zone - top third of table */
+/* Community cards zone - top area of table */
 .zone-community {
-  flex: 0 0 140px;
-  padding: 10px;
+  flex: 0 0 110px;
+  padding: 8px;
 }
 
 .community-cards {
@@ -106,36 +112,36 @@
 }
 
 /* Token positions for each seat */
-.spot-top {
+.spot-top-left {
   top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 30%;
 }
 
-.spot-bottom {
+.spot-top-right {
+  top: 20px;
+  right: 30%;
+}
+
+.spot-left {
+  left: 30px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.spot-right {
+  right: 30px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.spot-bottom-left {
   bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 30%;
 }
 
-.spot-left-top {
-  left: 30px;
-  top: 25%;
-}
-
-.spot-left-bottom {
-  left: 30px;
-  top: 60%;
-}
-
-.spot-right-top {
-  right: 30px;
-  top: 25%;
-}
-
-.spot-right-bottom {
-  right: 30px;
-  top: 60%;
+.spot-bottom-right {
+  bottom: 20px;
+  right: 30%;
 }
 
 /* Player info box - standardized size for all players */

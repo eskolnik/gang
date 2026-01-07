@@ -10,15 +10,15 @@ const isCardInBestHand = (card, myPocketCards, communityCards) => {
 };
 
 const Table = ({ players, currentTurn, myPlayerId, gameState, onTokenClick }) => {
-  // Define fixed slots: 1 top, 2 left, 2 right, 1 bottom
+  // Define fixed slots: 2 top, 1 left, 1 right, 2 bottom
   // Same view for all players - no reordering
   const FIXED_SLOTS = [
-    { id: 'seat-0', position: 'top', index: 0 },
-    { id: 'seat-1', position: 'left-top', index: 1 },
-    { id: 'seat-2', position: 'left-bottom', index: 2 },
-    { id: 'seat-3', position: 'right-top', index: 3 },
-    { id: 'seat-4', position: 'right-bottom', index: 4 },
-    { id: 'seat-5', position: 'bottom', index: 5 },
+    { id: 'seat-0', position: 'top-left', index: 0 },
+    { id: 'seat-1', position: 'top-right', index: 1 },
+    { id: 'seat-2', position: 'left', index: 2 },
+    { id: 'seat-3', position: 'right', index: 3 },
+    { id: 'seat-4', position: 'bottom-left', index: 4 },
+    { id: 'seat-5', position: 'bottom-right', index: 5 },
   ];
 
   // Map players to fixed slots
@@ -42,44 +42,44 @@ const Table = ({ players, currentTurn, myPlayerId, gameState, onTokenClick }) =>
   return (
     <div className="table-container">
       <div className="table-layout">
-        {/* Top seat */}
-        <div className="seat-area seat-top">
+        {/* Top seats - 2 seats */}
+        <div className="seat-row seat-top">
           {playerSlots[0].player && (
-            <PlayerInfo
-              player={playerSlots[0].player}
-              isMe={playerSlots[0].isMe}
-              isCurrentTurn={playerSlots[0].isCurrentTurn}
-              myPocketCards={playerSlots[0].isMe ? gameState.myPocketCards : null}
-              gameState={gameState}
-            />
+            <div className="seat-area">
+              <PlayerInfo
+                player={playerSlots[0].player}
+                isMe={playerSlots[0].isMe}
+                isCurrentTurn={playerSlots[0].isCurrentTurn}
+                myPocketCards={playerSlots[0].isMe ? gameState.myPocketCards : null}
+                gameState={gameState}
+              />
+            </div>
+          )}
+          {playerSlots[1].player && (
+            <div className="seat-area">
+              <PlayerInfo
+                player={playerSlots[1].player}
+                isMe={playerSlots[1].isMe}
+                isCurrentTurn={playerSlots[1].isCurrentTurn}
+                myPocketCards={playerSlots[1].isMe ? gameState.myPocketCards : null}
+                gameState={gameState}
+              />
+            </div>
           )}
         </div>
 
-        {/* Middle section with left seats, table, right seats */}
+        {/* Middle section with left seat, table, right seat */}
         <div className="table-middle">
-          {/* Left seats */}
-          <div className="seat-column seat-left">
-            {playerSlots[1].player && (
-              <div className="seat-area">
-                <PlayerInfo
-                  player={playerSlots[1].player}
-                  isMe={playerSlots[1].isMe}
-                  isCurrentTurn={playerSlots[1].isCurrentTurn}
-                  myPocketCards={playerSlots[1].isMe ? gameState.myPocketCards : null}
-                  gameState={gameState}
-                />
-              </div>
-            )}
+          {/* Left seat */}
+          <div className="seat-area seat-left">
             {playerSlots[2].player && (
-              <div className="seat-area">
-                <PlayerInfo
-                  player={playerSlots[2].player}
-                  isMe={playerSlots[2].isMe}
-                  isCurrentTurn={playerSlots[2].isCurrentTurn}
-                  myPocketCards={playerSlots[2].isMe ? gameState.myPocketCards : null}
-                  gameState={gameState}
-                />
-              </div>
+              <PlayerInfo
+                player={playerSlots[2].player}
+                isMe={playerSlots[2].isMe}
+                isCurrentTurn={playerSlots[2].isCurrentTurn}
+                myPocketCards={playerSlots[2].isMe ? gameState.myPocketCards : null}
+                gameState={gameState}
+              />
             )}
           </div>
 
@@ -135,43 +135,43 @@ const Table = ({ players, currentTurn, myPlayerId, gameState, onTokenClick }) =>
             </div>
           </div>
 
-          {/* Right seats */}
-          <div className="seat-column seat-right">
+          {/* Right seat */}
+          <div className="seat-area seat-right">
             {playerSlots[3].player && (
-              <div className="seat-area">
-                <PlayerInfo
-                  player={playerSlots[3].player}
-                  isMe={playerSlots[3].isMe}
-                  isCurrentTurn={playerSlots[3].isCurrentTurn}
-                  myPocketCards={playerSlots[3].isMe ? gameState.myPocketCards : null}
-                  gameState={gameState}
-                />
-              </div>
-            )}
-            {playerSlots[4].player && (
-              <div className="seat-area">
-                <PlayerInfo
-                  player={playerSlots[4].player}
-                  isMe={playerSlots[4].isMe}
-                  isCurrentTurn={playerSlots[4].isCurrentTurn}
-                  myPocketCards={playerSlots[4].isMe ? gameState.myPocketCards : null}
-                  gameState={gameState}
-                />
-              </div>
+              <PlayerInfo
+                player={playerSlots[3].player}
+                isMe={playerSlots[3].isMe}
+                isCurrentTurn={playerSlots[3].isCurrentTurn}
+                myPocketCards={playerSlots[3].isMe ? gameState.myPocketCards : null}
+                gameState={gameState}
+              />
             )}
           </div>
         </div>
 
-        {/* Bottom seat */}
-        <div className="seat-area seat-bottom">
+        {/* Bottom seats - 2 seats */}
+        <div className="seat-row seat-bottom">
+          {playerSlots[4].player && (
+            <div className="seat-area">
+              <PlayerInfo
+                player={playerSlots[4].player}
+                isMe={playerSlots[4].isMe}
+                isCurrentTurn={playerSlots[4].isCurrentTurn}
+                myPocketCards={playerSlots[4].isMe ? gameState.myPocketCards : null}
+                gameState={gameState}
+              />
+            </div>
+          )}
           {playerSlots[5].player && (
-            <PlayerInfo
-              player={playerSlots[5].player}
-              isMe={playerSlots[5].isMe}
-              isCurrentTurn={playerSlots[5].isCurrentTurn}
-              myPocketCards={playerSlots[5].isMe ? gameState.myPocketCards : null}
-              gameState={gameState}
-            />
+            <div className="seat-area">
+              <PlayerInfo
+                player={playerSlots[5].player}
+                isMe={playerSlots[5].isMe}
+                isCurrentTurn={playerSlots[5].isCurrentTurn}
+                myPocketCards={playerSlots[5].isMe ? gameState.myPocketCards : null}
+                gameState={gameState}
+              />
+            </div>
           )}
         </div>
       </div>
