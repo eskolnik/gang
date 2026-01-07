@@ -1,6 +1,6 @@
 .card {
-  width: clamp(60px, 10vw, 80px);
-  height: clamp(84px, 14vw, 112px);
+  /* width: clamp(60px, 10vw, 60px); */
+  /* height: clamp(84px, 14vw, 84px); */
   background-color: #ffffff;
   border: 2px solid #000000;
   border-radius: 5px;
@@ -21,7 +21,9 @@
 }
 
 .card-text {
-  font-family: Arial Black, sans-serif;
+  font-family:
+    Arial Black,
+    sans-serif;
   font-size: clamp(24px, 4vw, 32px);
   user-select: none;
 }

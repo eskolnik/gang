@@ -77,7 +77,9 @@
 }
 
 .round-name {
-  font-family: Arial Black, sans-serif;
+  font-family:
+    Arial Black,
+    sans-serif;
   font-size: 16px;
   font-weight: bold;
 }
@@ -102,21 +104,21 @@
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
 }
 
-/* Community Cards */
+/* Community Cards
 .community-cards {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
   justify-content: center;
-}
+} */
 
-/* Token Pool */
+/* Token Pool
 .token-pool {
   display: flex;
   gap: 15px;
   flex-wrap: wrap;
   justify-content: center;
-}
+} */
 
 /* Action Buttons - BOTTOM LEFT CORNER */
 .game-actions {
@@ -132,7 +134,9 @@
 
 .btn-action {
   padding: 15px 30px;
-  font-family: Arial Black, sans-serif;
+  font-family:
+    Arial Black,
+    sans-serif;
   font-size: 16px;
   color: #ffffff;
   background-color: #4a90e2;
@@ -200,7 +204,9 @@
 }
 
 .game-result-modal h1 {
-  font-family: Arial Black, sans-serif;
+  font-family:
+    Arial Black,
+    sans-serif;
   font-size: 48px;
   text-align: center;
   margin: 0;
@@ -219,7 +225,9 @@
 }
 
 .result-rankings h3 {
-  font-family: Arial Black, sans-serif;
+  font-family:
+    Arial Black,
+    sans-serif;
   font-size: 20px;
   margin-bottom: 15px;
 }

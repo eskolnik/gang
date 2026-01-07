@@ -1,28 +1,37 @@
-import Card, { CardBack } from './Card';
-import { HandEvaluator } from '../game/utils/handEvaluator';
-import './Table.css';
+import Card, { CardBack } from "./Card";
+import { HandEvaluator } from "../game/utils/handEvaluator";
+import "./Table.css";
 
 // Helper to check if a card is in best hand for highlighting
 const isCardInBestHand = (card, myPocketCards, communityCards) => {
   if (!myPocketCards || myPocketCards.length === 0) return false;
-  const evaluation = HandEvaluator.evaluateHand(myPocketCards, communityCards || []);
+  const evaluation = HandEvaluator.evaluateHand(
+    myPocketCards,
+    communityCards || []
+  );
   return evaluation && HandEvaluator.isCardInBestHand(card, evaluation.cards);
 };
 
-const Table = ({ players, currentTurn, myPlayerId, gameState, onTokenClick }) => {
+const Table = ({
+  players,
+  currentTurn,
+  myPlayerId,
+  gameState,
+  onTokenClick,
+}) => {
   // Define fixed slots: 2 top, 1 left, 1 right, 2 bottom
   // Same view for all players - no reordering
   const FIXED_SLOTS = [
-    { id: 'seat-0', position: 'top-left', index: 0 },
-    { id: 'seat-1', position: 'top-right', index: 1 },
-    { id: 'seat-2', position: 'left', index: 2 },
-    { id: 'seat-3', position: 'right', index: 3 },
-    { id: 'seat-4', position: 'bottom-left', index: 4 },
-    { id: 'seat-5', position: 'bottom-right', index: 5 },
+    { id: "seat-0", position: "top-left", index: 0 },
+    { id: "seat-1", position: "top-right", index: 1 },
+    { id: "seat-2", position: "left", index: 2 },
+    { id: "seat-3", position: "right", index: 3 },
+    { id: "seat-4", position: "bottom-left", index: 4 },
+    { id: "seat-5", position: "bottom-right", index: 5 },
   ];
 
   // Map players to fixed slots
-  const playerSlots = FIXED_SLOTS.map(slot => {
+  const playerSlots = FIXED_SLOTS.map((slot) => {
     const player = players[slot.index];
     if (!player) return { ...slot, player: null };
 
@@ -35,7 +44,7 @@ const Table = ({ players, currentTurn, myPlayerId, gameState, onTokenClick }) =>
       player,
       isMe,
       isCurrentTurn,
-      playerToken
+      playerToken,
     };
   });
 
@@ -50,7 +59,9 @@ const Table = ({ players, currentTurn, myPlayerId, gameState, onTokenClick }) =>
                 player={playerSlots[0].player}
                 isMe={playerSlots[0].isMe}
                 isCurrentTurn={playerSlots[0].isCurrentTurn}
-                myPocketCards={playerSlots[0].isMe ? gameState.myPocketCards : null}
+                myPocketCards={
+                  playerSlots[0].isMe ? gameState.myPocketCards : null
+                }
                 gameState={gameState}
               />
             </div>
@@ -61,7 +72,9 @@ const Table = ({ players, currentTurn, myPlayerId, gameState, onTokenClick }) =>
                 player={playerSlots[1].player}
                 isMe={playerSlots[1].isMe}
                 isCurrentTurn={playerSlots[1].isCurrentTurn}
-                myPocketCards={playerSlots[1].isMe ? gameState.myPocketCards : null}
+                myPocketCards={
+                  playerSlots[1].isMe ? gameState.myPocketCards : null
+                }
                 gameState={gameState}
               />
             </div>
@@ -77,7 +90,9 @@ const Table = ({ players, currentTurn, myPlayerId, gameState, onTokenClick }) =>
                 player={playerSlots[2].player}
                 isMe={playerSlots[2].isMe}
                 isCurrentTurn={playerSlots[2].isCurrentTurn}
-                myPocketCards={playerSlots[2].isMe ? gameState.myPocketCards : null}
+                myPocketCards={
+                  playerSlots[2].isMe ? gameState.myPocketCards : null
+                }
                 gameState={gameState}
               />
             )}
@@ -86,105 +101,162 @@ const Table = ({ players, currentTurn, myPlayerId, gameState, onTokenClick }) =>
           {/* Table surface with grid layout */}
           <div className="table-surface">
             {/* Top row: tokens for top-left and top-right seats */}
-            <div className="token-slot token-slot-top-left">
-              {playerSlots[0].player && playerSlots[0].playerToken !== undefined && (
-                <TokenDisplay
-                  number={playerSlots[0].playerToken}
-                  phase={gameState.phase}
-                  isMyToken={playerSlots[0].isMe}
-                  canClick={!playerSlots[0].isMe && currentTurn === myPlayerId && gameState.phase.includes('betting')}
-                  onClick={onTokenClick}
-                />
-              )}
-            </div>
-            <div className="token-slot token-slot-top-right">
-              {playerSlots[1].player && playerSlots[1].playerToken !== undefined && (
-                <TokenDisplay
-                  number={playerSlots[1].playerToken}
-                  phase={gameState.phase}
-                  isMyToken={playerSlots[1].isMe}
-                  canClick={!playerSlots[1].isMe && currentTurn === myPlayerId && gameState.phase.includes('betting')}
-                  onClick={onTokenClick}
-                />
-              )}
+            <div className="table-surface-top">
+              <div className="token-slot token-slot-top-left">
+                {playerSlots[0].player &&
+                  playerSlots[0].playerToken !== undefined && (
+                    <TokenDisplay
+                      number={playerSlots[0].playerToken}
+                      phase={gameState.phase}
+                      isMyToken={playerSlots[0].isMe}
+                      canClick={
+                        !playerSlots[0].isMe &&
+                        currentTurn === myPlayerId &&
+                        gameState.phase.includes("betting")
+                      }
+                      onClick={onTokenClick}
+                    />
+                  )}
+              </div>
+              <div className="token-slot token-slot-top-right">
+                {playerSlots[1].player &&
+                  playerSlots[1].playerToken !== undefined && (
+                    <TokenDisplay
+                      number={playerSlots[1].playerToken}
+                      phase={gameState.phase}
+                      isMyToken={playerSlots[1].isMe}
+                      canClick={
+                        !playerSlots[1].isMe &&
+                        currentTurn === myPlayerId &&
+                        gameState.phase.includes("betting")
+                      }
+                      onClick={onTokenClick}
+                    />
+                  )}
+              </div>
             </div>
 
             {/* Middle row: left token, center content, right token */}
-            <div className="token-slot token-slot-left">
-              {playerSlots[2].player && playerSlots[2].playerToken !== undefined && (
-                <TokenDisplay
-                  number={playerSlots[2].playerToken}
-                  phase={gameState.phase}
-                  isMyToken={playerSlots[2].isMe}
-                  canClick={!playerSlots[2].isMe && currentTurn === myPlayerId && gameState.phase.includes('betting')}
-                  onClick={onTokenClick}
-                />
-              )}
-            </div>
-
-            <div className="table-center">
-              {/* Community cards */}
-              {gameState.communityCards && gameState.communityCards.length > 0 && (
-                <div className="community-cards">
-                  {gameState.communityCards.map((card, i) => {
-                    const isInBestHand = myPlayerId && gameState.myPocketCards ?
-                      isCardInBestHand(card, gameState.myPocketCards, gameState.communityCards) : false;
-                    return <Card key={i} card={card} isInBestHand={isInBestHand} />;
-                  })}
-                </div>
-              )}
-
-              {/* Token pool */}
-              {gameState.phase.includes('betting') && gameState.tokenPool && gameState.tokenPool.length > 0 && (
-                <div className="token-pool">
-                  {[...gameState.tokenPool].sort((a, b) => a - b).map((tokenNum) => (
+            <div className="table-surface-middle">
+              <div className="token-slot token-slot-left">
+                {playerSlots[2].player &&
+                  playerSlots[2].playerToken !== undefined && (
                     <TokenDisplay
-                      key={tokenNum}
-                      number={tokenNum}
+                      number={playerSlots[2].playerToken}
                       phase={gameState.phase}
-                      isMyToken={false}
-                      canClick={gameState.currentTurn === myPlayerId}
-                      onClick={() => onTokenClick(tokenNum)}
+                      isMyToken={playerSlots[2].isMe}
+                      canClick={
+                        !playerSlots[2].isMe &&
+                        currentTurn === myPlayerId &&
+                        gameState.phase.includes("betting")
+                      }
+                      onClick={onTokenClick}
                     />
-                  ))}
-                </div>
-              )}
-            </div>
+                  )}
+              </div>
 
-            <div className="token-slot token-slot-right">
-              {playerSlots[3].player && playerSlots[3].playerToken !== undefined && (
-                <TokenDisplay
-                  number={playerSlots[3].playerToken}
-                  phase={gameState.phase}
-                  isMyToken={playerSlots[3].isMe}
-                  canClick={!playerSlots[3].isMe && currentTurn === myPlayerId && gameState.phase.includes('betting')}
-                  onClick={onTokenClick}
-                />
-              )}
+              <div className="table-center">
+                {/* Community cards */}
+                {gameState.communityCards &&
+                  gameState.communityCards.length > 0 && (
+                    <div className="community-cards">
+                      {gameState.communityCards.map((card, i) => {
+                        const isInBestHand =
+                          myPlayerId && gameState.myPocketCards
+                            ? isCardInBestHand(
+                                card,
+                                gameState.myPocketCards,
+                                gameState.communityCards
+                              )
+                            : false;
+                        return (
+                          <Card
+                            key={i}
+                            card={card}
+                            isInBestHand={isInBestHand}
+                            size="small"
+                          />
+                        );
+                      })}
+                      {Array.from(Array(5).keys())
+                        .slice(gameState.communityCards.length)
+                        .map((i) => (
+                          <div className="card-small" />
+                        ))}
+                    </div>
+                  )}
+
+                {/* Token pool */}
+                <div className="token-pool">
+                  {gameState.tokenPool &&
+                    gameState.tokenPool.length > 0 &&
+                    [...gameState.tokenPool]
+                      .sort((a, b) => a - b)
+                      .map((tokenNum) => (
+                        <TokenDisplay
+                          key={tokenNum}
+                          number={tokenNum}
+                          phase={gameState.phase}
+                          isMyToken={false}
+                          canClick={gameState.currentTurn === myPlayerId}
+                          onClick={() => onTokenClick(tokenNum)}
+                        />
+                      ))}
+                </div>
+              </div>
+
+              <div className="token-slot token-slot-right">
+                {playerSlots[3].player &&
+                  playerSlots[3].playerToken !== undefined && (
+                    <TokenDisplay
+                      number={playerSlots[3].playerToken}
+                      phase={gameState.phase}
+                      isMyToken={playerSlots[3].isMe}
+                      canClick={
+                        !playerSlots[3].isMe &&
+                        currentTurn === myPlayerId &&
+                        gameState.phase.includes("betting")
+                      }
+                      onClick={onTokenClick}
+                    />
+                  )}
+              </div>
             </div>
 
             {/* Bottom row: tokens for bottom-left and bottom-right seats */}
-            <div className="token-slot token-slot-bottom-left">
-              {playerSlots[4].player && playerSlots[4].playerToken !== undefined && (
-                <TokenDisplay
-                  number={playerSlots[4].playerToken}
-                  phase={gameState.phase}
-                  isMyToken={playerSlots[4].isMe}
-                  canClick={!playerSlots[4].isMe && currentTurn === myPlayerId && gameState.phase.includes('betting')}
-                  onClick={onTokenClick}
-                />
-              )}
-            </div>
-            <div className="token-slot token-slot-bottom-right">
-              {playerSlots[5].player && playerSlots[5].playerToken !== undefined && (
-                <TokenDisplay
-                  number={playerSlots[5].playerToken}
-                  phase={gameState.phase}
-                  isMyToken={playerSlots[5].isMe}
-                  canClick={!playerSlots[5].isMe && currentTurn === myPlayerId && gameState.phase.includes('betting')}
-                  onClick={onTokenClick}
-                />
-              )}
+            <div className="table-surface-bottom">
+              <div className="token-slot token-slot-bottom-left">
+                {playerSlots[4].player &&
+                  playerSlots[4].playerToken !== undefined && (
+                    <TokenDisplay
+                      number={playerSlots[4].playerToken}
+                      phase={gameState.phase}
+                      isMyToken={playerSlots[4].isMe}
+                      canClick={
+                        !playerSlots[4].isMe &&
+                        currentTurn === myPlayerId &&
+                        gameState.phase.includes("betting")
+                      }
+                      onClick={onTokenClick}
+                    />
+                  )}
+              </div>
+              <div className="token-slot token-slot-bottom-right">
+                {playerSlots[5].player &&
+                  playerSlots[5].playerToken !== undefined && (
+                    <TokenDisplay
+                      number={playerSlots[5].playerToken}
+                      phase={gameState.phase}
+                      isMyToken={playerSlots[5].isMe}
+                      canClick={
+                        !playerSlots[5].isMe &&
+                        currentTurn === myPlayerId &&
+                        gameState.phase.includes("betting")
+                      }
+                      onClick={onTokenClick}
+                    />
+                  )}
+              </div>
             </div>
           </div>
 
@@ -195,7 +267,9 @@ const Table = ({ players, currentTurn, myPlayerId, gameState, onTokenClick }) =>
                 player={playerSlots[3].player}
                 isMe={playerSlots[3].isMe}
                 isCurrentTurn={playerSlots[3].isCurrentTurn}
-                myPocketCards={playerSlots[3].isMe ? gameState.myPocketCards : null}
+                myPocketCards={
+                  playerSlots[3].isMe ? gameState.myPocketCards : null
+                }
                 gameState={gameState}
               />
             )}
@@ -210,7 +284,9 @@ const Table = ({ players, currentTurn, myPlayerId, gameState, onTokenClick }) =>
                 player={playerSlots[4].player}
                 isMe={playerSlots[4].isMe}
                 isCurrentTurn={playerSlots[4].isCurrentTurn}
-                myPocketCards={playerSlots[4].isMe ? gameState.myPocketCards : null}
+                myPocketCards={
+                  playerSlots[4].isMe ? gameState.myPocketCards : null
+                }
                 gameState={gameState}
               />
             </div>
@@ -221,7 +297,9 @@ const Table = ({ players, currentTurn, myPlayerId, gameState, onTokenClick }) =>
                 player={playerSlots[5].player}
                 isMe={playerSlots[5].isMe}
                 isCurrentTurn={playerSlots[5].isCurrentTurn}
-                myPocketCards={playerSlots[5].isMe ? gameState.myPocketCards : null}
+                myPocketCards={
+                  playerSlots[5].isMe ? gameState.myPocketCards : null
+                }
                 gameState={gameState}
               />
             </div>
@@ -233,17 +311,33 @@ const Table = ({ players, currentTurn, myPlayerId, gameState, onTokenClick }) =>
 };
 
 // PlayerInfo sub-component
-const PlayerInfo = ({ player, isMe, isCurrentTurn, myPocketCards, gameState }) => {
-  const hasPocketCards = gameState.phase !== 'waiting';
+const PlayerInfo = ({
+  player,
+  isMe,
+  isCurrentTurn,
+  myPocketCards,
+  gameState,
+}) => {
+  const hasPocketCards = gameState.phase !== "waiting";
 
   // Get historical tokens for this player from previous rounds
-  const tokenHistory = gameState.bettingRoundHistory?.map(round => {
-    return round.tokenAssignments[player.id];
-  }).filter(token => token !== undefined) || [];
+  const tokenHistory =
+    gameState.bettingRoundHistory
+      ?.map((round) => {
+        return round.tokenAssignments[player.id];
+      })
+      .filter((token) => token !== undefined) || [];
 
   return (
-    <div className={`player-info ${isCurrentTurn ? 'player-info-active' : ''} ${isMe ? 'player-info-me' : ''}`}>
-      <div className="player-name">{player.name}{isMe ? ' (You)' : ''}</div>
+    <div
+      className={`player-info ${isCurrentTurn ? "player-info-active" : ""} ${
+        isMe ? "player-info-me" : ""
+      }`}
+    >
+      <div className="player-name">
+        {player.name}
+        {isMe ? " (You)" : ""}
+      </div>
 
       {/* Always show cards container to maintain consistent size */}
       <div className="player-cards-container">
@@ -276,9 +370,15 @@ const PlayerInfo = ({ player, isMe, isCurrentTurn, myPocketCards, gameState }) =
         {/* Token history from previous rounds - always render container for consistent height */}
         <div className="token-history">
           {tokenHistory.map((token, i) => (
-            <div key={i} className="token-history-item" style={{
-              backgroundColor: ['#ffffff', '#ffff00', '#ff9900', '#ff0000'][i]
-            }}>
+            <div
+              key={i}
+              className="token-history-item"
+              style={{
+                backgroundColor: ["#ffffff", "#ffff00", "#ff9900", "#ff0000"][
+                  i
+                ],
+              }}
+            >
               {token}
             </div>
           ))}
@@ -291,17 +391,19 @@ const PlayerInfo = ({ player, isMe, isCurrentTurn, myPocketCards, gameState }) =
 // TokenDisplay sub-component
 const TokenDisplay = ({ number, phase, isMyToken, canClick, onClick }) => {
   const roundColors = {
-    'betting_1': '#ffffff',
-    'betting_2': '#ffff00',
-    'betting_3': '#ff9900',
-    'betting_4': '#ff0000'
+    betting_1: "#ffffff",
+    betting_2: "#ffff00",
+    betting_3: "#ff9900",
+    betting_4: "#ff0000",
   };
 
-  const color = roundColors[phase] || '#ffd700';
+  const color = roundColors[phase] || "#ffd700";
 
   return (
     <div
-      className={`token-display ${canClick ? 'token-clickable' : ''} ${isMyToken ? 'token-mine' : ''}`}
+      className={`token-display ${canClick ? "token-clickable" : ""} ${
+        isMyToken ? "token-mine" : ""
+      }`}
       style={{ backgroundColor: color }}
       onClick={canClick ? () => onClick(number) : undefined}
     >

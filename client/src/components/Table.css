@@ -55,14 +55,30 @@
   border-radius: 40px;
   width: 900px;
   height: 320px;
-  padding: 20px;
+  /* padding: 20px; */
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
 
   /* Grid layout: 3 rows x 3 columns */
-  display: grid;
+  display: flex;
+  flex-direction: column;
   grid-template-columns: 100px 1fr 100px;
   grid-template-rows: 70px 1fr 70px;
   gap: 10px;
+}
+
+.table-surface-top,
+.table-surface-bottom {
+  display: flex;
+  justify-content: center;
+  gap: 160px;
+  height: 60px;
+}
+
+.table-surface-middle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-grow: 1;
 }
 
 /* Token slots - individual grid cells */
@@ -70,6 +86,8 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  width: 60px;
+  height: 60px;
 }
 
 /* Top row token slots */
@@ -120,13 +138,14 @@
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 /* Token pool */
 .token-pool {
   display: flex;
   gap: 15px;
+  height: 54px;
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
@@ -153,7 +172,7 @@
 
 .player-info-active {
   border-color: #ffff00;
-  border-width: 3px;
+  border-width: 2px;
 }
 
 .player-name {
@@ -211,7 +230,9 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  font-family: Arial Black, sans-serif;
+  font-family:
+    Arial Black,
+    sans-serif;
   font-size: 24px;
   color: #000000;
   user-select: none;
@@ -248,7 +269,9 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  font-family: Arial Black, sans-serif;
+  font-family:
+    Arial Black,
+    sans-serif;
   font-size: 12px;
   color: #000000;
   user-select: none;
