@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import networkManager from '../game/core/NetworkManager.js';
+import { getSession } from '../game/utils/storage.js';
 
 const NetworkContext = createContext(null);
 
@@ -10,14 +11,38 @@ export const NetworkProvider = ({ children }) => {
   const [playerId, setPlayerId] = useState(null);
   const [playerName, setPlayerName] = useState(null);
   const [roomList, setRoomList] = useState([]);
+  const [isRejoining, setIsRejoining] = useState(false);
+  const [rejoinSuccess, setRejoinSuccess] = useState(false);
 
   useEffect(() => {
     // Connect to server on mount
     networkManager.connect();
 
     // Set up event listeners
-    const handleConnected = () => {
+    const handleConnected = async () => {
       setConnected(true);
+
+      // Check for active session and attempt to rejoin
+      const session = getSession();
+      if (session && session.roomId && session.playerId) {
+        console.log('Found active session, attempting to rejoin...', session.roomId);
+        setIsRejoining(true);
+
+        try {
+          await networkManager.rejoinGame(session.roomId, session.playerId, session.fingerprint);
+          setRoomId(networkManager.roomId);
+          setPlayerId(networkManager.playerId);
+          setPlayerName(networkManager.playerName);
+          setGameState(networkManager.gameState);
+          setRejoinSuccess(true);
+          console.log('✅ Successfully rejoined game');
+        } catch (error) {
+          console.log('❌ Failed to rejoin:', error.message);
+          setRejoinSuccess(false);
+        } finally {
+          setIsRejoining(false);
+        }
+      }
     };
 
     const handleDisconnected = () => {
@@ -92,6 +117,15 @@ export const NetworkProvider = ({ children }) => {
     return await networkManager.setReady();
   }, []);
 
+  const leaveGame = useCallback(() => {
+    networkManager.leaveGame();
+    setRoomId(null);
+    setPlayerId(null);
+    setPlayerName(null);
+    setGameState(null);
+    setRejoinSuccess(false);
+  }, []);
+
   const value = {
     connected,
     gameState,
@@ -99,6 +133,8 @@ export const NetworkProvider = ({ children }) => {
     playerId,
     playerName,
     roomList,
+    isRejoining,
+    rejoinSuccess,
     createRoom,
     joinRoom,
     getRoomList,
@@ -107,6 +143,7 @@ export const NetworkProvider = ({ children }) => {
     claimToken,
     passTurn,
     setReady,
+    leaveGame,
     networkManager // Expose the raw manager for advanced use cases
   };
 

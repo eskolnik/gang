@@ -21,8 +21,13 @@ const PHASE_NAMES = {
 };
 
 const Game = ({ onReturnToLobby }) => {
-  const { gameState, roomId, playerId, startGame, restartGame, claimToken, passTurn, setReady, networkManager } = useNetwork();
+  const { gameState, roomId, playerId, startGame, restartGame, claimToken, passTurn, setReady, leaveGame, networkManager } = useNetwork();
   const [gameResult, setGameResult] = useState(null);
+
+  const handleReturnToLobby = useCallback(() => {
+    leaveGame();
+    onReturnToLobby();
+  }, [leaveGame, onReturnToLobby]);
 
   // Listen for game complete event
   useEffect(() => {
@@ -150,7 +155,7 @@ const Game = ({ onReturnToLobby }) => {
   return (
     <div className="game">
       {/* TOP LEFT: Return to Lobby button */}
-      <button className="btn-return" onClick={onReturnToLobby}>
+      <button className="btn-return" onClick={handleReturnToLobby}>
         Return to Lobby
       </button>
 

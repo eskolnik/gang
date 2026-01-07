@@ -1,5 +1,7 @@
 import { io } from 'socket.io-client';
 import { SERVER_URL } from '../utils/constants.js';
+import { getFingerprint } from '../utils/fingerprint.js';
+import { saveSession, clearSession } from '../utils/storage.js';
 
 /**
  * NetworkManager - Singleton wrapper for Socket.io client
@@ -17,6 +19,7 @@ export class NetworkManager {
     this.playerId = null;
     this.playerName = null;
     this.gameState = null;
+    this.fingerprint = null;
     this.eventHandlers = new Map();
 
     NetworkManager.instance = this;
@@ -88,23 +91,37 @@ export class NetworkManager {
   /**
    * Create a new game room
    */
-  createRoom(playerName, maxPlayers = 6, minPlayers = 2) {
-    return new Promise((resolve, reject) => {
-      if (!this.connected) {
-        reject(new Error('Not connected to server'));
-        return;
-      }
+  async createRoom(playerName, maxPlayers = 6, minPlayers = 2) {
+    if (!this.connected) {
+      throw new Error('Not connected to server');
+    }
 
+    // Get fingerprint before creating room
+    if (!this.fingerprint) {
+      this.fingerprint = await getFingerprint();
+    }
+
+    return new Promise((resolve, reject) => {
       this.socket.emit('createRoom', {
         playerName,
         maxPlayers,
-        minPlayers
+        minPlayers,
+        fingerprint: this.fingerprint
       }, (response) => {
         if (response.success) {
           this.roomId = response.roomId;
           this.playerId = response.playerId;
           this.playerName = playerName;
           this.gameState = response.gameState;
+
+          // Save session to localStorage
+          saveSession({
+            roomId: this.roomId,
+            playerId: this.playerId,
+            playerName: this.playerName,
+            fingerprint: this.fingerprint
+          });
+
           console.log('✅ Room created:', this.roomId);
           resolve(response);
         } else {
@@ -118,22 +135,36 @@ export class NetworkManager {
   /**
    * Join an existing room
    */
-  joinRoom(roomId, playerName) {
-    return new Promise((resolve, reject) => {
-      if (!this.connected) {
-        reject(new Error('Not connected to server'));
-        return;
-      }
+  async joinRoom(roomId, playerName) {
+    if (!this.connected) {
+      throw new Error('Not connected to server');
+    }
 
+    // Get fingerprint before joining room
+    if (!this.fingerprint) {
+      this.fingerprint = await getFingerprint();
+    }
+
+    return new Promise((resolve, reject) => {
       this.socket.emit('joinRoom', {
         roomId: roomId.toUpperCase(),
-        playerName
+        playerName,
+        fingerprint: this.fingerprint
       }, (response) => {
         if (response.success) {
           this.roomId = response.roomId;
           this.playerId = response.playerId;
           this.playerName = playerName;
           this.gameState = response.gameState;
+
+          // Save session to localStorage
+          saveSession({
+            roomId: this.roomId,
+            playerId: this.playerId,
+            playerName: this.playerName,
+            fingerprint: this.fingerprint
+          });
+
           console.log('✅ Joined room:', this.roomId);
           resolve(response);
         } else {
@@ -142,6 +173,63 @@ export class NetworkManager {
         }
       });
     });
+  }
+
+  /**
+   * Rejoin an existing game session
+   * Used for reconnection and page refresh
+   */
+  async rejoinGame(roomId, playerId, fingerprint) {
+    if (!this.connected) {
+      throw new Error('Not connected to server');
+    }
+
+    // Use provided fingerprint or get new one
+    if (!this.fingerprint) {
+      this.fingerprint = fingerprint || await getFingerprint();
+    }
+
+    return new Promise((resolve, reject) => {
+      this.socket.emit('rejoinGame', {
+        roomId,
+        playerId,
+        fingerprint: this.fingerprint
+      }, (response) => {
+        if (response.success) {
+          this.roomId = response.roomId;
+          this.playerId = response.playerId;
+          this.playerName = response.playerName;
+          this.gameState = response.gameState;
+
+          // Update session timestamp
+          saveSession({
+            roomId: this.roomId,
+            playerId: this.playerId,
+            playerName: this.playerName,
+            fingerprint: this.fingerprint
+          });
+
+          console.log('✅ Rejoined game:', this.roomId);
+          resolve(response);
+        } else {
+          console.error('❌ Failed to rejoin game:', response.error);
+          reject(new Error(response.error));
+        }
+      });
+    });
+  }
+
+  /**
+   * Leave the current game and return to lobby
+   * Clears the session from localStorage
+   */
+  leaveGame() {
+    this.roomId = null;
+    this.playerId = null;
+    this.playerName = null;
+    this.gameState = null;
+    clearSession();
+    console.log('👋 Left game');
   }
 
   /**
