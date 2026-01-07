@@ -68,18 +68,7 @@ export class GameRoom {
       this.hostId = playerId;
     }
 
-    // Persist player to database
-    savePlayer({
-      playerId,
-      roomId: this.roomId,
-      name: playerName,
-      socketId,
-      pocketCards: [],
-      ready: false,
-      connected: true
-    });
-
-    // Persist game state
+    // Persist game state (saves both game room and all players)
     this.save();
   }
 
