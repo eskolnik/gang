@@ -17,16 +17,15 @@ export function savePlayer(player) {
 
   const stmt = db.prepare(`
     INSERT OR REPLACE INTO players (
-      player_id, room_id, name, fingerprint, socket_id,
+      player_id, room_id, name, socket_id,
       pocket_cards, ready, connected, last_seen
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   stmt.run(
     player.playerId,
     player.roomId,
     player.name,
-    null, // fingerprint no longer used
     player.socketId,
     JSON.stringify(player.pocketCards || []),
     player.ready ? 1 : 0,
@@ -57,7 +56,6 @@ export function loadPlayer(playerId) {
     playerId: row.player_id,
     roomId: row.room_id,
     name: row.name,
-    fingerprint: row.fingerprint,
     socketId: row.socket_id,
     pocketCards: JSON.parse(row.pocket_cards),
     ready: row.ready === 1,
@@ -91,38 +89,6 @@ export function loadPlayersByRoom(roomId) {
     connected: row.connected === 1,
     lastSeen: row.last_seen
   }));
-}
-
-/**
- * Find a player by fingerprint in a specific room
- * @param {string} fingerprint - Browser fingerprint
- * @param {string} roomId - Room ID
- * @returns {Object|null} Player data or null
- */
-export function findPlayerByFingerprint(fingerprint, roomId) {
-  const db = getDatabase();
-
-  const stmt = db.prepare(`
-    SELECT * FROM players WHERE fingerprint = ? AND room_id = ?
-  `);
-
-  const row = stmt.get(fingerprint, roomId);
-
-  if (!row) {
-    return null;
-  }
-
-  return {
-    playerId: row.player_id,
-    roomId: row.room_id,
-    name: row.name,
-    fingerprint: row.fingerprint,
-    socketId: row.socket_id,
-    pocketCards: JSON.parse(row.pocket_cards),
-    ready: row.ready === 1,
-    connected: row.connected === 1,
-    lastSeen: row.last_seen
-  };
 }
 
 /**

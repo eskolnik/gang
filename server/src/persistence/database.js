@@ -54,26 +54,61 @@ function createTables() {
     )
   `);
 
-  // Players table
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS players (
-      player_id TEXT PRIMARY KEY,
-      room_id TEXT NOT NULL,
-      name TEXT NOT NULL,
-      fingerprint TEXT NOT NULL,
-      socket_id TEXT,
-      pocket_cards TEXT,
-      ready INTEGER DEFAULT 0,
-      connected INTEGER DEFAULT 1,
-      last_seen INTEGER NOT NULL,
-      FOREIGN KEY (room_id) REFERENCES game_rooms(room_id) ON DELETE CASCADE
-    )
-  `);
+  // Check if we need to migrate the players table (remove fingerprint column)
+  const tableInfo = db.prepare("PRAGMA table_info(players)").all();
+  const hasFingerprintColumn = tableInfo.some(col => col.name === 'fingerprint');
+
+  if (hasFingerprintColumn) {
+    console.log('🔄 Migrating players table to remove fingerprint column...');
+
+    // SQLite doesn't support DROP COLUMN, so we need to recreate the table
+    db.exec(`
+      -- Create new table without fingerprint
+      CREATE TABLE players_new (
+        player_id TEXT PRIMARY KEY,
+        room_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        socket_id TEXT,
+        pocket_cards TEXT,
+        ready INTEGER DEFAULT 0,
+        connected INTEGER DEFAULT 1,
+        last_seen INTEGER NOT NULL,
+        FOREIGN KEY (room_id) REFERENCES game_rooms(room_id) ON DELETE CASCADE
+      );
+
+      -- Copy data from old table
+      INSERT INTO players_new (player_id, room_id, name, socket_id, pocket_cards, ready, connected, last_seen)
+      SELECT player_id, room_id, name, socket_id, pocket_cards, ready, connected, last_seen
+      FROM players;
+
+      -- Drop old table
+      DROP TABLE players;
+
+      -- Rename new table
+      ALTER TABLE players_new RENAME TO players;
+    `);
+
+    console.log('✅ Players table migrated successfully');
+  } else {
+    // Create players table without fingerprint
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS players (
+        player_id TEXT PRIMARY KEY,
+        room_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        socket_id TEXT,
+        pocket_cards TEXT,
+        ready INTEGER DEFAULT 0,
+        connected INTEGER DEFAULT 1,
+        last_seen INTEGER NOT NULL,
+        FOREIGN KEY (room_id) REFERENCES game_rooms(room_id) ON DELETE CASCADE
+      )
+    `);
+  }
 
   // Create indexes for faster lookups
   db.exec(`
     CREATE INDEX IF NOT EXISTS idx_players_room_id ON players(room_id);
-    CREATE INDEX IF NOT EXISTS idx_players_fingerprint ON players(fingerprint);
     CREATE INDEX IF NOT EXISTS idx_players_socket_id ON players(socket_id);
   `);
 
