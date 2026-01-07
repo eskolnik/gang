@@ -143,12 +143,12 @@ const Game = ({ onReturnToLobby }) => {
 
   return (
     <div className="game">
-      {/* Return to Lobby button (top right) */}
+      {/* TOP LEFT: Return to Lobby button */}
       <button className="btn-return" onClick={onReturnToLobby}>
         Return to Lobby
       </button>
 
-      {/* Round Tracker */}
+      {/* TOP RIGHT: Round Tracker */}
       {currentRound > 0 && (
         <div className="round-tracker">
           <div className="round-circles">
@@ -182,7 +182,7 @@ const Game = ({ onReturnToLobby }) => {
         />
       </div>
 
-      {/* Action Buttons */}
+      {/* BOTTOM LEFT: Action Buttons */}
       <div className="game-actions">
         {gameState.phase === GAME_PHASES.WAITING && (
           <button className="btn-action" onClick={handleStartGame}>
@@ -203,7 +203,7 @@ const Game = ({ onReturnToLobby }) => {
         )}
       </div>
 
-      {/* Status Text */}
+      {/* BOTTOM RIGHT: Status/Game Log */}
       {statusText && <div className="game-status">{statusText}</div>}
 
       {/* Game Result Modal */}

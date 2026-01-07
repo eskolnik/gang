@@ -17,11 +17,11 @@
   font-size: 24px;
 }
 
-/* Return to Lobby button */
+/* Return to Lobby button - TOP LEFT CORNER */
 .btn-return {
   position: fixed;
   top: 20px;
-  right: 20px;
+  left: 20px;
   padding: 10px 20px;
   font-family: Arial, sans-serif;
   font-size: 14px;
@@ -38,10 +38,10 @@
   background-color: #6ba3e8;
 }
 
-/* Round Tracker */
+/* Round Tracker - TOP RIGHT CORNER */
 .round-tracker {
   position: fixed;
-  top: 70px;
+  top: 20px;
   right: 20px;
   display: flex;
   flex-direction: column;
@@ -109,16 +109,16 @@
   justify-content: center;
 }
 
-/* Action Buttons */
+/* Action Buttons - BOTTOM LEFT CORNER */
 .game-actions {
   position: fixed;
   left: 20px;
-  top: 50%;
-  transform: translateY(-50%);
+  bottom: 20px;
   display: flex;
   flex-direction: column;
   gap: 15px;
   z-index: 100;
+  align-items: flex-start;
 }
 
 .btn-action {
@@ -147,19 +147,21 @@
   background-color: #ffaa33;
 }
 
-/* Status Text */
+/* Status Text - BOTTOM RIGHT CORNER */
 .game-status {
   position: fixed;
-  left: 20px;
-  bottom: 30px;
-  color: #ffff00;
-  font-size: 14px;
+  right: 20px;
+  bottom: 20px;
+  color: #ffffff;
+  font-size: 13px;
   padding: 12px 16px;
-  background-color: rgba(0, 0, 0, 0.8);
+  background-color: rgba(0, 0, 0, 0.85);
   border-radius: 5px;
-  z-index: 99;
-  max-width: 200px;
-  border: 2px solid rgba(255, 255, 0, 0.3);
+  z-index: 100;
+  max-width: 250px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  max-height: 150px;
+  overflow-y: auto;
 }
 
 /* Game Result Modal */
