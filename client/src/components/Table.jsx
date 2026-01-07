@@ -319,6 +319,7 @@ const PlayerInfo = ({
   gameState,
 }) => {
   const hasPocketCards = gameState.phase !== "waiting";
+  const isHost = player.id === gameState.hostId;
 
   // Get historical tokens for this player from previous rounds
   const tokenHistory =
@@ -335,6 +336,7 @@ const PlayerInfo = ({
       }`}
     >
       <div className="player-name">
+        {isHost && "👑 "}
         {player.name}
         {isMe ? " (You)" : ""}
       </div>
