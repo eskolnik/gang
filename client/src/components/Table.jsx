@@ -167,11 +167,13 @@ const PlayerInfo = ({ player, isMe, isCurrentTurn, myPocketCards, gameState }) =
     <div className={`player-info ${isCurrentTurn ? 'player-info-active' : ''}`}>
       <div className="player-name">{player.name}{isMe ? ' (You)' : ''}</div>
 
-      {hasPocketCards && (
-        <div className="player-cards-container">
-          <div className="player-cards-display">
-            {isMe && myPocketCards && myPocketCards.length > 0 ? (
-              // Show actual cards for me (using Card component for better display)
+      {/* Always show cards container to maintain consistent size */}
+      <div className="player-cards-container">
+        <div className="player-cards-display">
+          {hasPocketCards ? (
+            // Show cards when in play
+            isMe && myPocketCards && myPocketCards.length > 0 ? (
+              // Show actual cards for me
               <div className="pocket-cards">
                 {myPocketCards.map((card, i) => (
                   <Card key={i} card={card} size="small" />
@@ -183,23 +185,27 @@ const PlayerInfo = ({ player, isMe, isCurrentTurn, myPocketCards, gameState }) =
                 <CardBack size="small" />
                 <CardBack size="small" />
               </div>
-            )}
-          </div>
-
-          {/* Token history from previous rounds - horizontal line below cards */}
-          {tokenHistory.length > 0 && (
-            <div className="token-history">
-              {tokenHistory.map((token, i) => (
-                <div key={i} className="token-history-item" style={{
-                  backgroundColor: ['#ffffff', '#ffff00', '#ff9900', '#ff0000'][i]
-                }}>
-                  {token}
-                </div>
-              ))}
+            )
+          ) : (
+            // Show empty card frames when waiting
+            <div className="card-frames-empty">
+              <div className="card-frame-empty" />
+              <div className="card-frame-empty" />
             </div>
           )}
         </div>
-      )}
+
+        {/* Token history from previous rounds - always render container for consistent height */}
+        <div className="token-history">
+          {tokenHistory.map((token, i) => (
+            <div key={i} className="token-history-item" style={{
+              backgroundColor: ['#ffffff', '#ffff00', '#ff9900', '#ff0000'][i]
+            }}>
+              {token}
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };
