@@ -180,15 +180,17 @@ const Game = ({ onReturnToLobby }) => {
           gameState={gameState}
           onTokenClick={handleClaimToken}
         />
-      </div>
 
-      {/* BOTTOM LEFT: Action Buttons */}
-      <div className="game-actions">
+        {/* Start Game button in center of table when waiting */}
         {gameState.phase === GAME_PHASES.WAITING && (
-          <button className="btn-action" onClick={handleStartGame}>
+          <button className="btn-action btn-start-center" onClick={handleStartGame}>
             Start Game
           </button>
         )}
+      </div>
+
+      {/* BOTTOM LEFT: Action Buttons (during gameplay) */}
+      <div className="game-actions">
         {gameState.phase.includes('betting') &&
          gameState.currentTurn === playerId &&
          gameState.tokenAssignments?.[playerId] !== undefined && (

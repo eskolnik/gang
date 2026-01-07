@@ -91,6 +91,15 @@
   padding: 10px;
   min-height: 0; /* Allow flexbox to shrink */
   overflow: auto;
+  position: relative;
+}
+
+/* Start Game button centered on table */
+.btn-start-center {
+  position: absolute;
+  padding: 20px 40px;
+  font-size: 20px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
 }
 
 /* Community Cards */
