@@ -48,33 +48,74 @@
   min-width: 180px;
 }
 
-/* Table surface - horizontal rectangular poker table */
+/* Table surface - horizontal rectangular poker table with grid layout */
 .table-surface {
-  position: relative;
   background-color: #2a5a3a;
   border: 8px solid #1a472a;
   border-radius: 40px;
   width: 900px;
   height: 320px;
-  display: flex;
-  flex-direction: column;
   padding: 20px;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+
+  /* Grid layout: 3 rows x 3 columns */
+  display: grid;
+  grid-template-columns: 100px 1fr 100px;
+  grid-template-rows: 70px 1fr 70px;
+  gap: 10px;
 }
 
-/* Fixed zones on table surface */
-.table-zone {
+/* Token slots - individual grid cells */
+.token-slot {
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-/* Community cards zone - top area of table */
-.zone-community {
-  flex: 0 0 110px;
-  padding: 8px;
+/* Top row token slots */
+.token-slot-top-left {
+  grid-column: 1;
+  grid-row: 1;
 }
 
+.token-slot-top-right {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+/* Middle row - left token, center content, right token */
+.token-slot-left {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.table-center {
+  grid-column: 2;
+  grid-row: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  justify-content: center;
+  align-items: center;
+}
+
+.token-slot-right {
+  grid-column: 3;
+  grid-row: 2;
+}
+
+/* Bottom row token slots */
+.token-slot-bottom-left {
+  grid-column: 1;
+  grid-row: 3;
+}
+
+.token-slot-bottom-right {
+  grid-column: 3;
+  grid-row: 3;
+}
+
+/* Community cards */
 .community-cards {
   display: flex;
   gap: 12px;
@@ -82,66 +123,13 @@
   justify-content: center;
 }
 
-/* Token pool zone - middle of table */
-.zone-token-pool {
-  flex: 1;
-  padding: 10px;
-}
-
+/* Token pool */
 .token-pool {
   display: flex;
   gap: 15px;
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-}
-
-/* Player tokens zone - positioned absolutely around table edge */
-.zone-player-tokens {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none; /* Allow clicks through to table */
-}
-
-.player-token-spot {
-  position: absolute;
-  pointer-events: auto; /* Re-enable clicks on tokens */
-}
-
-/* Token positions for each seat */
-.spot-top-left {
-  top: 20px;
-  left: 30%;
-}
-
-.spot-top-right {
-  top: 20px;
-  right: 30%;
-}
-
-.spot-left {
-  left: 30px;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.spot-right {
-  right: 30px;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.spot-bottom-left {
-  bottom: 20px;
-  left: 30%;
-}
-
-.spot-bottom-right {
-  bottom: 20px;
-  right: 30%;
 }
 
 /* Player info box - standardized size for all players */
