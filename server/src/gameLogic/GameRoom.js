@@ -26,7 +26,7 @@ export const GAME_PHASES = {
 export class GameRoom {
   constructor(roomId, options = {}) {
     this.roomId = roomId;
-    this.players = new Map(); // playerId -> {id, name, socketId, fingerprint, pocketCards, ready}
+    this.players = new Map(); // playerId -> {id, name, socketId, pocketCards, ready}
     this.phase = GAME_PHASES.WAITING;
     this.deck = new Deck();
     this.communityCards = [];
@@ -44,7 +44,7 @@ export class GameRoom {
   /**
    * Add a player to the room
    */
-  addPlayer(playerId, playerName, socketId, fingerprint) {
+  addPlayer(playerId, playerName, socketId) {
     if (this.players.size >= this.maxPlayers) {
       throw new Error('Room is full');
     }
@@ -56,7 +56,6 @@ export class GameRoom {
       id: playerId,
       name: playerName,
       socketId: socketId,
-      fingerprint: fingerprint,
       pocketCards: [],
       ready: false
     };
@@ -74,7 +73,6 @@ export class GameRoom {
       playerId,
       roomId: this.roomId,
       name: playerName,
-      fingerprint,
       socketId,
       pocketCards: [],
       ready: false,
@@ -465,7 +463,6 @@ export class GameRoom {
         playerId,
         roomId: this.roomId,
         name: player.name,
-        fingerprint: player.fingerprint,
         socketId: player.socketId,
         pocketCards: player.pocketCards,
         ready: this.playerReadyStatus[playerId],
@@ -518,7 +515,6 @@ export class GameRoom {
         id: playerData.playerId,
         name: playerData.name,
         socketId: playerData.socketId,
-        fingerprint: playerData.fingerprint,
         pocketCards: playerData.pocketCards,
         ready: playerData.ready
       });

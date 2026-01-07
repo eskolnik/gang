@@ -29,7 +29,7 @@ export const NetworkProvider = ({ children }) => {
         setIsRejoining(true);
 
         try {
-          await networkManager.rejoinGame(session.roomId, session.playerId, session.fingerprint);
+          await networkManager.rejoinGame(session.roomId, session.playerId);
           setRoomId(networkManager.roomId);
           setPlayerId(networkManager.playerId);
           setPlayerName(networkManager.playerName);

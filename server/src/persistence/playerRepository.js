@@ -6,7 +6,6 @@ import { getDatabase } from './database.js';
  * @param {string} player.playerId - Player ID
  * @param {string} player.roomId - Room ID
  * @param {string} player.name - Player name
- * @param {string} player.fingerprint - Browser fingerprint
  * @param {string} player.socketId - Socket ID
  * @param {Array} player.pocketCards - Pocket cards
  * @param {boolean} player.ready - Ready status
@@ -27,7 +26,7 @@ export function savePlayer(player) {
     player.playerId,
     player.roomId,
     player.name,
-    player.fingerprint,
+    null, // fingerprint no longer used
     player.socketId,
     JSON.stringify(player.pocketCards || []),
     player.ready ? 1 : 0,

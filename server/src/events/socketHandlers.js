@@ -1,5 +1,5 @@
 import { GameRoom, GAME_PHASES } from '../gameLogic/GameRoom.js';
-import { findPlayerByFingerprint, markPlayerDisconnected } from '../persistence/playerRepository.js';
+import { markPlayerDisconnected } from '../persistence/playerRepository.js';
 
 /**
  * Generate a random room ID
@@ -80,18 +80,13 @@ export function setupSocketHandlers(io, gameRooms) {
         const roomId = generateRoomId();
         const playerId = generatePlayerId();
         const playerName = data.playerName || 'Player';
-        const fingerprint = data.fingerprint;
-
-        if (!fingerprint) {
-          return callback({ success: false, error: 'Fingerprint required' });
-        }
 
         const room = new GameRoom(roomId, {
           maxPlayers: data.maxPlayers || 6,
           minPlayers: data.minPlayers || 2
         });
 
-        room.addPlayer(playerId, playerName, socket.id, fingerprint);
+        room.addPlayer(playerId, playerName, socket.id);
         gameRooms.set(roomId, room);
 
         // Join the socket room
@@ -131,11 +126,7 @@ export function setupSocketHandlers(io, gameRooms) {
      */
     socket.on('joinRoom', (data, callback) => {
       try {
-        const { roomId, playerName, fingerprint } = data;
-
-        if (!fingerprint) {
-          return callback({ success: false, error: 'Fingerprint required' });
-        }
+        const { roomId, playerName } = data;
 
         const room = gameRooms.get(roomId);
 
@@ -143,21 +134,10 @@ export function setupSocketHandlers(io, gameRooms) {
           return callback({ success: false, error: 'Room not found' });
         }
 
-        // Check if player with this fingerprint already exists in room
-        const existingPlayer = findPlayerByFingerprint(fingerprint, roomId);
-
-        let playerId;
-        if (existingPlayer) {
-          // Reconnect existing player
-          playerId = existingPlayer.playerId;
-          room.reconnectPlayer(playerId, socket.id);
-          console.log(`🔄 ${existingPlayer.name} (${playerId}) reconnected to room ${roomId}`);
-        } else {
-          // Add new player
-          playerId = generatePlayerId();
-          room.addPlayer(playerId, playerName || 'Player', socket.id, fingerprint);
-          console.log(`👋 ${playerName} (${playerId}) joined room ${roomId}`);
-        }
+        // Add new player
+        const playerId = generatePlayerId();
+        room.addPlayer(playerId, playerName || 'Player', socket.id);
+        console.log(`👋 ${playerName} (${playerId}) joined room ${roomId}`);
 
         socket.join(roomId);
         currentRoomId = roomId;
@@ -167,7 +147,7 @@ export function setupSocketHandlers(io, gameRooms) {
           success: true,
           roomId,
           playerId,
-          playerName: playerName || existingPlayer?.name,
+          playerName,
           gameState: room.getPlayerState(playerId)
         });
 
@@ -187,11 +167,7 @@ export function setupSocketHandlers(io, gameRooms) {
      */
     socket.on('rejoinGame', async (data, callback) => {
       try {
-        const { roomId, playerId, fingerprint } = data;
-
-        if (!fingerprint) {
-          return callback({ success: false, error: 'Fingerprint required' });
-        }
+        const { roomId, playerId } = data;
 
         // Try to get room from memory first
         let room = gameRooms.get(roomId);
@@ -214,11 +190,6 @@ export function setupSocketHandlers(io, gameRooms) {
         const player = room.players.get(playerId);
         if (!player) {
           return callback({ success: false, error: 'Player not found in room' });
-        }
-
-        // Verify fingerprint matches
-        if (player.fingerprint !== fingerprint) {
-          return callback({ success: false, error: 'Fingerprint mismatch' });
         }
 
         // Reconnect player with new socket ID

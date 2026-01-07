@@ -5,7 +5,6 @@
 
 const STORAGE_KEYS = {
   SESSION: 'game_session',
-  FINGERPRINT: 'player_fingerprint',
 };
 
 // Session expiration time (4 hours in milliseconds)
@@ -17,7 +16,6 @@ const SESSION_EXPIRATION_MS = 4 * 60 * 60 * 1000;
  * @param {string} session.roomId - Current room ID
  * @param {string} session.playerId - Player ID
  * @param {string} session.playerName - Player name
- * @param {string} session.fingerprint - Browser fingerprint
  */
 export function saveSession(session) {
   const sessionData = {
@@ -98,5 +96,4 @@ export function hasActiveSession() {
  */
 export function clearAllData() {
   clearSession();
-  localStorage.removeItem(STORAGE_KEYS.FINGERPRINT);
 }
