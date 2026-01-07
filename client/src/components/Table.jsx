@@ -2,149 +2,149 @@ import Card, { CardBack } from './Card';
 import './Table.css';
 
 const Table = ({ players, children, currentTurn, myPlayerId, gameState, onTokenClick }) => {
-  const playerCount = players.length;
+  // Define fixed slots for up to 8 players
+  // Slots are positioned: bottom center (me), top-left, top-center, top-right, left, right
+  const FIXED_SLOTS = [
+    { id: 'bottom-center', position: 'bottom', index: 0 },
+    { id: 'top-left', position: 'top-left', index: 1 },
+    { id: 'top-center', position: 'top-center', index: 2 },
+    { id: 'top-right', position: 'top-right', index: 3 },
+    { id: 'left', position: 'left', index: 4 },
+    { id: 'right', position: 'right', index: 5 },
+  ];
 
-  if (playerCount === 0) {
-    return (
-      <div className="table-container">
-        <div className="table-rectangle">
-          <div className="table-center">{children}</div>
-        </div>
-      </div>
-    );
-  }
+  // Map players to fixed slots
+  const playerSlots = FIXED_SLOTS.map(slot => {
+    const player = players[slot.index];
+    if (!player) return { ...slot, player: null };
 
-  // Position players around rectangular table
-  // For a rectangular table, distribute players: bottom (me), top, left, right
-  const positionedPlayers = players.map((player, i) => {
     const isMe = player.id === myPlayerId;
     const isCurrentTurn = player.id === currentTurn;
     const playerToken = gameState.tokenAssignments?.[player.id];
 
-    // Position assignment based on index
-    // Bottom: index 0 (typically the current player)
-    // Top: indices 1-3
-    // Left: index 4
-    // Right: index 5
-    let position, slotIndex;
-
-    if (i === 0) {
-      position = 'bottom';
-      slotIndex = 1; // center of bottom
-    } else if (i <= 3) {
-      position = 'top';
-      slotIndex = i - 1; // 0, 1, 2
-    } else if (i === 4) {
-      position = 'left';
-      slotIndex = 0;
-    } else {
-      position = 'right';
-      slotIndex = 0;
-    }
-
-    return { player, isMe, isCurrentTurn, playerToken, position, slotIndex };
+    return {
+      ...slot,
+      player,
+      isMe,
+      isCurrentTurn,
+      playerToken
+    };
   });
 
   return (
     <div className="table-container">
       <div className="table-layout">
-        {/* Top players */}
+        {/* Top row - 3 fixed slots */}
         <div className="players-row players-top">
-          {positionedPlayers.filter(p => p.position === 'top').map(({ player, isMe, isCurrentTurn, playerToken }) => (
-            <div key={player.id} className="player-position">
-              <PlayerInfo
-                player={player}
-                isMe={isMe}
-                isCurrentTurn={isCurrentTurn}
-                myPocketCards={isMe ? gameState.myPocketCards : null}
-                gameState={gameState}
-              />
-              {playerToken !== undefined && (
-                <TokenDisplay
-                  number={playerToken}
-                  phase={gameState.phase}
-                  isMyToken={isMe}
-                  canClick={!isMe && currentTurn === myPlayerId && gameState.phase.includes('betting')}
-                  onClick={onTokenClick}
-                />
+          {playerSlots.filter(s => s.position.startsWith('top')).map(slot => (
+            <div key={slot.id} className={`player-slot slot-${slot.position}`}>
+              {slot.player && (
+                <div className="player-position">
+                  <PlayerInfo
+                    player={slot.player}
+                    isMe={slot.isMe}
+                    isCurrentTurn={slot.isCurrentTurn}
+                    myPocketCards={slot.isMe ? gameState.myPocketCards : null}
+                    gameState={gameState}
+                  />
+                  {slot.playerToken !== undefined && (
+                    <TokenDisplay
+                      number={slot.playerToken}
+                      phase={gameState.phase}
+                      isMyToken={slot.isMe}
+                      canClick={!slot.isMe && currentTurn === myPlayerId && gameState.phase.includes('betting')}
+                      onClick={onTokenClick}
+                    />
+                  )}
+                </div>
               )}
             </div>
           ))}
         </div>
 
-        {/* Middle row with left player, table, right player */}
+        {/* Middle row with left slot, table, right slot */}
         <div className="table-middle">
-          <div className="players-column players-left">
-            {positionedPlayers.filter(p => p.position === 'left').map(({ player, isMe, isCurrentTurn, playerToken }) => (
-              <div key={player.id} className="player-position">
-                <PlayerInfo
-                  player={player}
-                  isMe={isMe}
-                  isCurrentTurn={isCurrentTurn}
-                  myPocketCards={isMe ? gameState.myPocketCards : null}
-                  gameState={gameState}
-                />
-                {playerToken !== undefined && (
-                  <TokenDisplay
-                    number={playerToken}
-                    phase={gameState.phase}
-                    isMyToken={isMe}
-                    canClick={!isMe && currentTurn === myPlayerId && gameState.phase.includes('betting')}
-                    onClick={onTokenClick}
+          {/* Left slot */}
+          {playerSlots.filter(s => s.position === 'left').map(slot => (
+            <div key={slot.id} className={`player-slot slot-${slot.position}`}>
+              {slot.player && (
+                <div className="player-position">
+                  <PlayerInfo
+                    player={slot.player}
+                    isMe={slot.isMe}
+                    isCurrentTurn={slot.isCurrentTurn}
+                    myPocketCards={slot.isMe ? gameState.myPocketCards : null}
+                    gameState={gameState}
                   />
-                )}
-              </div>
-            ))}
-          </div>
+                  {slot.playerToken !== undefined && (
+                    <TokenDisplay
+                      number={slot.playerToken}
+                      phase={gameState.phase}
+                      isMyToken={slot.isMe}
+                      canClick={!slot.isMe && currentTurn === myPlayerId && gameState.phase.includes('betting')}
+                      onClick={onTokenClick}
+                    />
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
 
           {/* Rectangular table */}
           <div className="table-rectangle">
             <div className="table-center">{children}</div>
           </div>
 
-          <div className="players-column players-right">
-            {positionedPlayers.filter(p => p.position === 'right').map(({ player, isMe, isCurrentTurn, playerToken }) => (
-              <div key={player.id} className="player-position">
-                <PlayerInfo
-                  player={player}
-                  isMe={isMe}
-                  isCurrentTurn={isCurrentTurn}
-                  myPocketCards={isMe ? gameState.myPocketCards : null}
-                  gameState={gameState}
-                />
-                {playerToken !== undefined && (
-                  <TokenDisplay
-                    number={playerToken}
-                    phase={gameState.phase}
-                    isMyToken={isMe}
-                    canClick={!isMe && currentTurn === myPlayerId && gameState.phase.includes('betting')}
-                    onClick={onTokenClick}
+          {/* Right slot */}
+          {playerSlots.filter(s => s.position === 'right').map(slot => (
+            <div key={slot.id} className={`player-slot slot-${slot.position}`}>
+              {slot.player && (
+                <div className="player-position">
+                  <PlayerInfo
+                    player={slot.player}
+                    isMe={slot.isMe}
+                    isCurrentTurn={slot.isCurrentTurn}
+                    myPocketCards={slot.isMe ? gameState.myPocketCards : null}
+                    gameState={gameState}
                   />
-                )}
-              </div>
-            ))}
-          </div>
+                  {slot.playerToken !== undefined && (
+                    <TokenDisplay
+                      number={slot.playerToken}
+                      phase={gameState.phase}
+                      isMyToken={slot.isMe}
+                      canClick={!slot.isMe && currentTurn === myPlayerId && gameState.phase.includes('betting')}
+                      onClick={onTokenClick}
+                    />
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
         </div>
 
-        {/* Bottom players */}
+        {/* Bottom row - 1 fixed slot */}
         <div className="players-row players-bottom">
-          {positionedPlayers.filter(p => p.position === 'bottom').map(({ player, isMe, isCurrentTurn, playerToken }) => (
-            <div key={player.id} className="player-position">
-              <PlayerInfo
-                player={player}
-                isMe={isMe}
-                isCurrentTurn={isCurrentTurn}
-                myPocketCards={isMe ? gameState.myPocketCards : null}
-                gameState={gameState}
-              />
-              {playerToken !== undefined && (
-                <TokenDisplay
-                  number={playerToken}
-                  phase={gameState.phase}
-                  isMyToken={isMe}
-                  canClick={!isMe && currentTurn === myPlayerId && gameState.phase.includes('betting')}
-                  onClick={onTokenClick}
-                />
+          {playerSlots.filter(s => s.position === 'bottom').map(slot => (
+            <div key={slot.id} className={`player-slot slot-${slot.position}`}>
+              {slot.player && (
+                <div className="player-position">
+                  <PlayerInfo
+                    player={slot.player}
+                    isMe={slot.isMe}
+                    isCurrentTurn={slot.isCurrentTurn}
+                    myPocketCards={slot.isMe ? gameState.myPocketCards : null}
+                    gameState={gameState}
+                  />
+                  {slot.playerToken !== undefined && (
+                    <TokenDisplay
+                      number={slot.playerToken}
+                      phase={gameState.phase}
+                      isMyToken={slot.isMe}
+                      canClick={!slot.isMe && currentTurn === myPlayerId && gameState.phase.includes('betting')}
+                      onClick={onTokenClick}
+                    />
+                  )}
+                </div>
               )}
             </div>
           ))}

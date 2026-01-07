@@ -5,23 +5,34 @@
   justify-content: center;
   align-items: center;
   padding: 20px;
+  box-sizing: border-box;
+  overflow: auto;
 }
 
-/* Layout wrapper for rectangular table */
+/* Layout wrapper for rectangular table - scales as a unit */
 .table-layout {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  max-width: 1200px;
-  width: 100%;
+  width: 1200px; /* Fixed width */
+  /* Scale the entire layout uniformly based on available space */
+  transform-origin: center;
+  scale: clamp(0.5, min(calc((100vw - 40px) / 1200), calc((100vh - 40px) / 700)), 1);
 }
 
-/* Player rows (top and bottom) */
+/* Player rows (top and bottom) - fixed width slots */
 .players-row {
   display: flex;
   justify-content: center;
   gap: 20px;
-  flex-wrap: wrap;
+}
+
+.players-top {
+  min-height: 180px; /* Fixed height to prevent shifting */
+}
+
+.players-bottom {
+  min-height: 180px; /* Fixed height to prevent shifting */
 }
 
 /* Middle row with table and side players */
@@ -32,11 +43,19 @@
   gap: 20px;
 }
 
-/* Side player columns */
-.players-column {
+/* Fixed player slots - always take up space even when empty */
+.player-slot {
+  min-width: 160px; /* Fixed width for all slots */
+  min-height: 160px; /* Fixed height for all slots */
   display: flex;
-  flex-direction: column;
-  gap: 20px;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Specific slot positioning */
+.slot-left,
+.slot-right {
+  width: 160px;
 }
 
 /* Rectangular table */
