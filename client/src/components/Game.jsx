@@ -128,9 +128,15 @@ const Game = ({ onReturnToLobby }) => {
   // Don't reorder players - same view for everyone
   const players = [...(gameState.players || [])];
 
+  // Determine if current player is host
+  const isHost = gameState.hostId === playerId;
+  const hostPlayer = gameState.players?.find(p => p.id === gameState.hostId);
+
   // Status message
   let statusText = '';
-  if (gameState.currentTurn === playerId && gameState.phase.includes('betting')) {
+  if (gameState.phase === GAME_PHASES.WAITING && !isHost) {
+    statusText = `Waiting for ${hostPlayer?.name || 'host'} to start the game`;
+  } else if (gameState.currentTurn === playerId && gameState.phase.includes('betting')) {
     statusText = 'Your turn to select a token';
   } else if (gameState.phase.includes('betting')) {
     const currentPlayer = gameState.players.find(p => p.id === gameState.currentTurn);
@@ -181,8 +187,8 @@ const Game = ({ onReturnToLobby }) => {
           onTokenClick={handleClaimToken}
         />
 
-        {/* Start Game button in center of table when waiting */}
-        {gameState.phase === GAME_PHASES.WAITING && (
+        {/* Start Game button in center of table when waiting - only for host */}
+        {gameState.phase === GAME_PHASES.WAITING && isHost && (
           <button className="btn-action btn-start-center" onClick={handleStartGame}>
             Start Game
           </button>
@@ -230,9 +236,11 @@ const Game = ({ onReturnToLobby }) => {
             </div>
 
             <div className="result-actions">
-              <button className="btn-action" onClick={handleRestartGame}>
-                Play Again
-              </button>
+              {isHost && (
+                <button className="btn-action" onClick={handleRestartGame}>
+                  Play Again
+                </button>
+              )}
               <button className="btn-action" onClick={onReturnToLobby}>
                 Lobby
               </button>
