@@ -35,6 +35,7 @@ export class GameRoom {
     this.maxPlayers = options.maxPlayers || 6;
     this.minPlayers = options.minPlayers || 2;
     this.playerReadyStatus = {}; // playerId -> boolean
+    this.hostId = null; // Player ID of the room host
   }
 
   /**
@@ -57,6 +58,11 @@ export class GameRoom {
     });
 
     this.playerReadyStatus[playerId] = false;
+
+    // Set first player as host
+    if (this.hostId === null) {
+      this.hostId = playerId;
+    }
   }
 
   /**
@@ -66,6 +72,13 @@ export class GameRoom {
     this.players.delete(playerId);
     delete this.playerReadyStatus[playerId];
     delete this.tokenAssignments[playerId];
+
+    // Transfer host if the host is leaving
+    if (this.hostId === playerId) {
+      // Get the first remaining player as the new host
+      const remainingPlayers = Array.from(this.players.keys());
+      this.hostId = remainingPlayers.length > 0 ? remainingPlayers[0] : null;
+    }
   }
 
   /**
@@ -247,13 +260,14 @@ export class GameRoom {
   }
 
   /**
-   * Player marks themselves as ready
+   * Player toggles their ready status
    */
   setPlayerReady(playerId) {
     if (!this.tokenAssignments[playerId]) {
       throw new Error('Must claim a token before being ready');
     }
-    this.playerReadyStatus[playerId] = true;
+    // Toggle ready status
+    this.playerReadyStatus[playerId] = !this.playerReadyStatus[playerId];
   }
 
   /**
@@ -364,7 +378,8 @@ export class GameRoom {
       tokenAssignments: this.tokenAssignments,
       currentTurn: this.currentTurn,
       bettingRoundHistory: this.bettingRoundHistory,
-      allPlayersHaveTokens: this.allPlayersHaveTokens()
+      allPlayersHaveTokens: this.allPlayersHaveTokens(),
+      hostId: this.hostId
     };
   }
 

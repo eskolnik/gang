@@ -134,6 +134,9 @@
 }
 
 /* Community cards */
+.community-cards-container {
+  min-height: 84px;
+}
 .community-cards {
   display: flex;
   gap: 12px;
@@ -166,8 +169,8 @@
 
 /* Highlight for current player's seat */
 .player-info-me {
-  background-color: #3a7a7a;
-  border-color: #5ac5c5;
+  background-color: #73168f;
+  border-color: #7e48a1;
 }
 
 .player-info-active {
@@ -181,6 +184,12 @@
   font-weight: bold;
   text-align: center;
   white-space: nowrap;
+}
+
+.ready-check {
+  color: #4ade80;
+  font-weight: bold;
+  margin-left: 4px;
 }
 
 /* Cards container and display - standardized for all players */
@@ -275,4 +284,40 @@
   font-size: 12px;
   color: #000000;
   user-select: none;
+}
+
+/* Game Outcome Above Community Cards */
+.game-outcome {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.game-outcome h2 {
+  font-family:
+    Arial Black,
+    sans-serif;
+  font-size: 32px;
+  margin: 0;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+}
+
+/* Result Rankings Below Community Cards */
+.result-rankings {
+  columns: 2;
+  column-gap: 20px;
+  max-height: 150px;
+  overflow-y: auto;
+  color: #ffffff;
+}
+
+.result-hand {
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  padding: 6px 8px;
+  text-align: left;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+  break-inside: avoid;
+  margin-bottom: 6px;
 }

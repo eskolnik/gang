@@ -18,6 +18,7 @@ const Table = ({
   myPlayerId,
   gameState,
   onTokenClick,
+  gameResult,
 }) => {
   // Define fixed slots: 2 top, 1 left, 1 right, 2 bottom
   // Same view for all players - no reordering
@@ -63,6 +64,7 @@ const Table = ({
                   playerSlots[0].isMe ? gameState.myPocketCards : null
                 }
                 gameState={gameState}
+                gameResult={gameResult}
               />
             </div>
           )}
@@ -76,6 +78,7 @@ const Table = ({
                   playerSlots[1].isMe ? gameState.myPocketCards : null
                 }
                 gameState={gameState}
+                gameResult={gameResult}
               />
             </div>
           )}
@@ -94,6 +97,7 @@ const Table = ({
                   playerSlots[2].isMe ? gameState.myPocketCards : null
                 }
                 gameState={gameState}
+                gameResult={gameResult}
               />
             )}
           </div>
@@ -102,44 +106,61 @@ const Table = ({
           <div className="table-surface">
             {/* Top row: tokens for top-left and top-right seats */}
             <div className="table-surface-top">
-              <div className="token-slot token-slot-top-left">
-                {playerSlots[0].player &&
-                  playerSlots[0].playerToken !== undefined && (
-                    <TokenDisplay
-                      number={playerSlots[0].playerToken}
-                      phase={gameState.phase}
-                      isMyToken={playerSlots[0].isMe}
-                      canClick={
-                        !playerSlots[0].isMe &&
-                        currentTurn === myPlayerId &&
-                        gameState.phase.includes("betting")
-                      }
-                      onClick={onTokenClick}
-                    />
-                  )}
-              </div>
-              <div className="token-slot token-slot-top-right">
-                {playerSlots[1].player &&
-                  playerSlots[1].playerToken !== undefined && (
-                    <TokenDisplay
-                      number={playerSlots[1].playerToken}
-                      phase={gameState.phase}
-                      isMyToken={playerSlots[1].isMe}
-                      canClick={
-                        !playerSlots[1].isMe &&
-                        currentTurn === myPlayerId &&
-                        gameState.phase.includes("betting")
-                      }
-                      onClick={onTokenClick}
-                    />
-                  )}
-              </div>
+              {gameResult ? (
+                <div className="game-outcome">
+                  <h2
+                    className={
+                      gameResult.success ? "result-win" : "result-lose"
+                    }
+                  >
+                    {gameResult.success ? "Victory!" : "Defeat"}
+                  </h2>
+                </div>
+              ) : (
+                <>
+                  <div className="token-slot token-slot-top-left">
+                    {!gameResult &&
+                      playerSlots[0].player &&
+                      playerSlots[0].playerToken !== undefined && (
+                        <TokenDisplay
+                          number={playerSlots[0].playerToken}
+                          phase={gameState.phase}
+                          isMyToken={playerSlots[0].isMe}
+                          canClick={
+                            !playerSlots[0].isMe &&
+                            currentTurn === myPlayerId &&
+                            gameState.phase.includes("betting")
+                          }
+                          onClick={onTokenClick}
+                        />
+                      )}
+                  </div>
+                  <div className="token-slot token-slot-top-right">
+                    {!gameResult &&
+                      playerSlots[1].player &&
+                      playerSlots[1].playerToken !== undefined && (
+                        <TokenDisplay
+                          number={playerSlots[1].playerToken}
+                          phase={gameState.phase}
+                          isMyToken={playerSlots[1].isMe}
+                          canClick={
+                            !playerSlots[1].isMe &&
+                            currentTurn === myPlayerId &&
+                            gameState.phase.includes("betting")
+                          }
+                          onClick={onTokenClick}
+                        />
+                      )}
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Middle row: left token, center content, right token */}
             <div className="table-surface-middle">
               <div className="token-slot token-slot-left">
-                {playerSlots[2].player &&
+                {!gameResult &&
+                  playerSlots[2].player &&
                   playerSlots[2].playerToken !== undefined && (
                     <TokenDisplay
                       number={playerSlots[2].playerToken}
@@ -157,56 +178,77 @@ const Table = ({
 
               <div className="table-center">
                 {/* Community cards */}
-                {gameState.communityCards &&
-                  gameState.communityCards.length > 0 && (
-                    <div className="community-cards">
-                      {gameState.communityCards.map((card, i) => {
-                        const isInBestHand =
-                          myPlayerId && gameState.myPocketCards
-                            ? isCardInBestHand(
-                                card,
-                                gameState.myPocketCards,
-                                gameState.communityCards
-                              )
-                            : false;
-                        return (
-                          <Card
-                            key={i}
-                            card={card}
-                            isInBestHand={isInBestHand}
-                            size="small"
-                          />
-                        );
-                      })}
-                      {Array.from(Array(5).keys())
-                        .slice(gameState.communityCards.length)
-                        .map((i) => (
-                          <div className="card-small" />
-                        ))}
-                    </div>
-                  )}
-
-                {/* Token pool */}
-                <div className="token-pool">
-                  {gameState.tokenPool &&
-                    gameState.tokenPool.length > 0 &&
-                    [...gameState.tokenPool]
-                      .sort((a, b) => a - b)
-                      .map((tokenNum) => (
-                        <TokenDisplay
-                          key={tokenNum}
-                          number={tokenNum}
-                          phase={gameState.phase}
-                          isMyToken={false}
-                          canClick={gameState.currentTurn === myPlayerId}
-                          onClick={() => onTokenClick(tokenNum)}
-                        />
-                      ))}
+                <div className="community-cards-container">
+                  {gameState.communityCards &&
+                    gameState.communityCards.length > 0 && (
+                      <div className="community-cards">
+                        {gameState.communityCards.map((card, i) => {
+                          const isInBestHand =
+                            myPlayerId && gameState.myPocketCards
+                              ? isCardInBestHand(
+                                  card,
+                                  gameState.myPocketCards,
+                                  gameState.communityCards
+                                )
+                              : false;
+                          return (
+                            <Card
+                              key={i}
+                              card={card}
+                              isInBestHand={isInBestHand}
+                              size="small"
+                            />
+                          );
+                        })}
+                        {[1, 2, 3, 4, 5]
+                          .slice(gameState.communityCards.length)
+                          .map((i) => (
+                            <div className="card-small" />
+                          ))}
+                      </div>
+                    )}{" "}
                 </div>
+
+                {/* Hand rankings or Token pool */}
+                {gameResult ? (
+                  // Show hand rankings when game is complete
+                  <div className="result-rankings">
+                    {gameResult.rankedHands.map((hand, i) => {
+                      const correct =
+                        hand.rank === gameState.tokenAssignments[hand.playerId];
+                      const icon = correct ? "✅" : "❌";
+                      return (
+                        <div key={i} className="result-hand">
+                          {icon} {hand.rank}. {hand.playerName}:{" "}
+                          {hand.evaluation.description}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  // Show token pool during game
+                  <div className="token-pool">
+                    {gameState.tokenPool &&
+                      gameState.tokenPool.length > 0 &&
+                      [...gameState.tokenPool]
+                        .sort((a, b) => a - b)
+                        .map((tokenNum) => (
+                          <TokenDisplay
+                            key={tokenNum}
+                            number={tokenNum}
+                            phase={gameState.phase}
+                            isMyToken={false}
+                            canClick={gameState.currentTurn === myPlayerId}
+                            onClick={() => onTokenClick(tokenNum)}
+                          />
+                        ))}
+                  </div>
+                )}
               </div>
 
               <div className="token-slot token-slot-right">
-                {playerSlots[3].player &&
+                {!gameResult &&
+                  playerSlots[3].player &&
                   playerSlots[3].playerToken !== undefined && (
                     <TokenDisplay
                       number={playerSlots[3].playerToken}
@@ -226,7 +268,8 @@ const Table = ({
             {/* Bottom row: tokens for bottom-left and bottom-right seats */}
             <div className="table-surface-bottom">
               <div className="token-slot token-slot-bottom-left">
-                {playerSlots[4].player &&
+                {!gameResult &&
+                  playerSlots[4].player &&
                   playerSlots[4].playerToken !== undefined && (
                     <TokenDisplay
                       number={playerSlots[4].playerToken}
@@ -242,7 +285,8 @@ const Table = ({
                   )}
               </div>
               <div className="token-slot token-slot-bottom-right">
-                {playerSlots[5].player &&
+                {!gameResult &&
+                  playerSlots[5].player &&
                   playerSlots[5].playerToken !== undefined && (
                     <TokenDisplay
                       number={playerSlots[5].playerToken}
@@ -271,6 +315,7 @@ const Table = ({
                   playerSlots[3].isMe ? gameState.myPocketCards : null
                 }
                 gameState={gameState}
+                gameResult={gameResult}
               />
             )}
           </div>
@@ -288,6 +333,7 @@ const Table = ({
                   playerSlots[4].isMe ? gameState.myPocketCards : null
                 }
                 gameState={gameState}
+                gameResult={gameResult}
               />
             </div>
           )}
@@ -301,6 +347,7 @@ const Table = ({
                   playerSlots[5].isMe ? gameState.myPocketCards : null
                 }
                 gameState={gameState}
+                gameResult={gameResult}
               />
             </div>
           )}
@@ -317,9 +364,15 @@ const PlayerInfo = ({
   isCurrentTurn,
   myPocketCards,
   gameState,
+  gameResult,
 }) => {
   const hasPocketCards = gameState.phase !== "waiting";
   const isHost = player.id === gameState.hostId;
+
+  // Get player's actual cards from game result if game is complete
+  const playerCards = gameResult
+    ? gameResult.rankedHands.find((h) => h.playerId === player.id)?.pocketCards
+    : null;
 
   // Get historical tokens for this player from previous rounds
   const tokenHistory =
@@ -338,7 +391,7 @@ const PlayerInfo = ({
       <div className="player-name">
         {isHost && "👑 "}
         {player.name}
-        {isMe ? " (You)" : ""}
+        {player.ready && <span className="ready-check">✓</span>}
       </div>
 
       {/* Always show cards container to maintain consistent size */}
@@ -346,15 +399,22 @@ const PlayerInfo = ({
         <div className="player-cards-display">
           {hasPocketCards ? (
             // Show cards when in play
-            isMe && myPocketCards && myPocketCards.length > 0 ? (
-              // Show actual cards for me
+            gameResult && playerCards ? (
+              // Game complete - reveal all cards
+              <div className="pocket-cards">
+                {playerCards.map((card, i) => (
+                  <Card key={i} card={card} size="small" />
+                ))}
+              </div>
+            ) : isMe && myPocketCards && myPocketCards.length > 0 ? (
+              // Show actual cards for me during game
               <div className="pocket-cards">
                 {myPocketCards.map((card, i) => (
                   <Card key={i} card={card} size="small" />
                 ))}
               </div>
             ) : (
-              // Show card backs for others
+              // Show card backs for others during game
               <div className="card-backs">
                 <CardBack size="small" />
                 <CardBack size="small" />

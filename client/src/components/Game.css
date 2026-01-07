@@ -42,7 +42,7 @@
 .round-tracker {
   position: fixed;
   top: 20px;
-  right: 20px;
+  right: 100px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -67,7 +67,7 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  border: 2px solid #666666;
+  /* border: 2px solid #666666; */
   transition: all 0.3s;
 }
 
@@ -120,7 +120,7 @@
   justify-content: center;
 } */
 
-/* Action Buttons - BOTTOM LEFT CORNER */
+/* Action Buttons and Results - BOTTOM LEFT CORNER */
 .game-actions {
   position: fixed;
   left: 20px;
@@ -130,6 +130,29 @@
   gap: 15px;
   z-index: 100;
   align-items: flex-start;
+  max-width: 400px;
+}
+
+.game-results {
+  background-color: rgba(26, 71, 42, 0.95);
+  border: 3px solid #2a5a3a;
+  border-radius: 10px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.game-results h2 {
+  font-family: Arial Black, sans-serif;
+  font-size: 28px;
+  margin: 0;
+  text-align: center;
+}
+
+.game-results .result-rankings {
+  max-height: 250px;
+  overflow-y: auto;
 }
 
 .btn-action {
@@ -163,15 +186,15 @@
 /* Status Text - BOTTOM RIGHT CORNER */
 .game-status {
   position: fixed;
-  right: 20px;
-  bottom: 20px;
+  right: 40px;
+  top: 80px;
   color: #ffffff;
   font-size: 13px;
   padding: 12px 16px;
   background-color: rgba(0, 0, 0, 0.85);
   border-radius: 5px;
   z-index: 100;
-  max-width: 250px;
+  width: 250px;
   border: 2px solid rgba(255, 255, 255, 0.2);
   max-height: 150px;
   overflow-y: auto;
@@ -245,4 +268,24 @@
   display: flex;
   justify-content: center;
   gap: 20px;
+}
+
+/* Play Again Button - TOP RIGHT CORNER */
+.play-again-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 100;
+}
+
+.btn-play-again {
+  padding: 15px 30px;
+  font-size: 18px;
+  background-color: #4ade80;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+  font-weight: bold;
+}
+
+.btn-play-again:hover {
+  background-color: #5bed8f;
 }

@@ -39,10 +39,10 @@ const Game = ({ onReturnToLobby }) => {
 
   // Reset game result when game restarts
   useEffect(() => {
-    if (gameState?.phase === GAME_PHASES.WAITING) {
+    if (gameState?.phase !== GAME_PHASES.COMPLETE && gameResult !== null) {
       setGameResult(null);
     }
-  }, [gameState?.phase]);
+  }, [gameState?.phase, gameResult]);
 
   const handleClaimToken = useCallback(async (tokenNumber) => {
     try {
@@ -176,6 +176,7 @@ const Game = ({ onReturnToLobby }) => {
           </div>
         </div>
       )}
+      {statusText && <div className="game-status">{statusText}</div>}
 
       {/* Game Table */}
       <div className="game-table">
@@ -185,6 +186,7 @@ const Game = ({ onReturnToLobby }) => {
           myPlayerId={playerId}
           gameState={gameState}
           onTokenClick={handleClaimToken}
+          gameResult={gameResult}
         />
 
         {/* Start Game button in center of table when waiting - only for host */}
@@ -206,48 +208,22 @@ const Game = ({ onReturnToLobby }) => {
         )}
         {gameState.phase.includes('betting') && gameState.allPlayersHaveTokens && (
           <button className="btn-action" onClick={handleSetReady}>
-            Ready
+            {gameState.players?.find(p => p.id === playerId)?.ready ? 'Unready' : 'Ready'}
           </button>
         )}
       </div>
 
-      {/* BOTTOM RIGHT: Status/Game Log */}
-      {statusText && <div className="game-status">{statusText}</div>}
-
-      {/* Game Result Modal */}
-      {gameResult && (
-        <div className="game-result-overlay">
-          <div className="game-result-modal">
-            <h1 className={gameResult.success ? 'result-win' : 'result-lose'}>
-              {gameResult.success ? '🎊 YOU WIN!' : '❌ YOU LOSE'}
-            </h1>
-
-            <div className="result-rankings">
-              <h3>Hand Rankings:</h3>
-              {gameResult.rankedHands.map((hand, i) => {
-                const correct = hand.rank === gameState.tokenAssignments[hand.playerId];
-                const icon = correct ? '✅' : '❌';
-                return (
-                  <div key={i} className="result-hand">
-                    {icon} {hand.rank}. {hand.playerName}: {hand.evaluation.description}
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="result-actions">
-              {isHost && (
-                <button className="btn-action" onClick={handleRestartGame}>
-                  Play Again
-                </button>
-              )}
-              <button className="btn-action" onClick={onReturnToLobby}>
-                Lobby
-              </button>
-            </div>
-          </div>
+      {/* TOP RIGHT: Round Tracker or Play Again */}
+      {gameResult && isHost ? (
+        <div className="play-again-container">
+          <button className="btn-action btn-play-again" onClick={handleRestartGame}>
+            Play Again
+          </button>
         </div>
-      )}
+      ) : null}
+
+      {/* BOTTOM RIGHT: Status/Game Log */}
+      {/* {statusText && <div className="game-status">{statusText}</div>} */}
     </div>
   );
 };
