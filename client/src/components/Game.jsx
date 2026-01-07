@@ -1,7 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNetwork } from '../context/NetworkContext';
-import Card from './Card';
-import Token from './Token';
 import Table from './Table';
 import { HandEvaluator } from '../game/utils/handEvaluator';
 import './Game.css';

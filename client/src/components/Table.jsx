@@ -1,5 +1,13 @@
 import Card, { CardBack } from './Card';
+import { HandEvaluator } from '../game/utils/handEvaluator';
 import './Table.css';
+
+// Helper to check if a card is in best hand for highlighting
+const isCardInBestHand = (card, myPocketCards, communityCards) => {
+  if (!myPocketCards || myPocketCards.length === 0) return false;
+  const evaluation = HandEvaluator.evaluateHand(myPocketCards, communityCards || []);
+  return evaluation && HandEvaluator.isCardInBestHand(card, evaluation.cards);
+};
 
 const Table = ({ players, children, currentTurn, myPlayerId, gameState, onTokenClick }) => {
   // Define fixed slots: 1 top, 2 left, 2 right, 1 bottom
@@ -81,9 +89,12 @@ const Table = ({ players, children, currentTurn, myPlayerId, gameState, onTokenC
             <div className="table-zone zone-community">
               {gameState.communityCards && gameState.communityCards.length > 0 && (
                 <div className="community-cards">
-                  {gameState.communityCards.map((card, i) => (
-                    <Card key={i} card={card} />
-                  ))}
+                  {gameState.communityCards.map((card, i) => {
+                    // Check if card is in best hand for highlighting
+                    const isInBestHand = myPlayerId && gameState.myPocketCards ?
+                      isCardInBestHand(card, gameState.myPocketCards, gameState.communityCards) : false;
+                    return <Card key={i} card={card} isInBestHand={isInBestHand} />;
+                  })}
                 </div>
               )}
             </div>
