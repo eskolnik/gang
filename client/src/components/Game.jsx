@@ -127,13 +127,8 @@ const Game = ({ onReturnToLobby }) => {
     phaseName = 'River';
   }
 
-  // Reorder players so current player is first (at bottom)
+  // Don't reorder players - same view for everyone
   const players = [...(gameState.players || [])];
-  const myIndex = players.findIndex(p => p.id === playerId);
-  if (myIndex > 0) {
-    const reordered = [...players.slice(myIndex), ...players.slice(0, myIndex)];
-    players.splice(0, players.length, ...reordered);
-  }
 
   // Status message
   let statusText = '';
@@ -186,34 +181,7 @@ const Game = ({ onReturnToLobby }) => {
           myPlayerId={playerId}
           gameState={gameState}
           onTokenClick={handleClaimToken}
-        >
-          {/* Center area: Community Cards and Token Pool */}
-          {gameState.communityCards && gameState.communityCards.length > 0 && (
-            <div className="community-cards">
-              {gameState.communityCards.map((card, i) => (
-                <Card key={i} card={card} isInBestHand={isInBestHand(card)} />
-              ))}
-            </div>
-          )}
-
-          {gameState.phase.includes('betting') && gameState.tokenPool && gameState.tokenPool.length > 0 && (
-            <div className="token-pool">
-              {[...gameState.tokenPool].sort((a, b) => a - b).map((tokenNum) => (
-                <Token
-                  key={tokenNum}
-                  number={tokenNum}
-                  phase={gameState.phase}
-                  onClick={
-                    gameState.currentTurn === playerId
-                      ? () => handleClaimToken(tokenNum)
-                      : null
-                  }
-                  size="normal"
-                />
-              ))}
-            </div>
-          )}
-        </Table>
+        />
       </div>
 
       {/* Action Buttons */}

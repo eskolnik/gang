@@ -2,15 +2,15 @@ import Card, { CardBack } from './Card';
 import './Table.css';
 
 const Table = ({ players, children, currentTurn, myPlayerId, gameState, onTokenClick }) => {
-  // Define fixed slots for up to 8 players
-  // Slots are positioned: bottom center (me), top-left, top-center, top-right, left, right
+  // Define fixed slots: 1 top, 2 left, 2 right, 1 bottom
+  // Same view for all players - no reordering
   const FIXED_SLOTS = [
-    { id: 'bottom-center', position: 'bottom', index: 0 },
-    { id: 'top-left', position: 'top-left', index: 1 },
-    { id: 'top-center', position: 'top-center', index: 2 },
-    { id: 'top-right', position: 'top-right', index: 3 },
-    { id: 'left', position: 'left', index: 4 },
-    { id: 'right', position: 'right', index: 5 },
+    { id: 'seat-0', position: 'top', index: 0 },
+    { id: 'seat-1', position: 'left-top', index: 1 },
+    { id: 'seat-2', position: 'left-bottom', index: 2 },
+    { id: 'seat-3', position: 'right-top', index: 3 },
+    { id: 'seat-4', position: 'right-bottom', index: 4 },
+    { id: 'seat-5', position: 'bottom', index: 5 },
   ];
 
   // Map players to fixed slots
@@ -34,93 +34,134 @@ const Table = ({ players, children, currentTurn, myPlayerId, gameState, onTokenC
   return (
     <div className="table-container">
       <div className="table-layout">
-        {/* Top row - 3 fixed slots */}
-        <div className="players-row players-top">
-          {playerSlots.filter(s => s.position.startsWith('top')).map(slot => (
-            <div key={slot.id} className={`player-slot slot-${slot.position}`}>
-              {slot.player && (
-                <PlayerInfo
-                  player={slot.player}
-                  isMe={slot.isMe}
-                  isCurrentTurn={slot.isCurrentTurn}
-                  myPocketCards={slot.isMe ? gameState.myPocketCards : null}
-                  gameState={gameState}
-                />
-              )}
-            </div>
-          ))}
+        {/* Top seat */}
+        <div className="seat-area seat-top">
+          {playerSlots[0].player && (
+            <PlayerInfo
+              player={playerSlots[0].player}
+              isMe={playerSlots[0].isMe}
+              isCurrentTurn={playerSlots[0].isCurrentTurn}
+              myPocketCards={playerSlots[0].isMe ? gameState.myPocketCards : null}
+              gameState={gameState}
+            />
+          )}
         </div>
 
-        {/* Middle row with left slot, table, right slot */}
+        {/* Middle section with left seats, table, right seats */}
         <div className="table-middle">
-          {/* Left slot */}
-          {playerSlots.filter(s => s.position === 'left').map(slot => (
-            <div key={slot.id} className={`player-slot slot-${slot.position}`}>
-              {slot.player && (
+          {/* Left seats */}
+          <div className="seat-column seat-left">
+            {playerSlots[1].player && (
+              <div className="seat-area">
                 <PlayerInfo
-                  player={slot.player}
-                  isMe={slot.isMe}
-                  isCurrentTurn={slot.isCurrentTurn}
-                  myPocketCards={slot.isMe ? gameState.myPocketCards : null}
+                  player={playerSlots[1].player}
+                  isMe={playerSlots[1].isMe}
+                  isCurrentTurn={playerSlots[1].isCurrentTurn}
+                  myPocketCards={playerSlots[1].isMe ? gameState.myPocketCards : null}
                   gameState={gameState}
                 />
-              )}
-            </div>
-          ))}
-
-          {/* Rectangular table with token positions */}
-          <div className="table-rectangle-wrapper">
-            <div className="table-rectangle">
-              <div className="table-center">{children}</div>
-            </div>
-
-            {/* Tokens positioned on table surface */}
-            {playerSlots.map(slot => (
-              slot.player && slot.playerToken !== undefined && (
-                <div key={`token-${slot.id}`} className={`token-on-table token-${slot.position}`}>
-                  <TokenDisplay
-                    number={slot.playerToken}
-                    phase={gameState.phase}
-                    isMyToken={slot.isMe}
-                    canClick={!slot.isMe && currentTurn === myPlayerId && gameState.phase.includes('betting')}
-                    onClick={onTokenClick}
-                  />
-                </div>
-              )
-            ))}
+              </div>
+            )}
+            {playerSlots[2].player && (
+              <div className="seat-area">
+                <PlayerInfo
+                  player={playerSlots[2].player}
+                  isMe={playerSlots[2].isMe}
+                  isCurrentTurn={playerSlots[2].isCurrentTurn}
+                  myPocketCards={playerSlots[2].isMe ? gameState.myPocketCards : null}
+                  gameState={gameState}
+                />
+              </div>
+            )}
           </div>
 
-          {/* Right slot */}
-          {playerSlots.filter(s => s.position === 'right').map(slot => (
-            <div key={slot.id} className={`player-slot slot-${slot.position}`}>
-              {slot.player && (
-                <PlayerInfo
-                  player={slot.player}
-                  isMe={slot.isMe}
-                  isCurrentTurn={slot.isCurrentTurn}
-                  myPocketCards={slot.isMe ? gameState.myPocketCards : null}
-                  gameState={gameState}
-                />
+          {/* Table surface with fixed zones */}
+          <div className="table-surface">
+            {/* Community cards zone - top of table */}
+            <div className="table-zone zone-community">
+              {gameState.communityCards && gameState.communityCards.length > 0 && (
+                <div className="community-cards">
+                  {gameState.communityCards.map((card, i) => (
+                    <Card key={i} card={card} />
+                  ))}
+                </div>
               )}
             </div>
-          ))}
+
+            {/* Token pool zone - center of table */}
+            <div className="table-zone zone-token-pool">
+              {gameState.phase.includes('betting') && gameState.tokenPool && gameState.tokenPool.length > 0 && (
+                <div className="token-pool">
+                  {[...gameState.tokenPool].sort((a, b) => a - b).map((tokenNum) => (
+                    <TokenDisplay
+                      key={tokenNum}
+                      number={tokenNum}
+                      phase={gameState.phase}
+                      isMyToken={false}
+                      canClick={gameState.currentTurn === myPlayerId}
+                      onClick={() => onTokenClick(tokenNum)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Player token zones - fixed positions around table edge */}
+            <div className="table-zone zone-player-tokens">
+              {playerSlots.map((slot, idx) => (
+                slot.player && slot.playerToken !== undefined && (
+                  <div key={slot.id} className={`player-token-spot spot-${slot.position}`}>
+                    <TokenDisplay
+                      number={slot.playerToken}
+                      phase={gameState.phase}
+                      isMyToken={slot.isMe}
+                      canClick={!slot.isMe && currentTurn === myPlayerId && gameState.phase.includes('betting')}
+                      onClick={onTokenClick}
+                    />
+                  </div>
+                )
+              ))}
+            </div>
+          </div>
+
+          {/* Right seats */}
+          <div className="seat-column seat-right">
+            {playerSlots[3].player && (
+              <div className="seat-area">
+                <PlayerInfo
+                  player={playerSlots[3].player}
+                  isMe={playerSlots[3].isMe}
+                  isCurrentTurn={playerSlots[3].isCurrentTurn}
+                  myPocketCards={playerSlots[3].isMe ? gameState.myPocketCards : null}
+                  gameState={gameState}
+                />
+              </div>
+            )}
+            {playerSlots[4].player && (
+              <div className="seat-area">
+                <PlayerInfo
+                  player={playerSlots[4].player}
+                  isMe={playerSlots[4].isMe}
+                  isCurrentTurn={playerSlots[4].isCurrentTurn}
+                  myPocketCards={playerSlots[4].isMe ? gameState.myPocketCards : null}
+                  gameState={gameState}
+                />
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Bottom row - 1 fixed slot */}
-        <div className="players-row players-bottom">
-          {playerSlots.filter(s => s.position === 'bottom').map(slot => (
-            <div key={slot.id} className={`player-slot slot-${slot.position}`}>
-              {slot.player && (
-                <PlayerInfo
-                  player={slot.player}
-                  isMe={slot.isMe}
-                  isCurrentTurn={slot.isCurrentTurn}
-                  myPocketCards={slot.isMe ? gameState.myPocketCards : null}
-                  gameState={gameState}
-                />
-              )}
-            </div>
-          ))}
+        {/* Bottom seat */}
+        <div className="seat-area seat-bottom">
+          {playerSlots[5].player && (
+            <PlayerInfo
+              player={playerSlots[5].player}
+              isMe={playerSlots[5].isMe}
+              isCurrentTurn={playerSlots[5].isCurrentTurn}
+              myPocketCards={playerSlots[5].isMe ? gameState.myPocketCards : null}
+              gameState={gameState}
+            />
+          )}
         </div>
       </div>
     </div>
@@ -137,7 +178,7 @@ const PlayerInfo = ({ player, isMe, isCurrentTurn, myPocketCards, gameState }) =
   }).filter(token => token !== undefined) || [];
 
   return (
-    <div className={`player-info ${isCurrentTurn ? 'player-info-active' : ''}`}>
+    <div className={`player-info ${isCurrentTurn ? 'player-info-active' : ''} ${isMe ? 'player-info-me' : ''}`}>
       <div className="player-name">{player.name}{isMe ? ' (You)' : ''}</div>
 
       {/* Always show cards container to maintain consistent size */}
