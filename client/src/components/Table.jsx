@@ -9,7 +9,7 @@ const isCardInBestHand = (card, myPocketCards, communityCards) => {
   return evaluation && HandEvaluator.isCardInBestHand(card, evaluation.cards);
 };
 
-const Table = ({ players, children, currentTurn, myPlayerId, gameState, onTokenClick }) => {
+const Table = ({ players, currentTurn, myPlayerId, gameState, onTokenClick }) => {
   // Define fixed slots: 1 top, 2 left, 2 right, 1 bottom
   // Same view for all players - no reordering
   const FIXED_SLOTS = [
