@@ -115,25 +115,25 @@ A cooperative card game where players attempt to order their poker hands from we
 
 ### Project Structure
 ```
-client/                      # Phaser game (current src/)
+client/                      # React game client
   src/
+    components/
+      Lobby.jsx            # Room join/create
+      Game.jsx             # Main game component
+      Table.jsx            # Table and player areas
+      Card.jsx             # Card display component
+    context/
+      NetworkContext.jsx   # Socket.io context provider
     game/
-      main.js              # Phaser config
-      scenes/
-        Boot.js            # Initial setup
-        Preloader.js       # Asset loading
-        Lobby.js           # Room join/create (NEW)
-        TheGangGame.js     # Main game scene (NEW)
-        ResultsScene.js    # Win/loss display (NEW)
       core/
-        NetworkManager.js  # Socket.io client wrapper (NEW)
-        GameState.js       # Client-side state (NEW)
-      components/
-        Card.js            # Card display component (NEW)
-        Token.js           # Token component (NEW)
-        PlayerArea.js      # Player UI area (NEW)
+        NetworkManager.js  # Socket.io client wrapper
       utils/
-        constants.js       # Game constants (NEW)
+        handEvaluator.js   # Client-side hand evaluation
+        constants.js       # Game constants
+        fingerprint.js     # Browser fingerprinting (Sprint 4)
+        storage.js         # localStorage management (Sprint 4)
+    App.jsx                # Root component
+    main.jsx               # Entry point
 
 server/                      # Node.js server (NEW)
   src/
@@ -144,20 +144,32 @@ server/                      # Node.js server (NEW)
       GameRoom.js          # Room state management
     events/
       socketHandlers.js    # Socket.io event handlers
+    persistence/           # Database layer (Sprint 4)
+      database.js          # DB connection & setup
+      gameRepository.js    # Game state CRUD operations
+      playerRepository.js  # Player session management
+      migrations/          # Database schema migrations
+    utils/
+      cleanup.js           # Background cleanup jobs (Sprint 4)
   package.json             # Server dependencies
 ```
 
 ### Key Technologies
 - **Client:**
-  - Phaser 3.90.0: Game framework
+  - React 19.2.3: UI framework
   - Socket.io-client: WebSocket client
   - Vite 6.3.1: Build tool
+  - @fingerprintjs/fingerprintjs: Browser fingerprinting (Sprint 4)
   - JavaScript ES6+
 
 - **Server:**
   - Node.js + Express: Web server
   - Socket.io: WebSocket server
-  - pokersolver (or similar): Poker hand evaluation library
+  - pokersolver: Poker hand evaluation library
+  - **Persistence (Sprint 4):**
+    - PostgreSQL or SQLite: Primary database
+    - node-postgres (pg) or better-sqlite3: Database driver
+    - (Optional) Redis: Session caching for performance
 
 ---
 
@@ -193,8 +205,135 @@ server/                      # Node.js server (NEW)
 3. Turn management
 4. Community card reveals
 
-### Sprint 4: Polish & Testing
-1. Results screen
-2. Error handling & reconnection
-3. Visual polish
-4. Multi-device testing
+### Sprint 4: Production Readiness - Persistence & Reconnection
+
+#### 4.1 Database & Persistence Layer
+1. **Database Setup**
+   - [ ] Choose persistence solution (SQLite/PostgreSQL for production, or in-memory Redis)
+   - [ ] Set up database connection and schema
+   - [ ] Create migrations for game state tables
+   - [ ] Add database client library to server dependencies
+
+2. **Game State Persistence**
+   - [ ] Design database schema for game rooms
+     - [ ] Room metadata (roomId, phase, hostId, created/updated timestamps)
+     - [ ] Player data (playerId, name, socketId, pocketCards, ready status)
+     - [ ] Game state (communityCards, tokenAssignments, tokenPool, currentTurn)
+     - [ ] History data (bettingRoundHistory)
+   - [ ] Implement GameRoom.save() method to persist state to DB
+   - [ ] Implement GameRoom.load() static method to restore from DB
+   - [ ] Add auto-save hooks on state changes (after each game action)
+   - [ ] Add periodic state sync (every N seconds as backup)
+
+3. **Player Session Persistence**
+   - [ ] Create player sessions table (sessionId, playerId, fingerprint, lastSeen)
+   - [ ] Track active player sessions in database
+   - [ ] Implement session cleanup for stale/expired sessions
+   - [ ] Add session validation on reconnection
+
+#### 4.2 Browser Fingerprinting & Client Storage
+1. **Fingerprint Generation**
+   - [ ] Install and configure fingerprinting library (e.g., FingerprintJS)
+   - [ ] Generate stable browser fingerprint on client load
+   - [ ] Store fingerprint in localStorage
+   - [ ] Send fingerprint to server on connection
+
+2. **Local Storage Management**
+   - [ ] Store active game session data in localStorage
+     - [ ] Current roomId
+     - [ ] PlayerId
+     - [ ] Fingerprint
+     - [ ] Last connection timestamp
+   - [ ] Clear localStorage on explicit "Leave Game" action
+   - [ ] Implement localStorage cleanup for expired sessions
+
+#### 4.3 Socket Reconnection Handling
+1. **Server-Side Reconnection**
+   - [ ] Modify addPlayer to handle reconnection vs new player
+   - [ ] Implement reconnectPlayer(fingerprint, roomId) method
+   - [ ] Update socketId for reconnecting player without changing playerId
+   - [ ] Prevent duplicate players in same room
+   - [ ] Send full game state to reconnecting player
+
+2. **Socket Disconnection Handling**
+   - [ ] Don't immediately remove player on disconnect
+   - [ ] Mark player as "disconnected" with grace period (e.g., 60 seconds)
+   - [ ] Keep game state frozen if player disconnects mid-turn
+   - [ ] Only remove player after grace period expires
+   - [ ] Transfer host if host disconnects beyond grace period
+
+3. **Client-Side Reconnection**
+   - [ ] Implement automatic reconnection on socket disconnect
+   - [ ] Add reconnection UI state (show "Reconnecting..." message)
+   - [ ] Retry logic with exponential backoff
+   - [ ] Max retry attempts before giving up
+   - [ ] Handle reconnection success/failure
+
+#### 4.4 Auto-Rejoin on Page Refresh
+1. **Client-Side Auto-Rejoin**
+   - [ ] Check localStorage for active session on app load
+   - [ ] Validate session hasn't expired (timestamp check)
+   - [ ] Automatically attempt to rejoin game if active session found
+   - [ ] Skip lobby if successfully rejoined
+   - [ ] Fall back to lobby if rejoin fails
+
+2. **Server-Side Rejoin Validation**
+   - [ ] Create rejoinGame socket event handler
+   - [ ] Validate fingerprint matches stored player
+   - [ ] Validate game is still active (not completed/expired)
+   - [ ] Validate player is still in the game
+   - [ ] Return error codes for different failure scenarios
+
+3. **State Synchronization After Rejoin**
+   - [ ] Send complete game state to rejoining player
+   - [ ] Update UI to match current game phase
+   - [ ] Resume gameplay if it's player's turn
+   - [ ] Show "Welcome back!" or "Reconnected" message
+
+#### 4.5 Edge Cases & Error Handling
+1. **Multiple Connection Handling**
+   - [ ] Detect if player opens game in multiple tabs/windows
+   - [ ] Handle same fingerprint connecting twice simultaneously
+   - [ ] Close old socket connection when new one connects
+   - [ ] Show warning about multiple connections
+
+2. **Game Cleanup & Expiration**
+   - [ ] Implement game expiration (remove games after N hours of inactivity)
+   - [ ] Background job to clean up expired games from database
+   - [ ] Handle edge case: player tries to rejoin expired game
+   - [ ] Graceful error messages for cleanup scenarios
+
+3. **Network Error Handling**
+   - [ ] Handle database connection failures gracefully
+   - [ ] Implement fallback to in-memory state if DB unavailable
+   - [ ] Log errors for debugging without crashing server
+   - [ ] Client-side error UI for connection issues
+
+#### 4.6 Testing & Validation
+1. **Reconnection Testing**
+   - [ ] Test disconnect/reconnect during each game phase
+   - [ ] Test page refresh during gameplay
+   - [ ] Test multiple players disconnecting simultaneously
+   - [ ] Test reconnection after grace period expiration
+   - [ ] Test host transfer on disconnect
+
+2. **Persistence Testing**
+   - [ ] Verify game state survives server restart
+   - [ ] Test game resume after DB restore
+   - [ ] Validate data integrity across save/load cycles
+   - [ ] Test concurrent game state updates
+
+3. **Multi-Device Testing**
+   - [ ] Test on different browsers (Chrome, Firefox, Safari)
+   - [ ] Test on mobile devices (iOS, Android)
+   - [ ] Verify fingerprint stability across browser sessions
+   - [ ] Test network conditions (slow, intermittent)
+
+---
+
+### Sprint 5: Polish & Production Deployment (Future)
+1. Visual polish and animations
+2. Sound effects and music
+3. Production deployment configuration
+4. Performance optimization
+5. Security hardening
