@@ -58,6 +58,14 @@
   width: 160px;
 }
 
+/* Table wrapper for absolute positioning of tokens */
+.table-rectangle-wrapper {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 /* Rectangular table */
 .table-rectangle {
   background-color: #2a5a3a;
@@ -71,6 +79,47 @@
   align-items: center;
 }
 
+/* Tokens on table surface - positioned around the edges */
+.token-on-table {
+  position: absolute;
+  z-index: 10;
+}
+
+/* Position tokens based on player position */
+.token-bottom {
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.token-top-left {
+  top: 20px;
+  left: 20%;
+}
+
+.token-top-center {
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.token-top-right {
+  top: 20px;
+  right: 20%;
+}
+
+.token-left {
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.token-right {
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
 /* Center area for community cards and tokens */
 .table-center {
   display: flex;
@@ -80,13 +129,6 @@
   justify-content: center;
 }
 
-/* Player position wrapper */
-.player-position {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-}
 
 /* Player info box - standardized size for all players */
 .player-info {

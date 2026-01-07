@@ -87,10 +87,10 @@
   flex: 1;
   display: flex;
   justify-content: center;
-  align-items: flex-start; /* Align to top instead of center */
-  padding: 10px 10px 100px 10px; /* Minimal top padding, more at bottom */
+  align-items: center;
+  padding: 10px;
   min-height: 0; /* Allow flexbox to shrink */
-  overflow: hidden;
+  overflow: auto;
 }
 
 /* Community Cards */
