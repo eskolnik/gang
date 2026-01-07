@@ -224,6 +224,11 @@ export class NetworkManager {
    * Clears the session from localStorage
    */
   leaveGame() {
+    // Notify server that we're explicitly leaving
+    if (this.socket && this.roomId) {
+      this.socket.emit('leaveGame');
+    }
+
     this.roomId = null;
     this.playerId = null;
     this.playerName = null;

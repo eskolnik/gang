@@ -1,5 +1,7 @@
 import { Deck } from './Deck.js';
 import { HandEvaluator } from './HandEvaluator.js';
+import { saveGameRoom, deleteGameRoom } from '../persistence/gameRepository.js';
+import { savePlayer, loadPlayersByRoom, updatePlayerSocketId, deletePlayersByRoom } from '../persistence/playerRepository.js';
 
 /**
  * Game phases in order
@@ -24,7 +26,7 @@ export const GAME_PHASES = {
 export class GameRoom {
   constructor(roomId, options = {}) {
     this.roomId = roomId;
-    this.players = new Map(); // playerId -> {id, name, socketId, pocketCards, ready}
+    this.players = new Map(); // playerId -> {id, name, socketId, fingerprint, pocketCards, ready}
     this.phase = GAME_PHASES.WAITING;
     this.deck = new Deck();
     this.communityCards = [];
@@ -36,12 +38,13 @@ export class GameRoom {
     this.minPlayers = options.minPlayers || 2;
     this.playerReadyStatus = {}; // playerId -> boolean
     this.hostId = null; // Player ID of the room host
+    this.createdAt = options.createdAt || Date.now();
   }
 
   /**
    * Add a player to the room
    */
-  addPlayer(playerId, playerName, socketId) {
+  addPlayer(playerId, playerName, socketId, fingerprint) {
     if (this.players.size >= this.maxPlayers) {
       throw new Error('Room is full');
     }
@@ -49,20 +52,37 @@ export class GameRoom {
       throw new Error('Game already in progress');
     }
 
-    this.players.set(playerId, {
+    const playerData = {
       id: playerId,
       name: playerName,
       socketId: socketId,
+      fingerprint: fingerprint,
       pocketCards: [],
       ready: false
-    });
+    };
 
+    this.players.set(playerId, playerData);
     this.playerReadyStatus[playerId] = false;
 
     // Set first player as host
     if (this.hostId === null) {
       this.hostId = playerId;
     }
+
+    // Persist player to database
+    savePlayer({
+      playerId,
+      roomId: this.roomId,
+      name: playerName,
+      fingerprint,
+      socketId,
+      pocketCards: [],
+      ready: false,
+      connected: true
+    });
+
+    // Persist game state
+    this.save();
   }
 
   /**
@@ -79,6 +99,9 @@ export class GameRoom {
       const remainingPlayers = Array.from(this.players.keys());
       this.hostId = remainingPlayers.length > 0 ? remainingPlayers[0] : null;
     }
+
+    // Persist state
+    this.save();
   }
 
   /**
@@ -122,6 +145,9 @@ export class GameRoom {
 
     // Start first betting round
     this.startBettingRound(GAME_PHASES.BETTING_1);
+
+    // Persist state
+    this.save();
   }
 
   /**
@@ -150,6 +176,9 @@ export class GameRoom {
 
     // Start first betting round
     this.startBettingRound(GAME_PHASES.BETTING_1);
+
+    // Persist state
+    this.save();
   }
 
   /**
@@ -222,6 +251,9 @@ export class GameRoom {
     // Move to next player's turn
     this.advanceTurn();
 
+    // Persist state
+    this.save();
+
     return {
       tokenAssignments: { ...this.tokenAssignments },
       tokenPool: [...this.tokenPool],
@@ -243,6 +275,9 @@ export class GameRoom {
 
     // Just advance to next player without changing tokens
     this.advanceTurn();
+
+    // Persist state
+    this.save();
 
     return {
       currentTurn: this.currentTurn
@@ -268,6 +303,9 @@ export class GameRoom {
     }
     // Toggle ready status
     this.playerReadyStatus[playerId] = !this.playerReadyStatus[playerId];
+
+    // Persist state
+    this.save();
   }
 
   /**
@@ -317,12 +355,15 @@ export class GameRoom {
       case GAME_PHASES.BETTING_4:
         // Reveal and evaluate
         this.phase = GAME_PHASES.REVEAL;
+        this.save();
         return this.evaluateHands();
 
       default:
         throw new Error(`Cannot advance from phase: ${this.phase}`);
     }
 
+    // Persist state
+    this.save();
     return null;
   }
 
@@ -410,5 +451,98 @@ export class GameRoom {
       isStarted: this.phase !== GAME_PHASES.WAITING,
       isJoinable: this.phase === GAME_PHASES.WAITING && this.players.size < this.maxPlayers
     };
+  }
+
+  /**
+   * Save game state to database
+   */
+  save() {
+    saveGameRoom(this);
+
+    // Also save all players
+    for (const [playerId, player] of this.players) {
+      savePlayer({
+        playerId,
+        roomId: this.roomId,
+        name: player.name,
+        fingerprint: player.fingerprint,
+        socketId: player.socketId,
+        pocketCards: player.pocketCards,
+        ready: this.playerReadyStatus[playerId],
+        connected: true
+      });
+    }
+  }
+
+  /**
+   * Delete game and all players from database
+   */
+  delete() {
+    deletePlayersByRoom(this.roomId);
+    deleteGameRoom(this.roomId);
+  }
+
+  /**
+   * Load a game room from database
+   * @param {string} roomId - Room ID to load
+   * @returns {GameRoom|null} Loaded game room or null
+   */
+  static async load(roomId) {
+    const { loadGameRoom } = await import('../persistence/gameRepository.js');
+    const gameData = loadGameRoom(roomId);
+
+    if (!gameData) {
+      return null;
+    }
+
+    // Create new GameRoom instance
+    const room = new GameRoom(gameData.roomId, {
+      maxPlayers: gameData.maxPlayers,
+      minPlayers: gameData.minPlayers,
+      createdAt: gameData.createdAt
+    });
+
+    // Restore game state
+    room.phase = gameData.phase;
+    room.hostId = gameData.hostId;
+    room.communityCards = gameData.communityCards;
+    room.tokenPool = gameData.tokenPool;
+    room.tokenAssignments = gameData.tokenAssignments;
+    room.currentTurn = gameData.currentTurn;
+    room.bettingRoundHistory = gameData.bettingRoundHistory;
+
+    // Load players
+    const players = loadPlayersByRoom(roomId);
+    for (const playerData of players) {
+      room.players.set(playerData.playerId, {
+        id: playerData.playerId,
+        name: playerData.name,
+        socketId: playerData.socketId,
+        fingerprint: playerData.fingerprint,
+        pocketCards: playerData.pocketCards,
+        ready: playerData.ready
+      });
+      room.playerReadyStatus[playerData.playerId] = playerData.ready;
+    }
+
+    // Restore deck state (create new deck - exact state not critical)
+    room.deck = new Deck();
+
+    return room;
+  }
+
+  /**
+   * Reconnect a player (update their socket ID)
+   */
+  reconnectPlayer(playerId, socketId) {
+    const player = this.players.get(playerId);
+    if (!player) {
+      throw new Error('Player not found');
+    }
+
+    player.socketId = socketId;
+    updatePlayerSocketId(playerId, socketId);
+
+    console.log(`✅ Player ${player.name} (${playerId}) reconnected`);
   }
 }

@@ -1,0 +1,10 @@
+# Database files
+game_state.db
+game_state.db-shm
+game_state.db-wal
+
+# Node modules
+node_modules/
+
+# Logs
+*.log

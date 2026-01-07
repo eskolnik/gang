@@ -1,4 +1,5 @@
 import { GameRoom, GAME_PHASES } from '../gameLogic/GameRoom.js';
+import { findPlayerByFingerprint, markPlayerDisconnected } from '../persistence/playerRepository.js';
 
 /**
  * Generate a random room ID
@@ -79,13 +80,18 @@ export function setupSocketHandlers(io, gameRooms) {
         const roomId = generateRoomId();
         const playerId = generatePlayerId();
         const playerName = data.playerName || 'Player';
+        const fingerprint = data.fingerprint;
+
+        if (!fingerprint) {
+          return callback({ success: false, error: 'Fingerprint required' });
+        }
 
         const room = new GameRoom(roomId, {
           maxPlayers: data.maxPlayers || 6,
           minPlayers: data.minPlayers || 2
         });
 
-        room.addPlayer(playerId, playerName, socket.id);
+        room.addPlayer(playerId, playerName, socket.id, fingerprint);
         gameRooms.set(roomId, room);
 
         // Join the socket room
@@ -102,6 +108,7 @@ export function setupSocketHandlers(io, gameRooms) {
           success: true,
           roomId,
           playerId,
+          playerName,
           gameState: playerState
         });
 
@@ -124,26 +131,43 @@ export function setupSocketHandlers(io, gameRooms) {
      */
     socket.on('joinRoom', (data, callback) => {
       try {
-        const { roomId, playerName } = data;
+        const { roomId, playerName, fingerprint } = data;
+
+        if (!fingerprint) {
+          return callback({ success: false, error: 'Fingerprint required' });
+        }
+
         const room = gameRooms.get(roomId);
 
         if (!room) {
           return callback({ success: false, error: 'Room not found' });
         }
 
-        const playerId = generatePlayerId();
-        room.addPlayer(playerId, playerName || 'Player', socket.id);
+        // Check if player with this fingerprint already exists in room
+        const existingPlayer = findPlayerByFingerprint(fingerprint, roomId);
+
+        let playerId;
+        if (existingPlayer) {
+          // Reconnect existing player
+          playerId = existingPlayer.playerId;
+          room.reconnectPlayer(playerId, socket.id);
+          console.log(`🔄 ${existingPlayer.name} (${playerId}) reconnected to room ${roomId}`);
+        } else {
+          // Add new player
+          playerId = generatePlayerId();
+          room.addPlayer(playerId, playerName || 'Player', socket.id, fingerprint);
+          console.log(`👋 ${playerName} (${playerId}) joined room ${roomId}`);
+        }
 
         socket.join(roomId);
         currentRoomId = roomId;
         currentPlayerId = playerId;
 
-        console.log(`👋 ${playerName} (${playerId}) joined room ${roomId}`);
-
         callback({
           success: true,
           roomId,
           playerId,
+          playerName: playerName || existingPlayer?.name,
           gameState: room.getPlayerState(playerId)
         });
 
@@ -154,6 +178,70 @@ export function setupSocketHandlers(io, gameRooms) {
         broadcastRoomList(io, gameRooms);
       } catch (error) {
         console.error('Error joining room:', error);
+        callback({ success: false, error: error.message });
+      }
+    });
+
+    /**
+     * Rejoin an existing game
+     */
+    socket.on('rejoinGame', async (data, callback) => {
+      try {
+        const { roomId, playerId, fingerprint } = data;
+
+        if (!fingerprint) {
+          return callback({ success: false, error: 'Fingerprint required' });
+        }
+
+        // Try to get room from memory first
+        let room = gameRooms.get(roomId);
+
+        // If not in memory, try to load from database
+        if (!room) {
+          console.log(`🔍 Room ${roomId} not in memory, attempting to load from database...`);
+          room = await GameRoom.load(roomId);
+
+          if (!room) {
+            return callback({ success: false, error: 'Room not found' });
+          }
+
+          // Add loaded room to memory
+          gameRooms.set(roomId, room);
+          console.log(`✅ Room ${roomId} loaded from database`);
+        }
+
+        // Verify player exists in room
+        const player = room.players.get(playerId);
+        if (!player) {
+          return callback({ success: false, error: 'Player not found in room' });
+        }
+
+        // Verify fingerprint matches
+        if (player.fingerprint !== fingerprint) {
+          return callback({ success: false, error: 'Fingerprint mismatch' });
+        }
+
+        // Reconnect player with new socket ID
+        room.reconnectPlayer(playerId, socket.id);
+
+        socket.join(roomId);
+        currentRoomId = roomId;
+        currentPlayerId = playerId;
+
+        console.log(`🔄 ${player.name} (${playerId}) rejoined room ${roomId}`);
+
+        callback({
+          success: true,
+          roomId,
+          playerId,
+          playerName: player.name,
+          gameState: room.getPlayerState(playerId)
+        });
+
+        // Broadcast room update to all players
+        broadcastGameState(io, room);
+      } catch (error) {
+        console.error('Error rejoining game:', error);
         callback({ success: false, error: error.message });
       }
     });
@@ -353,7 +441,7 @@ export function setupSocketHandlers(io, gameRooms) {
     });
 
     /**
-     * Handle disconnect
+     * Handle disconnect - mark player as disconnected but don't remove them
      */
     socket.on('disconnect', () => {
       console.log(`🔌 Client disconnected: ${socket.id}`);
@@ -361,21 +449,55 @@ export function setupSocketHandlers(io, gameRooms) {
       if (currentRoomId && currentPlayerId) {
         const room = gameRooms.get(currentRoomId);
         if (room) {
-          room.removePlayer(currentPlayerId);
+          // Mark player as disconnected in database
+          markPlayerDisconnected(currentPlayerId);
 
-          console.log(`👋 Player ${currentPlayerId} left room ${currentRoomId}`);
+          console.log(`📴 Player ${currentPlayerId} disconnected from room ${currentRoomId} (can rejoin)`);
 
-          // If room is empty, delete it
-          if (room.getPlayerCount() === 0) {
-            gameRooms.delete(currentRoomId);
-            console.log(`🗑️  Room ${currentRoomId} deleted (empty)`);
-          } else {
-            // Broadcast updated state to remaining players
-            broadcastGameState(io, room);
+          // Broadcast updated state to remaining connected players
+          broadcastGameState(io, room);
+        }
+      }
+    });
+
+    /**
+     * Handle explicit quit - remove player and delete room if empty
+     */
+    socket.on('leaveGame', (callback) => {
+      try {
+        if (currentRoomId && currentPlayerId) {
+          const room = gameRooms.get(currentRoomId);
+          if (room) {
+            room.removePlayer(currentPlayerId);
+
+            console.log(`👋 Player ${currentPlayerId} left room ${currentRoomId}`);
+
+            // If room is empty, delete it from memory and database
+            if (room.getPlayerCount() === 0) {
+              room.delete();
+              gameRooms.delete(currentRoomId);
+              console.log(`🗑️  Room ${currentRoomId} deleted (empty)`);
+            } else {
+              // Broadcast updated state to remaining players
+              broadcastGameState(io, room);
+            }
+
+            // Broadcast updated room list
+            broadcastRoomList(io, gameRooms);
+
+            // Clear current room and player
+            currentRoomId = null;
+            currentPlayerId = null;
           }
+        }
 
-          // Broadcast updated room list
-          broadcastRoomList(io, gameRooms);
+        if (callback) {
+          callback({ success: true });
+        }
+      } catch (error) {
+        console.error('Error leaving game:', error);
+        if (callback) {
+          callback({ success: false, error: error.message });
         }
       }
     });
