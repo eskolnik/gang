@@ -3,7 +3,11 @@
  */
 
 // Server configuration
-export const SERVER_URL = 'http://localhost:3000';
+// In production, connect to the same server that served the page
+// In development, connect to localhost:3000
+export const SERVER_URL = import.meta.env.PROD
+  ? window.location.origin
+  : 'http://localhost:3000';
 
 // Game phases (must match server)
 export const GAME_PHASES = {
