@@ -207,6 +207,7 @@ const Game = ({ onReturnToLobby }) => {
           myPlayerId={playerId}
           gameState={gameState}
           onTokenClick={handleClaimToken}
+          onSetReady={handleSetReady}
           gameResult={gameResult}
         />
 
@@ -225,11 +226,6 @@ const Game = ({ onReturnToLobby }) => {
          gameState.tokenAssignments?.[playerId] !== undefined && (
           <button className="btn-action btn-pass" onClick={handlePassTurn}>
             Pass
-          </button>
-        )}
-        {gameState.phase.includes('betting') && gameState.allPlayersHaveTokens && (
-          <button className="btn-action" onClick={handleSetReady}>
-            {gameState.players?.find(p => p.id === playerId)?.ready ? 'Unready' : 'Ready'}
           </button>
         )}
       </div>

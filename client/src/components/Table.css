@@ -144,6 +144,16 @@
   justify-content: flex-start;
 }
 
+/* Token pool container - maintains consistent height */
+.token-pool-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 54px;
+  align-items: center;
+  justify-content: center;
+}
+
 /* Token pool */
 .token-pool {
   display: flex;
@@ -326,4 +336,30 @@
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
   break-inside: avoid;
   margin-bottom: 6px;
+}
+
+/* Ready button in table center */
+.btn-ready-table {
+  height: 54px;
+  padding: 0 24px;
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.btn-ready-table:hover {
+  background-color: #6ba3e8;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+.btn-ready-table:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }

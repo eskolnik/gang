@@ -18,6 +18,7 @@ const Table = ({
   myPlayerId,
   gameState,
   onTokenClick,
+  onSetReady,
   gameResult,
 }) => {
   // Define fixed slots: 2 top, 1 left, 1 right, 2 bottom
@@ -227,21 +228,29 @@ const Table = ({
                   </div>
                 ) : (
                   // Show token pool during game
-                  <div className="token-pool">
-                    {gameState.tokenPool &&
-                      gameState.tokenPool.length > 0 &&
-                      [...gameState.tokenPool]
-                        .sort((a, b) => a - b)
-                        .map((tokenNum) => (
-                          <TokenDisplay
-                            key={tokenNum}
-                            number={tokenNum}
-                            phase={gameState.phase}
-                            isMyToken={false}
-                            canClick={gameState.currentTurn === myPlayerId}
-                            onClick={() => onTokenClick(tokenNum)}
-                          />
-                        ))}
+                  <div className="token-pool-container">
+                    <div className="token-pool">
+                      {gameState.tokenPool &&
+                        gameState.tokenPool.length > 0 &&
+                        [...gameState.tokenPool]
+                          .sort((a, b) => a - b)
+                          .map((tokenNum) => (
+                            <TokenDisplay
+                              key={tokenNum}
+                              number={tokenNum}
+                              phase={gameState.phase}
+                              isMyToken={false}
+                              canClick={gameState.currentTurn === myPlayerId}
+                              onClick={() => onTokenClick(tokenNum)}
+                            />
+                          ))}
+                    </div>
+                    {/* Ready button - only shown when all players have tokens */}
+                    {gameState.phase.includes('betting') && gameState.allPlayersHaveTokens && (
+                      <button className="btn-ready-table" onClick={onSetReady}>
+                        {gameState.players?.find(p => p.id === myPlayerId)?.ready ? 'Unready' : 'Ready'}
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
