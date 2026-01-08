@@ -23,6 +23,9 @@ const PHASE_NAMES = {
 const Game = ({ onReturnToLobby }) => {
   const { gameState, roomId, playerId, startGame, restartGame, claimToken, passTurn, setReady, leaveGame, returnToLobby, networkManager } = useNetwork();
   const [gameResult, setGameResult] = useState(null);
+  const [revealedHands, setRevealedHands] = useState([]); // Array of player IDs whose hands have been revealed
+  const [showFinalResult, setShowFinalResult] = useState(false);
+  const [visibleCommunityCards, setVisibleCommunityCards] = useState(0); // Number of community cards to show
 
   const handleReturnToLobby = useCallback(async () => {
     try {
@@ -44,6 +47,8 @@ const Game = ({ onReturnToLobby }) => {
   useEffect(() => {
     const handleGameComplete = (result) => {
       setGameResult(result);
+      setRevealedHands([]); // Reset revealed hands
+      setShowFinalResult(false); // Reset final result display
     };
 
     networkManager.on('gameComplete', handleGameComplete);
@@ -53,10 +58,68 @@ const Game = ({ onReturnToLobby }) => {
     };
   }, [networkManager]);
 
+  // Sequential hand reveal animation when game completes
+  useEffect(() => {
+    if (!gameResult || !gameResult.rankedHands) return;
+
+    // Sort hands by token assignment (rank) - lowest to highest
+    const sortedByRank = [...gameResult.rankedHands].sort((a, b) => a.rank - b.rank);
+
+    // Reveal hands one by one
+    let currentIndex = 0;
+    const revealInterval = setInterval(() => {
+      if (currentIndex < sortedByRank.length) {
+        const hand = sortedByRank[currentIndex];
+        setRevealedHands(prev => [...prev, hand.playerId]);
+        currentIndex++;
+      } else {
+        // All hands revealed, show final result after a delay
+        clearInterval(revealInterval);
+        setTimeout(() => {
+          setShowFinalResult(true);
+        }, 800); // Wait 800ms after last hand before showing result
+      }
+    }, 1200); // Reveal each hand every 1.2 seconds
+
+    return () => clearInterval(revealInterval);
+  }, [gameResult]);
+
+  // Animate community card dealing
+  useEffect(() => {
+    if (!gameState?.communityCards) {
+      setVisibleCommunityCards(0);
+      return;
+    }
+
+    const targetCount = gameState.communityCards.length;
+
+    // If we need to show more cards, animate them one by one
+    if (visibleCommunityCards < targetCount) {
+      const dealInterval = setInterval(() => {
+        setVisibleCommunityCards(prev => {
+          if (prev >= targetCount) {
+            clearInterval(dealInterval);
+            return prev;
+          }
+          return prev + 1;
+        });
+      }, 300); // Deal each card every 300ms
+
+      return () => clearInterval(dealInterval);
+    }
+  }, [gameState?.communityCards?.length]);
+
   // Reset game result when game restarts
   useEffect(() => {
     if (gameState?.phase !== GAME_PHASES.COMPLETE && gameResult !== null) {
       setGameResult(null);
+      setRevealedHands([]);
+      setShowFinalResult(false);
+    }
+
+    // Reset visible community cards when game restarts
+    if (gameState?.phase === GAME_PHASES.WAITING) {
+      setVisibleCommunityCards(0);
     }
   }, [gameState?.phase, gameResult]);
 
@@ -209,6 +272,9 @@ const Game = ({ onReturnToLobby }) => {
           onTokenClick={handleClaimToken}
           onSetReady={handleSetReady}
           gameResult={gameResult}
+          revealedHands={revealedHands}
+          showFinalResult={showFinalResult}
+          visibleCommunityCards={visibleCommunityCards}
         />
 
         {/* Start Game button in center of table when waiting - only for host */}

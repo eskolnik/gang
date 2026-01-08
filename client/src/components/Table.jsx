@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import Card, { CardBack } from "./Card";
 import { HandEvaluator } from "../game/utils/handEvaluator";
 import "./Table.css";
@@ -20,7 +21,36 @@ const Table = ({
   onTokenClick,
   onSetReady,
   gameResult,
+  revealedHands = [],
+  showFinalResult = false,
+  visibleCommunityCards = 0,
 }) => {
+  const [lastTokenAssignments, setLastTokenAssignments] = useState({});
+  const [newlyClaimedTokens, setNewlyClaimedTokens] = useState(new Set());
+
+  // Track newly claimed tokens for animation
+  useEffect(() => {
+    if (!gameState?.tokenAssignments) return;
+
+    const currentAssignments = gameState.tokenAssignments;
+    const newClaims = new Set();
+
+    // Check for new token assignments
+    Object.keys(currentAssignments).forEach(playerId => {
+      if (!lastTokenAssignments[playerId] && currentAssignments[playerId] !== undefined) {
+        newClaims.add(playerId);
+      }
+    });
+
+    if (newClaims.size > 0) {
+      setNewlyClaimedTokens(newClaims);
+      // Clear the animation state after animation completes
+      setTimeout(() => setNewlyClaimedTokens(new Set()), 600);
+    }
+
+    setLastTokenAssignments(currentAssignments);
+  }, [gameState?.tokenAssignments]);
+
   // Define fixed slots: 2 top, 1 left, 1 right, 2 bottom
   // Same view for all players - no reordering
   const FIXED_SLOTS = [
@@ -66,6 +96,7 @@ const Table = ({
                 }
                 gameState={gameState}
                 gameResult={gameResult}
+                isRevealed={revealedHands.includes(playerSlots[0].player.id)}
               />
             </div>
           )}
@@ -80,6 +111,7 @@ const Table = ({
                 }
                 gameState={gameState}
                 gameResult={gameResult}
+                isRevealed={revealedHands.includes(playerSlots[1].player.id)}
               />
             </div>
           )}
@@ -99,6 +131,7 @@ const Table = ({
                 }
                 gameState={gameState}
                 gameResult={gameResult}
+                isRevealed={revealedHands.includes(playerSlots[2].player.id)}
               />
             )}
           </div>
@@ -107,8 +140,8 @@ const Table = ({
           <div className="table-surface">
             {/* Top row: tokens for top-left and top-right seats */}
             <div className="table-surface-top">
-              {gameResult ? (
-                <div className="game-outcome">
+              {gameResult && showFinalResult ? (
+                <div className="game-outcome game-outcome-animate">
                   <h2
                     className={
                       gameResult.success ? "result-win" : "result-lose"
@@ -127,6 +160,7 @@ const Table = ({
                           number={playerSlots[0].playerToken}
                           phase={gameState.phase}
                           isMyToken={playerSlots[0].isMe}
+                          isNewlyClaimed={newlyClaimedTokens.has(playerSlots[0].player.id)}
                           canClick={
                             !playerSlots[0].isMe &&
                             currentTurn === myPlayerId &&
@@ -144,6 +178,7 @@ const Table = ({
                           number={playerSlots[1].playerToken}
                           phase={gameState.phase}
                           isMyToken={playerSlots[1].isMe}
+                          isNewlyClaimed={newlyClaimedTokens.has(playerSlots[1].player.id)}
                           canClick={
                             !playerSlots[1].isMe &&
                             currentTurn === myPlayerId &&
@@ -167,6 +202,7 @@ const Table = ({
                       number={playerSlots[2].playerToken}
                       phase={gameState.phase}
                       isMyToken={playerSlots[2].isMe}
+                      isNewlyClaimed={newlyClaimedTokens.has(playerSlots[2].player.id)}
                       canClick={
                         !playerSlots[2].isMe &&
                         currentTurn === myPlayerId &&
@@ -183,7 +219,7 @@ const Table = ({
                   {gameState.communityCards &&
                     gameState.communityCards.length > 0 && (
                       <div className="community-cards">
-                        {gameState.communityCards.map((card, i) => {
+                        {gameState.communityCards.slice(0, visibleCommunityCards).map((card, i) => {
                           const isInBestHand =
                             myPlayerId && gameState.myPocketCards
                               ? isCardInBestHand(
@@ -193,27 +229,28 @@ const Table = ({
                                 )
                               : false;
                           return (
-                            <Card
-                              key={i}
-                              card={card}
-                              isInBestHand={isInBestHand}
-                              size="small"
-                            />
+                            <div key={i} className="community-card-deal">
+                              <Card
+                                card={card}
+                                isInBestHand={isInBestHand}
+                                size="small"
+                              />
+                            </div>
                           );
                         })}
                         {[1, 2, 3, 4, 5]
-                          .slice(gameState.communityCards.length)
+                          .slice(visibleCommunityCards)
                           .map((i) => (
-                            <div className="card-small" />
+                            <div key={`empty-${i}`} className="card-small" />
                           ))}
                       </div>
                     )}{" "}
                 </div>
 
                 {/* Hand rankings or Token pool */}
-                {gameResult ? (
-                  // Show hand rankings when game is complete
-                  <div className="result-rankings">
+                {gameResult && showFinalResult ? (
+                  // Show hand rankings when game is complete and all hands revealed
+                  <div className="result-rankings result-rankings-animate">
                     {gameResult.rankedHands.map((hand, i) => {
                       const correct =
                         hand.rank === gameState.tokenAssignments[hand.playerId];
@@ -226,7 +263,7 @@ const Table = ({
                       );
                     })}
                   </div>
-                ) : (
+                ) : !gameResult ? (
                   // Show token pool during game
                   <div className="token-pool-container">
                     {gameState.tokenPool && gameState.tokenPool.length > 0 && (
@@ -271,6 +308,7 @@ const Table = ({
                       number={playerSlots[3].playerToken}
                       phase={gameState.phase}
                       isMyToken={playerSlots[3].isMe}
+                      isNewlyClaimed={newlyClaimedTokens.has(playerSlots[3].player.id)}
                       canClick={
                         !playerSlots[3].isMe &&
                         currentTurn === myPlayerId &&
@@ -292,6 +330,7 @@ const Table = ({
                       number={playerSlots[4].playerToken}
                       phase={gameState.phase}
                       isMyToken={playerSlots[4].isMe}
+                      isNewlyClaimed={newlyClaimedTokens.has(playerSlots[4].player.id)}
                       canClick={
                         !playerSlots[4].isMe &&
                         currentTurn === myPlayerId &&
@@ -309,6 +348,7 @@ const Table = ({
                       number={playerSlots[5].playerToken}
                       phase={gameState.phase}
                       isMyToken={playerSlots[5].isMe}
+                      isNewlyClaimed={newlyClaimedTokens.has(playerSlots[5].player.id)}
                       canClick={
                         !playerSlots[5].isMe &&
                         currentTurn === myPlayerId &&
@@ -333,6 +373,7 @@ const Table = ({
                 }
                 gameState={gameState}
                 gameResult={gameResult}
+                isRevealed={revealedHands.includes(playerSlots[3].player.id)}
               />
             )}
           </div>
@@ -351,6 +392,7 @@ const Table = ({
                 }
                 gameState={gameState}
                 gameResult={gameResult}
+                isRevealed={revealedHands.includes(playerSlots[4].player.id)}
               />
             </div>
           )}
@@ -365,6 +407,7 @@ const Table = ({
                 }
                 gameState={gameState}
                 gameResult={gameResult}
+                isRevealed={revealedHands.includes(playerSlots[5].player.id)}
               />
             </div>
           )}
@@ -382,6 +425,7 @@ const PlayerInfo = ({
   myPocketCards,
   gameState,
   gameResult,
+  isRevealed = false,
 }) => {
   const hasPocketCards = gameState.phase !== "waiting";
   const isHost = player.id === gameState.hostId;
@@ -389,6 +433,11 @@ const PlayerInfo = ({
   // Get player's actual cards from game result if game is complete
   const playerCards = gameResult
     ? gameResult.rankedHands.find((h) => h.playerId === player.id)?.pocketCards
+    : null;
+
+  // Get player's hand evaluation for display
+  const playerHandEval = gameResult
+    ? gameResult.rankedHands.find((h) => h.playerId === player.id)
     : null;
 
   // Get historical tokens for this player from previous rounds
@@ -418,12 +467,19 @@ const PlayerInfo = ({
           {hasPocketCards ? (
             // Show cards when in play
             gameResult && playerCards ? (
-              // Game complete - reveal all cards
-              <div className="pocket-cards">
-                {playerCards.map((card, i) => (
-                  <Card key={i} card={card} size="small" />
-                ))}
-              </div>
+              // Game complete - show revealed or backs based on isRevealed
+              isRevealed ? (
+                <div className={`pocket-cards card-flip-reveal`}>
+                  {playerCards.map((card, i) => (
+                    <Card key={i} card={card} size="small" />
+                  ))}
+                </div>
+              ) : (
+                <div className="card-backs">
+                  <CardBack size="small" />
+                  <CardBack size="small" />
+                </div>
+              )
             ) : isMe && myPocketCards && myPocketCards.length > 0 ? (
               // Show actual cards for me during game
               <div className="pocket-cards">
@@ -447,6 +503,13 @@ const PlayerInfo = ({
           )}
         </div>
 
+        {/* Show hand description when revealed */}
+        {gameResult && isRevealed && playerHandEval && (
+          <div className="hand-description">
+            {playerHandEval.evaluation.description}
+          </div>
+        )}
+
         {/* Token history from previous rounds - always render container for consistent height */}
         <div className="token-history">
           {tokenHistory.map((token, i) => (
@@ -469,7 +532,7 @@ const PlayerInfo = ({
 };
 
 // TokenDisplay sub-component
-const TokenDisplay = ({ number, phase, isMyToken, canClick, onClick }) => {
+const TokenDisplay = ({ number, phase, isMyToken, canClick, onClick, isNewlyClaimed = false }) => {
   const roundColors = {
     betting_1: "#ffffff",
     betting_2: "#ffff00",
@@ -483,7 +546,7 @@ const TokenDisplay = ({ number, phase, isMyToken, canClick, onClick }) => {
     <div
       className={`token-display ${canClick ? "token-clickable" : ""} ${
         isMyToken ? "token-mine" : ""
-      }`}
+      } ${isNewlyClaimed ? "token-claimed" : ""}`}
       style={{ backgroundColor: color }}
       onClick={canClick ? () => onClick(number) : undefined}
     >
