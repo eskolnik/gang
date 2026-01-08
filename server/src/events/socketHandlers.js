@@ -34,8 +34,8 @@ function broadcastGameState(io, room) {
  */
 function broadcastRoomList(io, gameRooms) {
   const roomList = Array.from(gameRooms.values())
-    .map(room => room.getLobbyInfo())
-    .filter(info => info.isJoinable); // Only show joinable rooms
+    .map(room => room.getLobbyInfo());
+    // Show all rooms (joinable and in-progress) so players can see their active games
 
   io.emit('roomListUpdate', roomList);
 }
@@ -57,15 +57,25 @@ export function setupSocketHandlers(io, gameRooms) {
     let currentPlayerId = null;
 
     /**
-     * Get list of available rooms
+     * Get list of all rooms (joinable and in-progress)
      */
     socket.on('getRoomList', (callback) => {
       try {
         const roomList = Array.from(gameRooms.values())
-          .map(room => room.getLobbyInfo())
-          .filter(info => info.isJoinable);
+          .map(room => room.getLobbyInfo());
 
-        callback({ success: true, rooms: roomList });
+        // Find if current player is in any game
+        let myActiveGameId = null;
+        if (currentPlayerId) {
+          for (const room of gameRooms.values()) {
+            if (room.players.has(currentPlayerId)) {
+              myActiveGameId = room.roomId;
+              break;
+            }
+          }
+        }
+
+        callback({ success: true, rooms: roomList, myActiveGameId });
       } catch (error) {
         console.error('Error getting room list:', error);
         callback({ success: false, error: error.message });
@@ -77,6 +87,18 @@ export function setupSocketHandlers(io, gameRooms) {
      */
     socket.on('createRoom', (data, callback) => {
       try {
+        // Check if player is already in a game
+        if (currentPlayerId && currentRoomId) {
+          const existingRoom = gameRooms.get(currentRoomId);
+          if (existingRoom && existingRoom.players.has(currentPlayerId)) {
+            return callback({
+              success: false,
+              error: 'You are already in a game. Please leave it first.',
+              currentRoomId
+            });
+          }
+        }
+
         const roomId = generateRoomId();
         const playerId = generatePlayerId();
         const playerName = data.playerName || 'Player';
@@ -127,6 +149,18 @@ export function setupSocketHandlers(io, gameRooms) {
     socket.on('joinRoom', (data, callback) => {
       try {
         const { roomId, playerName } = data;
+
+        // Check if player is already in a DIFFERENT game
+        if (currentPlayerId && currentRoomId && currentRoomId !== roomId) {
+          const existingRoom = gameRooms.get(currentRoomId);
+          if (existingRoom && existingRoom.players.has(currentPlayerId)) {
+            return callback({
+              success: false,
+              error: 'You are already in a different game. Please leave it first.',
+              currentRoomId
+            });
+          }
+        }
 
         const room = gameRooms.get(roomId);
 
@@ -408,6 +442,34 @@ export function setupSocketHandlers(io, gameRooms) {
       } catch (error) {
         console.error('Error getting game state:', error);
         callback({ success: false, error: error.message });
+      }
+    });
+
+    /**
+     * Return to lobby - player stays in game but not at table
+     */
+    socket.on('returnToLobby', (callback) => {
+      try {
+        if (currentRoomId && currentPlayerId) {
+          const room = gameRooms.get(currentRoomId);
+          if (room) {
+            room.setPlayerAtTable(currentPlayerId, false);
+
+            console.log(`🚪 Player ${currentPlayerId} returned to lobby from room ${currentRoomId}`);
+
+            // Broadcast updated state to all players
+            broadcastGameState(io, room);
+          }
+        }
+
+        if (callback) {
+          callback({ success: true });
+        }
+      } catch (error) {
+        console.error('Error returning to lobby:', error);
+        if (callback) {
+          callback({ success: false, error: error.message });
+        }
       }
     });
 

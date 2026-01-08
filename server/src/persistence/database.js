@@ -72,13 +72,14 @@ function createTables() {
         pocket_cards TEXT,
         ready INTEGER DEFAULT 0,
         connected INTEGER DEFAULT 1,
+        at_table INTEGER DEFAULT 1,
         last_seen INTEGER NOT NULL,
         FOREIGN KEY (room_id) REFERENCES game_rooms(room_id) ON DELETE CASCADE
       );
 
       -- Copy data from old table
-      INSERT INTO players_new (player_id, room_id, name, socket_id, pocket_cards, ready, connected, last_seen)
-      SELECT player_id, room_id, name, socket_id, pocket_cards, ready, connected, last_seen
+      INSERT INTO players_new (player_id, room_id, name, socket_id, pocket_cards, ready, connected, at_table, last_seen)
+      SELECT player_id, room_id, name, socket_id, pocket_cards, ready, connected, 1, last_seen
       FROM players;
 
       -- Drop old table
@@ -100,6 +101,7 @@ function createTables() {
         pocket_cards TEXT,
         ready INTEGER DEFAULT 0,
         connected INTEGER DEFAULT 1,
+        at_table INTEGER DEFAULT 1,
         last_seen INTEGER NOT NULL,
         FOREIGN KEY (room_id) REFERENCES game_rooms(room_id) ON DELETE CASCADE
       )

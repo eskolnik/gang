@@ -1,7 +1,7 @@
 import { Deck } from './Deck.js';
 import { HandEvaluator } from './HandEvaluator.js';
 import { saveGameRoom, deleteGameRoom } from '../persistence/gameRepository.js';
-import { savePlayer, loadPlayersByRoom, updatePlayerSocketId, deletePlayersByRoom } from '../persistence/playerRepository.js';
+import { savePlayer, loadPlayersByRoom, updatePlayerSocketId, deletePlayersByRoom, updatePlayerAtTable } from '../persistence/playerRepository.js';
 
 /**
  * Game phases in order
@@ -26,7 +26,7 @@ export const GAME_PHASES = {
 export class GameRoom {
   constructor(roomId, options = {}) {
     this.roomId = roomId;
-    this.players = new Map(); // playerId -> {id, name, socketId, pocketCards, ready}
+    this.players = new Map(); // playerId -> {id, name, socketId, pocketCards, ready, atTable}
     this.phase = GAME_PHASES.WAITING;
     this.deck = new Deck();
     this.communityCards = [];
@@ -57,7 +57,8 @@ export class GameRoom {
       name: playerName,
       socketId: socketId,
       pocketCards: [],
-      ready: false
+      ready: false,
+      atTable: true
     };
 
     this.players.set(playerId, playerData);
@@ -399,7 +400,8 @@ export class GameRoom {
       players: Array.from(this.players.values()).map(p => ({
         id: p.id,
         name: p.name,
-        ready: this.playerReadyStatus[p.id]
+        ready: this.playerReadyStatus[p.id],
+        atTable: p.atTable
       })),
       communityCards: this.communityCards,
       tokenPool: this.tokenPool,
@@ -455,7 +457,8 @@ export class GameRoom {
         socketId: player.socketId,
         pocketCards: player.pocketCards,
         ready: this.playerReadyStatus[playerId],
-        connected: true
+        connected: true,
+        atTable: player.atTable
       });
     }
   }
@@ -505,7 +508,8 @@ export class GameRoom {
         name: playerData.name,
         socketId: playerData.socketId,
         pocketCards: playerData.pocketCards,
-        ready: playerData.ready
+        ready: playerData.ready,
+        atTable: playerData.atTable
       });
       room.playerReadyStatus[playerData.playerId] = playerData.ready;
     }
@@ -526,8 +530,27 @@ export class GameRoom {
     }
 
     player.socketId = socketId;
+    player.atTable = true; // Player is back at table when reconnecting
     updatePlayerSocketId(playerId, socketId);
+    updatePlayerAtTable(playerId, true);
 
     console.log(`✅ Player ${player.name} (${playerId}) reconnected`);
+  }
+
+  /**
+   * Set whether a player is currently at the table (viewing the game)
+   * @param {string} playerId - Player ID
+   * @param {boolean} atTable - Whether player is at table
+   */
+  setPlayerAtTable(playerId, atTable) {
+    const player = this.players.get(playerId);
+    if (!player) {
+      throw new Error('Player not found');
+    }
+
+    player.atTable = atTable;
+    updatePlayerAtTable(playerId, atTable);
+
+    console.log(`${atTable ? '✅' : '📴'} Player ${player.name} (${playerId}) ${atTable ? 'at table' : 'left table'}`);
   }
 }

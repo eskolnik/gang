@@ -10,6 +10,7 @@ import { getDatabase } from './database.js';
  * @param {Array} player.pocketCards - Pocket cards
  * @param {boolean} player.ready - Ready status
  * @param {boolean} player.connected - Connection status
+ * @param {boolean} player.atTable - Whether player is currently viewing the game
  */
 export function savePlayer(player) {
   const db = getDatabase();
@@ -18,8 +19,8 @@ export function savePlayer(player) {
   const stmt = db.prepare(`
     INSERT OR REPLACE INTO players (
       player_id, room_id, name, socket_id,
-      pocket_cards, ready, connected, last_seen
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      pocket_cards, ready, connected, at_table, last_seen
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   stmt.run(
@@ -30,6 +31,7 @@ export function savePlayer(player) {
     JSON.stringify(player.pocketCards || []),
     player.ready ? 1 : 0,
     player.connected !== false ? 1 : 0,
+    player.atTable !== false ? 1 : 0,
     now
   );
 }
@@ -60,6 +62,7 @@ export function loadPlayer(playerId) {
     pocketCards: JSON.parse(row.pocket_cards),
     ready: row.ready === 1,
     connected: row.connected === 1,
+    atTable: row.at_table === 1,
     lastSeen: row.last_seen
   };
 }
@@ -179,4 +182,19 @@ export function updatePlayerCards(playerId, pocketCards) {
   `);
 
   stmt.run(JSON.stringify(pocketCards), playerId);
+}
+
+/**
+ * Update player's at-table status
+ * @param {string} playerId - Player ID
+ * @param {boolean} atTable - Whether player is at table
+ */
+export function updatePlayerAtTable(playerId, atTable) {
+  const db = getDatabase();
+
+  const stmt = db.prepare(`
+    UPDATE players SET at_table = ? WHERE player_id = ?
+  `);
+
+  stmt.run(atTable ? 1 : 0, playerId);
 }
