@@ -501,15 +501,17 @@ export function setupSocketHandlers(io, gameRooms) {
         if (currentRoomId && currentPlayerId) {
           const room = gameRooms.get(currentRoomId);
           if (room) {
-            room.removePlayer(currentPlayerId);
+            const wasAutoDeleted = room.removePlayer(currentPlayerId);
 
             console.log(`👋 Player ${currentPlayerId} left room ${currentRoomId}`);
 
-            // If room is empty, delete it from memory and database
-            if (room.getPlayerCount() === 0) {
-              room.delete();
+            // If room was auto-deleted or is now empty, remove from memory
+            if (wasAutoDeleted || room.getPlayerCount() === 0) {
               gameRooms.delete(currentRoomId);
-              console.log(`🗑️  Room ${currentRoomId} deleted (empty)`);
+              if (!wasAutoDeleted) {
+                room.delete();
+                console.log(`🗑️  Room ${currentRoomId} deleted (empty)`);
+              }
             } else {
               // Broadcast updated state to remaining players
               broadcastGameState(io, room);

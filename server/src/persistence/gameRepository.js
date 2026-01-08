@@ -13,8 +13,8 @@ export function saveGameRoom(gameRoom) {
       room_id, phase, host_id, max_players, min_players,
       community_cards, token_pool, token_assignments,
       current_turn, betting_round_history,
-      created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      created_at, updated_at, last_action
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   stmt.run(
@@ -29,7 +29,8 @@ export function saveGameRoom(gameRoom) {
     gameRoom.currentTurn,
     JSON.stringify(gameRoom.bettingRoundHistory),
     gameRoom.createdAt || now,
-    now
+    now,
+    gameRoom.lastAction || now
   );
 }
 
@@ -64,7 +65,8 @@ export function loadGameRoom(roomId) {
     currentTurn: row.current_turn,
     bettingRoundHistory: JSON.parse(row.betting_round_history),
     createdAt: row.created_at,
-    updatedAt: row.updated_at
+    updatedAt: row.updated_at,
+    lastAction: row.last_action
   };
 }
 

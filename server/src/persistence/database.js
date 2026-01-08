@@ -50,7 +50,8 @@ function createTables() {
       current_turn TEXT,
       betting_round_history TEXT,
       created_at INTEGER NOT NULL,
-      updated_at INTEGER NOT NULL
+      updated_at INTEGER NOT NULL,
+      last_action INTEGER
     )
   `);
 
@@ -120,6 +121,18 @@ function createTables() {
     CREATE INDEX IF NOT EXISTS idx_players_socket_id ON players(socket_id);
   `);
 
+  // Check if we need to add last_action column to game_rooms
+  const roomTableInfo = db.prepare("PRAGMA table_info(game_rooms)").all();
+  const hasLastActionColumn = roomTableInfo.some(col => col.name === 'last_action');
+
+  if (!hasLastActionColumn && roomTableInfo.length > 0) {
+    console.log('🔄 Adding last_action column to game_rooms...');
+    db.exec(`ALTER TABLE game_rooms ADD COLUMN last_action INTEGER`);
+    // Set existing games' last_action to their updated_at time
+    db.exec(`UPDATE game_rooms SET last_action = updated_at WHERE last_action IS NULL`);
+    console.log('✅ last_action column added successfully');
+  }
+
   console.log('✅ Database tables created/verified');
 }
 
@@ -178,6 +191,155 @@ export function purgeAllGames() {
   console.log('🗑️ All game data purged');
 }
 
+/**
+ * Clean up stale unstarted games
+ * Deletes games that:
+ * - Are in 'waiting' phase
+ * - Have 1 or fewer players
+ * - Last updated more than 10 minutes ago
+ * @returns {Array<string>} Array of deleted room IDs
+ */
+export function cleanupStaleUnstartedGames() {
+  const db = getDatabase();
+  const tenMinutesAgo = Date.now() - (10 * 60 * 1000);
+
+  // First get room_ids to delete
+  const roomsToDelete = db.prepare(`
+    SELECT gr.room_id, COUNT(p.player_id) as player_count
+    FROM game_rooms gr
+    LEFT JOIN players p ON gr.room_id = p.room_id
+    WHERE gr.phase = 'waiting'
+      AND gr.updated_at < ?
+    GROUP BY gr.room_id
+    HAVING player_count <= 1
+  `).all(tenMinutesAgo);
+
+  if (roomsToDelete.length === 0) {
+    return [];
+  }
+
+  // Delete the rooms (CASCADE will delete players)
+  const placeholders = roomsToDelete.map(() => '?').join(',');
+  const roomIds = roomsToDelete.map(r => r.room_id);
+
+  const result = db.prepare(`
+    DELETE FROM game_rooms WHERE room_id IN (${placeholders})
+  `).run(...roomIds);
+
+  if (result.changes > 0) {
+    console.log(`🗑️ Cleaned up ${result.changes} stale unstarted game(s)`);
+  }
+
+  return roomIds;
+}
+
+/**
+ * Clean up empty in-progress games
+ * Deletes games that:
+ * - Are in any phase except 'waiting'
+ * - Have 1 or fewer players
+ * @returns {Array<string>} Array of deleted room IDs
+ */
+export function cleanupEmptyInProgressGames() {
+  const db = getDatabase();
+
+  // First get room_ids to delete
+  const roomsToDelete = db.prepare(`
+    SELECT gr.room_id, COUNT(p.player_id) as player_count
+    FROM game_rooms gr
+    LEFT JOIN players p ON gr.room_id = p.room_id
+    WHERE gr.phase != 'waiting'
+    GROUP BY gr.room_id
+    HAVING player_count <= 1
+  `).all();
+
+  if (roomsToDelete.length === 0) {
+    return [];
+  }
+
+  // Delete the rooms (CASCADE will delete players)
+  const placeholders = roomsToDelete.map(() => '?').join(',');
+  const roomIds = roomsToDelete.map(r => r.room_id);
+
+  const result = db.prepare(`
+    DELETE FROM game_rooms WHERE room_id IN (${placeholders})
+  `).run(...roomIds);
+
+  if (result.changes > 0) {
+    console.log(`🗑️ Cleaned up ${result.changes} empty in-progress game(s)`);
+  }
+
+  return roomIds;
+}
+
+/**
+ * Clean up inactive in-progress games
+ * Deletes games that:
+ * - Are in any phase except 'waiting' or 'complete'
+ * - Have had no player action for 20+ minutes
+ * @returns {Array<string>} Array of deleted room IDs
+ */
+export function cleanupInactiveGames() {
+  const db = getDatabase();
+  const twentyMinutesAgo = Date.now() - (20 * 60 * 1000);
+
+  // First get room_ids to delete
+  const roomsToDelete = db.prepare(`
+    SELECT room_id
+    FROM game_rooms
+    WHERE phase NOT IN ('waiting', 'complete')
+      AND last_action < ?
+  `).all(twentyMinutesAgo);
+
+  if (roomsToDelete.length === 0) {
+    return [];
+  }
+
+  const roomIds = roomsToDelete.map(r => r.room_id);
+  const placeholders = roomIds.map(() => '?').join(',');
+
+  const result = db.prepare(`
+    DELETE FROM game_rooms WHERE room_id IN (${placeholders})
+  `).run(...roomIds);
+
+  if (result.changes > 0) {
+    console.log(`🗑️ Cleaned up ${result.changes} inactive game(s) (no action for 20+ minutes)`);
+  }
+
+  return roomIds;
+}
+
+/**
+ * Run all scheduled cleanup tasks
+ * Called by cron job every 5 minutes
+ * @returns {Array<string>} Array of all deleted room IDs
+ */
+export function runScheduledCleanup() {
+  console.log('🧹 Running scheduled cleanup...');
+
+  const staleUnstarted = cleanupStaleUnstartedGames();
+  const emptyInProgress = cleanupEmptyInProgressGames();
+  const inactive = cleanupInactiveGames();
+  const expired = cleanupExpiredGames();
+
+  // Combine all deleted room IDs
+  const allDeletedRoomIds = [
+    ...staleUnstarted,
+    ...emptyInProgress,
+    ...inactive
+    // expired doesn't return room IDs, just count
+  ];
+
+  if (allDeletedRoomIds.length > 0 || expired > 0) {
+    const total = allDeletedRoomIds.length + expired;
+    console.log(`✅ Cleanup complete: ${total} game(s) removed`);
+  } else {
+    console.log('✅ Cleanup complete: No games to remove');
+  }
+
+  return allDeletedRoomIds;
+}
+
 // Initialize database on import
 initDatabase();
 
@@ -186,5 +348,9 @@ export default {
   getDatabase,
   closeDatabase,
   cleanupExpiredGames,
-  purgeAllGames
+  purgeAllGames,
+  cleanupStaleUnstartedGames,
+  cleanupEmptyInProgressGames,
+  cleanupInactiveGames,
+  runScheduledCleanup
 };

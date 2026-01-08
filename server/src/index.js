@@ -1,7 +1,9 @@
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
+import cron from 'node-cron';
 import { setupSocketHandlers } from './events/socketHandlers.js';
+import { runScheduledCleanup } from './persistence/database.js';
 
 const app = express();
 const httpServer = createServer(app);
@@ -48,6 +50,24 @@ httpServer.listen(PORT, () => {
   console.log(`📡 WebSocket ready for connections`);
   console.log(`   Socket.io path: /socket.io/`);
 });
+
+// Set up cleanup cron job - runs every 5 minutes
+cron.schedule('*/5 * * * *', () => {
+  const deletedRoomIds = runScheduledCleanup();
+
+  // Remove deleted rooms from memory
+  deletedRoomIds.forEach(roomId => {
+    if (gameRooms.has(roomId)) {
+      gameRooms.delete(roomId);
+      console.log(`🗑️  Removed ${roomId} from memory (cleaned up by scheduler)`);
+    }
+  });
+}, {
+  scheduled: true,
+  timezone: "America/New_York" // Adjust to your timezone
+});
+
+console.log('🧹 Cleanup cron job scheduled (every 5 minutes)');
 
 // Graceful shutdown
 process.on('SIGTERM', () => {

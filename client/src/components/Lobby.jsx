@@ -1,14 +1,19 @@
-import { useState, useEffect } from 'react';
-import { useNetwork } from '../context/NetworkContext';
-import { getSession, getPlayerName, savePlayerName } from '../game/utils/storage';
-import './Lobby.css';
+import { useState, useEffect } from "react";
+import { useNetwork } from "../context/NetworkContext";
+import {
+  getSession,
+  getPlayerName,
+  savePlayerName,
+} from "../game/utils/storage";
+import "./Lobby.css";
 
 const Lobby = ({ onStartGame }) => {
-  const { connected, roomList, createRoom, joinRoom, getRoomList, rejoinGame } = useNetwork();
-  const [playerName, setPlayerName] = useState(getPlayerName() || 'Player');
-  const [roomCode, setRoomCode] = useState('');
-  const [statusMessage, setStatusMessage] = useState('');
-  const [statusType, setStatusType] = useState('info'); // 'info' | 'success' | 'error'
+  const { connected, roomList, createRoom, joinRoom, getRoomList, rejoinGame } =
+    useNetwork();
+  const [playerName, setPlayerName] = useState(getPlayerName());
+  const [roomCode, setRoomCode] = useState("");
+  const [statusMessage, setStatusMessage] = useState("");
+  const [statusType, setStatusType] = useState("info"); // 'info' | 'success' | 'error'
   const [isLoading, setIsLoading] = useState(false);
   const [myActiveGameId, setMyActiveGameId] = useState(null);
 
@@ -18,19 +23,19 @@ const Lobby = ({ onStartGame }) => {
       const { myActiveGameId: activeId } = await getRoomList();
       setMyActiveGameId(activeId);
     } catch (error) {
-      console.error('Failed to get room list:', error);
+      console.error("Failed to get room list:", error);
     }
   };
 
   // Update status message based on connection
   useEffect(() => {
     if (connected) {
-      setStatusMessage('✅ Connected to server');
-      setStatusType('success');
+      setStatusMessage("✅ Connected to server");
+      setStatusType("success");
       fetchRoomList();
     } else {
-      setStatusMessage('Connecting to server...');
-      setStatusType('info');
+      setStatusMessage("Connecting to server...");
+      setStatusType("info");
     }
   }, [connected]);
 
@@ -47,20 +52,20 @@ const Lobby = ({ onStartGame }) => {
 
   const handleCreateRoom = async () => {
     if (!playerName.trim()) {
-      setStatusMessage('❌ Please enter your name');
-      setStatusType('error');
+      setStatusMessage("❌ Please enter your name");
+      setStatusType("error");
       return;
     }
 
     try {
       setIsLoading(true);
-      setStatusMessage('Creating room...');
-      setStatusType('info');
+      setStatusMessage("Creating room...");
+      setStatusType("info");
 
       const response = await createRoom(playerName.trim(), 6, 2);
 
       setStatusMessage(`✅ Room created: ${response.roomId}`);
-      setStatusType('success');
+      setStatusType("success");
 
       // Transition to game after brief delay
       setTimeout(() => {
@@ -68,27 +73,27 @@ const Lobby = ({ onStartGame }) => {
       }, 500);
     } catch (error) {
       setStatusMessage(`❌ Failed: ${error.message}`);
-      setStatusType('error');
+      setStatusType("error");
       setIsLoading(false);
     }
   };
 
   const handleJoinRoom = async (roomId) => {
     if (!playerName.trim()) {
-      setStatusMessage('❌ Please enter your name');
-      setStatusType('error');
+      setStatusMessage("❌ Please enter your name");
+      setStatusType("error");
       return;
     }
 
     try {
       setIsLoading(true);
-      setStatusMessage('Joining room...');
-      setStatusType('info');
+      setStatusMessage("Joining room...");
+      setStatusType("info");
 
       await joinRoom(roomId, playerName.trim());
 
       setStatusMessage(`✅ Joined room: ${roomId}`);
-      setStatusType('success');
+      setStatusType("success");
 
       // Transition to game after brief delay
       setTimeout(() => {
@@ -96,7 +101,7 @@ const Lobby = ({ onStartGame }) => {
       }, 500);
     } catch (error) {
       setStatusMessage(`❌ ${error.message}`);
-      setStatusType('error');
+      setStatusType("error");
       setIsLoading(false);
     }
   };
@@ -104,8 +109,8 @@ const Lobby = ({ onStartGame }) => {
   const handleJoinByCode = () => {
     const code = roomCode.trim().toUpperCase();
     if (code.length !== 6) {
-      setStatusMessage('❌ Invalid room code (must be 6 characters)');
-      setStatusType('error');
+      setStatusMessage("❌ Invalid room code (must be 6 characters)");
+      setStatusType("error");
       return;
     }
     handleJoinRoom(code);
@@ -114,18 +119,18 @@ const Lobby = ({ onStartGame }) => {
   const handleRejoinGame = async (roomId) => {
     try {
       setIsLoading(true);
-      setStatusMessage('Rejoining game...');
-      setStatusType('info');
+      setStatusMessage("Rejoining game...");
+      setStatusType("info");
 
       const session = getSession();
       if (!session || session.roomId !== roomId) {
-        throw new Error('Session not found');
+        throw new Error("Session not found");
       }
 
       await rejoinGame(session.roomId, session.playerId);
 
       setStatusMessage(`✅ Rejoined game: ${roomId}`);
-      setStatusType('success');
+      setStatusType("success");
 
       // Transition to game after brief delay
       setTimeout(() => {
@@ -133,13 +138,13 @@ const Lobby = ({ onStartGame }) => {
       }, 500);
     } catch (error) {
       setStatusMessage(`❌ ${error.message}`);
-      setStatusType('error');
+      setStatusType("error");
       setIsLoading(false);
     }
   };
 
   const handleRoomCodeKeyPress = (e) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       handleJoinByCode();
     }
   };
@@ -158,6 +163,7 @@ const Lobby = ({ onStartGame }) => {
         <p className="lobby-subtitle">Cooperative Poker</p>
 
         {/* Connection Status */}
+
         <div className={`status-message status-${statusType}`}>
           {statusMessage}
         </div>
@@ -176,40 +182,58 @@ const Lobby = ({ onStartGame }) => {
           />
         </div>
 
+        {/* Create Room Button */}
+        <div className="new-room-button">
+          <button
+            className="btn btn-primary"
+            onClick={handleCreateRoom}
+            disabled={!connected || isLoading}
+          >
+            New Table
+          </button>
+        </div>
+
         {/* My Active Game (if any) */}
         {myActiveGameId && (
           <div className="rooms-section">
             <h2>Your Active Game</h2>
             <div className="room-list">
-              {roomList.filter(r => r.roomId === myActiveGameId).map((room) => (
-                <div
-                  key={room.roomId}
-                  className="room-item room-item-active"
-                >
-                  <div className="room-id">{room.roomId}</div>
-                  <div className="room-count">{room.playerCount}/{room.maxPlayers}</div>
-                  <div className="room-players">{room.players.join(', ')}</div>
-                  <button
-                    className="btn btn-primary btn-rejoin"
-                    onClick={() => !isLoading && handleRejoinGame(room.roomId)}
-                    disabled={isLoading}
-                  >
-                    Rejoin Table
-                  </button>
-                </div>
-              ))}
+              {roomList
+                .filter((r) => r.roomId === myActiveGameId)
+                .map((room) => (
+                  <div key={room.roomId} className="room-item room-item-active">
+                    <div className="room-id">{room.roomId}</div>
+                    <div className="room-count">
+                      {room.playerCount}/{room.maxPlayers}
+                    </div>
+                    <div className="room-players">
+                      {room.players.join(", ")}
+                    </div>
+                    <button
+                      className="btn btn-primary btn-rejoin"
+                      onClick={() =>
+                        !isLoading && handleRejoinGame(room.roomId)
+                      }
+                      disabled={isLoading}
+                    >
+                      Rejoin Table
+                    </button>
+                  </div>
+                ))}
             </div>
           </div>
         )}
 
         {/* Available Rooms */}
         <div className="rooms-section">
-          <h2>All Rooms</h2>
+          <h2>All Tables</h2>
           <div className="room-list">
             {!connected ? (
               <div className="room-list-empty">Connecting...</div>
             ) : roomList.length === 0 ? (
-              <div className="room-list-empty">No rooms available. Create one!</div>
+              <div className="room-list-empty">
+                No tables available. Create one!
+              </div>
             ) : (
               roomList.slice(0, 10).map((room) => {
                 const isMyGame = room.roomId === myActiveGameId;
@@ -221,18 +245,26 @@ const Lobby = ({ onStartGame }) => {
                 return (
                   <div
                     key={room.roomId}
-                    className={`room-item ${isInProgress ? 'room-item-in-progress' : ''}`}
+                    className={`room-item ${
+                      isInProgress ? "room-item-in-progress" : ""
+                    }`}
                   >
                     <div className="room-id">{room.roomId}</div>
-                    <div className="room-count">{room.playerCount}/{room.maxPlayers}</div>
-                    <div className="room-players">{room.players.join(', ')}</div>
+                    <div className="room-count">
+                      {room.playerCount}/{room.maxPlayers}
+                    </div>
+                    <div className="room-players">
+                      {room.players.join(", ")}
+                    </div>
                     <div className="room-status">
-                      {isInProgress ? '🎮 In Progress' : '⏳ Waiting'}
+                      {isInProgress ? "🎮 In Progress" : "⏳ Waiting"}
                     </div>
                     {isJoinable && (
                       <button
                         className="btn btn-secondary btn-join"
-                        onClick={() => !isLoading && handleJoinRoom(room.roomId)}
+                        onClick={() =>
+                          !isLoading && handleJoinRoom(room.roomId)
+                        }
                         disabled={isLoading}
                       >
                         Join
@@ -243,37 +275,6 @@ const Lobby = ({ onStartGame }) => {
               })
             )}
           </div>
-        </div>
-
-        {/* Create Room Button */}
-        <button
-          className="btn btn-primary"
-          onClick={handleCreateRoom}
-          disabled={!connected || isLoading}
-        >
-          Create New Room
-        </button>
-
-        {/* Manual Join Section */}
-        <div className="manual-join">
-          <label htmlFor="room-code">Or enter code:</label>
-          <input
-            id="room-code"
-            type="text"
-            value={roomCode}
-            onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-            onKeyPress={handleRoomCodeKeyPress}
-            placeholder="ABCDEF"
-            disabled={isLoading}
-            maxLength={6}
-          />
-          <button
-            className="btn btn-secondary"
-            onClick={handleJoinByCode}
-            disabled={!connected || isLoading}
-          >
-            Join
-          </button>
         </div>
       </div>
     </div>

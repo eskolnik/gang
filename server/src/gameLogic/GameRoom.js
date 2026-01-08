@@ -39,6 +39,7 @@ export class GameRoom {
     this.playerReadyStatus = {}; // playerId -> boolean
     this.hostId = null; // Player ID of the room host
     this.createdAt = options.createdAt || Date.now();
+    this.lastAction = null; // Timestamp of last player action (for inactive game cleanup)
   }
 
   /**
@@ -75,6 +76,7 @@ export class GameRoom {
 
   /**
    * Remove a player from the room
+   * Returns true if game should be deleted
    */
   removePlayer(playerId) {
     this.players.delete(playerId);
@@ -88,8 +90,18 @@ export class GameRoom {
       this.hostId = remainingPlayers.length > 0 ? remainingPlayers[0] : null;
     }
 
+    // Auto-delete game if it drops to 1 or fewer players and is in progress
+    const shouldDelete = this.players.size <= 1 && this.phase !== GAME_PHASES.WAITING;
+
+    if (shouldDelete) {
+      console.log(`🗑️ Auto-deleting game ${this.roomId} - only ${this.players.size} player(s) remaining`);
+      this.delete();
+      return true;
+    }
+
     // Persist state
     this.save();
+    return false;
   }
 
   /**
@@ -239,6 +251,9 @@ export class GameRoom {
     // Move to next player's turn
     this.advanceTurn();
 
+    // Update last action timestamp
+    this.lastAction = Date.now();
+
     // Persist state
     this.save();
 
@@ -263,6 +278,9 @@ export class GameRoom {
 
     // Just advance to next player without changing tokens
     this.advanceTurn();
+
+    // Update last action timestamp
+    this.lastAction = Date.now();
 
     // Persist state
     this.save();
@@ -291,6 +309,9 @@ export class GameRoom {
     }
     // Toggle ready status
     this.playerReadyStatus[playerId] = !this.playerReadyStatus[playerId];
+
+    // Update last action timestamp
+    this.lastAction = Date.now();
 
     // Persist state
     this.save();
@@ -499,6 +520,7 @@ export class GameRoom {
     room.tokenAssignments = gameData.tokenAssignments;
     room.currentTurn = gameData.currentTurn;
     room.bettingRoundHistory = gameData.bettingRoundHistory;
+    room.lastAction = gameData.lastAction;
 
     // Load players
     const players = loadPlayersByRoom(roomId);
