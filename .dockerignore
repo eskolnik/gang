@@ -1,0 +1,47 @@
+# Node modules
+**/node_modules/
+**/npm-debug.log
+
+# Build artifacts
+client/dist/
+
+# Database (will be on volume)
+server/game_state.db*
+
+# Development files
+**/.env
+**/.env.local
+**/.env.*.local
+server/.env.example
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Documentation
+README.md
+ROADMAP.md
+LICENSE
+*.md
+
+# CI/CD
+.github/
+.claude/
+
+# Fly.io
+.dockerignore
+fly.toml
+
+# Test files
+server/test.html
+**/*.test.js
+**/*.spec.js

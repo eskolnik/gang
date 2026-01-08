@@ -1,11 +1,14 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { config } from '../config.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Database file path (stored in server root)
-const DB_PATH = path.join(__dirname, '../../game_state.db');
+// Database file path - defaults to server root, but configurable via env
+const DB_PATH = path.isAbsolute(config.dbPath)
+  ? config.dbPath
+  : path.join(__dirname, '../..', config.dbPath);
 
 let db = null;
 

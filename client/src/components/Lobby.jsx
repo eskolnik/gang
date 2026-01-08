@@ -159,14 +159,14 @@ const Lobby = ({ onStartGame }) => {
     <div className="lobby">
       <div className="lobby-container">
         {/* Header */}
-        <h1 className="lobby-title">THE GANG</h1>
-        <p className="lobby-subtitle">Cooperative Poker</p>
+        <h1 className="lobby-title">DA GANG</h1>
 
         {/* Connection Status */}
-
-        <div className={`status-message status-${statusType}`}>
-          {statusMessage}
-        </div>
+        {statusType == "error" && (
+          <div className={`status-message status-${statusType}`}>
+            {statusMessage}
+          </div>
+        )}
 
         {/* Player Name Input */}
         <div className="name-section">

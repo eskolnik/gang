@@ -1,0 +1,44 @@
+# fly.toml app configuration file generated for the-gang on 2026-01-08
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+
+app = 'the-gang'
+primary_region = 'ewr'  # Newark, NJ - change to your preferred region
+kill_signal = 'SIGTERM'
+kill_timeout = '5s'
+
+[build]
+
+[deploy]
+  release_command = 'echo "Deployment complete"'
+
+[env]
+  NODE_ENV = 'production'
+  PORT = '8080'
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = 'off'  # Keep machines running for real-time game
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ['app']
+
+  [[http_service.http_checks]]
+    interval = '10s'
+    timeout = '2s'
+    grace_period = '5s'
+    method = 'GET'
+    path = '/health'
+
+# Persistent volume for SQLite database
+[[mounts]]
+  source = 'the_gang_data'
+  destination = '/data'
+  initial_size = '1gb'
+
+# VM resources
+[[vm]]
+  size = 'shared-cpu-1x'  # 256 MB RAM, shared CPU
+  memory = '256mb'
+  cpus = 1

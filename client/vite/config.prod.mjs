@@ -1,40 +1,29 @@
 import { defineConfig } from 'vite';
-
-const phasermsg = () => {
-    return {
-        name: 'phasermsg',
-        buildStart() {
-            process.stdout.write(`Building for production...\n`);
-        },
-        buildEnd() {
-            const line = "---------------------------------------------------------";
-            const msg = `❤️❤️❤️ Tell us about your game! - games@phaser.io ❤️❤️❤️`;
-            process.stdout.write(`${line}\n${msg}\n${line}\n`);
-            
-            process.stdout.write(`✨ Done ✨\n`);
-        }
-    }
-}   
+import react from '@vitejs/plugin-react';
 
 export default defineConfig({
     base: './',
     logLevel: 'warn',
     build: {
-        rollupOptions: {
-            output: {
-                manualChunks: {
-                    phaser: ['phaser']
-                }
-            }
-        },
+        outDir: 'dist',
+        sourcemap: false,
         minify: 'terser',
         terserOptions: {
             compress: {
-                passes: 2
+                passes: 2,
+                drop_console: true, // Remove console.logs in production
             },
             mangle: true,
             format: {
                 comments: false
+            }
+        },
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    react: ['react', 'react-dom'],
+                    vendor: ['socket.io-client', 'pokersolver']
+                }
             }
         }
     },
@@ -42,6 +31,15 @@ export default defineConfig({
         port: 8080
     },
     plugins: [
-        phasermsg()
+        react(),
+        {
+            name: 'build-msg',
+            buildStart() {
+                process.stdout.write(`🎮 Building The Gang for production...\n`);
+            },
+            buildEnd() {
+                process.stdout.write(`✨ Client build complete ✨\n`);
+            }
+        }
     ]
 });

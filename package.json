@@ -1,0 +1,31 @@
+{
+  "name": "the-gang",
+  "version": "1.0.0",
+  "description": "Cooperative poker game where players order hands using numbered tokens",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "install:client": "cd client && npm install",
+    "install:server": "cd server && npm install",
+    "install:all": "npm run install:client && npm run install:server",
+    "dev:client": "cd client && npm run dev",
+    "dev:server": "cd server && npm run dev",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "build:client": "cd client && npm run build",
+    "build": "npm run build:client",
+    "start": "cd server && npm start",
+    "clean": "rm -rf client/dist && rm -rf server/game_state.db"
+  },
+  "keywords": [
+    "poker",
+    "cooperative",
+    "card-game",
+    "multiplayer",
+    "websocket"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
