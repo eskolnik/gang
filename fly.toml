@@ -18,7 +18,7 @@ kill_timeout = '5s'
   PORT = '8080'
 
 [[mounts]]
-  source = 'the_gang_data'
+  source = 'da_gang_data'
   destination = '/data'
   initial_size = '1gb'
 

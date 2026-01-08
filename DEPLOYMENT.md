@@ -309,4 +309,4 @@ flyctl ping              # Test connectivity
 
 - Fly.io Docs: https://fly.io/docs
 - Community Forum: https://community.fly.io
-- The Gang Issues: https://github.com/yourusername/the_gang/issues
+- The Gang Issues: https://github.com/yourusername/da_gang/issues

@@ -1,11 +1,11 @@
 {
-  "name": "the_gang_client",
+  "name": "da_gang_client",
   "description": "A React-based poker game client using Vite.",
   "version": "1.4.0",
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yourusername/the_gang.git"
+    "url": "git+https://github.com/yourusername/da_gang.git"
   },
   "author": "Your Name",
   "license": "MIT",
