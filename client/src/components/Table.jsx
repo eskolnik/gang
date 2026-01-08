@@ -26,30 +26,49 @@ const Table = ({
   visibleCommunityCards = 0,
 }) => {
   const [lastTokenAssignments, setLastTokenAssignments] = useState({});
-  const [newlyClaimedTokens, setNewlyClaimedTokens] = useState(new Set());
+  const [tokenMovements, setTokenMovements] = useState({}); // { playerId: { from: 'center'|playerId, animating: true } }
 
-  // Track newly claimed tokens for animation
+  // Track token movements for sliding animations
   useEffect(() => {
     if (!gameState?.tokenAssignments) return;
 
     const currentAssignments = gameState.tokenAssignments;
-    const newClaims = new Set();
+    const movements = {};
 
-    // Check for new token assignments
-    Object.keys(currentAssignments).forEach(playerId => {
-      if (!lastTokenAssignments[playerId] && currentAssignments[playerId] !== undefined) {
-        newClaims.add(playerId);
+    // Check for new or changed token assignments
+    Object.keys(currentAssignments).forEach((playerId) => {
+      const currentToken = currentAssignments[playerId];
+      const previousToken = lastTokenAssignments[playerId];
+
+      // Token newly claimed from pool
+      if (previousToken === undefined && currentToken !== undefined) {
+        movements[playerId] = { from: 'center', animating: true };
+      }
+      // Token changed (stolen from another player)
+      else if (previousToken !== undefined && previousToken !== currentToken) {
+        // Find who had this token before
+        const previousOwner = Object.keys(lastTokenAssignments).find(
+          pid => lastTokenAssignments[pid] === currentToken
+        );
+        movements[playerId] = { from: previousOwner || 'center', animating: true };
       }
     });
 
-    if (newClaims.size > 0) {
-      setNewlyClaimedTokens(newClaims);
-      // Clear the animation state after animation completes
-      setTimeout(() => setNewlyClaimedTokens(new Set()), 600);
+    // Check for tokens returned to pool
+    Object.keys(lastTokenAssignments).forEach((playerId) => {
+      if (currentAssignments[playerId] === undefined && lastTokenAssignments[playerId] !== undefined) {
+        // Token was removed (returned to pool) - we don't animate this yet
+      }
+    });
+
+    if (Object.keys(movements).length > 0) {
+      setTokenMovements(movements);
+      // Clear animation state after animation completes
+      setTimeout(() => setTokenMovements({}), 600);
     }
 
     setLastTokenAssignments(currentAssignments);
-  }, [gameState?.tokenAssignments]);
+  }, [gameState?.tokenAssignments, lastTokenAssignments]);
 
   // Define fixed slots: 2 top, 1 left, 1 right, 2 bottom
   // Same view for all players - no reordering
@@ -70,6 +89,7 @@ const Table = ({
     const isMe = player.id === myPlayerId;
     const isCurrentTurn = player.id === currentTurn;
     const playerToken = gameState.tokenAssignments?.[player.id];
+    const movement = tokenMovements[player.id];
 
     return {
       ...slot,
@@ -77,8 +97,15 @@ const Table = ({
       isMe,
       isCurrentTurn,
       playerToken,
+      movement,
     };
   });
+
+  // Helper to get slot position for a player ID
+  const getSlotPosition = (playerId) => {
+    const slot = playerSlots.find(s => s.player?.id === playerId);
+    return slot?.position || 'center';
+  };
 
   return (
     <div className="table-container">
@@ -160,7 +187,7 @@ const Table = ({
                           number={playerSlots[0].playerToken}
                           phase={gameState.phase}
                           isMyToken={playerSlots[0].isMe}
-                          isNewlyClaimed={newlyClaimedTokens.has(playerSlots[0].player.id)}
+                          slideFrom={playerSlots[0].movement?.animating ? getSlotPosition(playerSlots[0].movement.from) : null}
                           canClick={
                             !playerSlots[0].isMe &&
                             currentTurn === myPlayerId &&
@@ -178,7 +205,7 @@ const Table = ({
                           number={playerSlots[1].playerToken}
                           phase={gameState.phase}
                           isMyToken={playerSlots[1].isMe}
-                          isNewlyClaimed={newlyClaimedTokens.has(playerSlots[1].player.id)}
+                          slideFrom={playerSlots[1].movement?.animating ? getSlotPosition(playerSlots[1].movement.from) : null}
                           canClick={
                             !playerSlots[1].isMe &&
                             currentTurn === myPlayerId &&
@@ -202,7 +229,7 @@ const Table = ({
                       number={playerSlots[2].playerToken}
                       phase={gameState.phase}
                       isMyToken={playerSlots[2].isMe}
-                      isNewlyClaimed={newlyClaimedTokens.has(playerSlots[2].player.id)}
+                      slideFrom={playerSlots[2].movement?.animating ? getSlotPosition(playerSlots[2].movement.from) : null}
                       canClick={
                         !playerSlots[2].isMe &&
                         currentTurn === myPlayerId &&
@@ -219,25 +246,27 @@ const Table = ({
                   {gameState.communityCards &&
                     gameState.communityCards.length > 0 && (
                       <div className="community-cards">
-                        {gameState.communityCards.slice(0, visibleCommunityCards).map((card, i) => {
-                          const isInBestHand =
-                            myPlayerId && gameState.myPocketCards
-                              ? isCardInBestHand(
-                                  card,
-                                  gameState.myPocketCards,
-                                  gameState.communityCards
-                                )
-                              : false;
-                          return (
-                            <div key={i} className="community-card-deal">
-                              <Card
-                                card={card}
-                                isInBestHand={isInBestHand}
-                                size="small"
-                              />
-                            </div>
-                          );
-                        })}
+                        {gameState.communityCards
+                          .slice(0, visibleCommunityCards)
+                          .map((card, i) => {
+                            const isInBestHand =
+                              myPlayerId && gameState.myPocketCards
+                                ? isCardInBestHand(
+                                    card,
+                                    gameState.myPocketCards,
+                                    gameState.communityCards
+                                  )
+                                : false;
+                            return (
+                              <div key={i} className="community-card-deal">
+                                <Card
+                                  card={card}
+                                  isInBestHand={isInBestHand}
+                                  size="small"
+                                />
+                              </div>
+                            );
+                          })}
                         {[1, 2, 3, 4, 5]
                           .slice(visibleCommunityCards)
                           .map((i) => (
@@ -248,7 +277,7 @@ const Table = ({
                 </div>
 
                 {/* Hand rankings or Token pool */}
-                {gameResult && showFinalResult ? (
+                {gameResult && showFinalResult && (
                   // Show hand rankings when game is complete and all hands revealed
                   <div className="result-rankings result-rankings-animate">
                     {gameResult.rankedHands.map((hand, i) => {
@@ -263,7 +292,8 @@ const Table = ({
                       );
                     })}
                   </div>
-                ) : !gameResult ? (
+                )}
+                {!gameResult && (
                   // Show token pool during game
                   <div className="token-pool-container">
                     {gameState.tokenPool && gameState.tokenPool.length > 0 && (
@@ -308,7 +338,7 @@ const Table = ({
                       number={playerSlots[3].playerToken}
                       phase={gameState.phase}
                       isMyToken={playerSlots[3].isMe}
-                      isNewlyClaimed={newlyClaimedTokens.has(playerSlots[3].player.id)}
+                      slideFrom={playerSlots[3].movement?.animating ? getSlotPosition(playerSlots[3].movement.from) : null}
                       canClick={
                         !playerSlots[3].isMe &&
                         currentTurn === myPlayerId &&
@@ -330,7 +360,7 @@ const Table = ({
                       number={playerSlots[4].playerToken}
                       phase={gameState.phase}
                       isMyToken={playerSlots[4].isMe}
-                      isNewlyClaimed={newlyClaimedTokens.has(playerSlots[4].player.id)}
+                      slideFrom={playerSlots[4].movement?.animating ? getSlotPosition(playerSlots[4].movement.from) : null}
                       canClick={
                         !playerSlots[4].isMe &&
                         currentTurn === myPlayerId &&
@@ -348,7 +378,7 @@ const Table = ({
                       number={playerSlots[5].playerToken}
                       phase={gameState.phase}
                       isMyToken={playerSlots[5].isMe}
-                      isNewlyClaimed={newlyClaimedTokens.has(playerSlots[5].player.id)}
+                      slideFrom={playerSlots[5].movement?.animating ? getSlotPosition(playerSlots[5].movement.from) : null}
                       canClick={
                         !playerSlots[5].isMe &&
                         currentTurn === myPlayerId &&
@@ -532,7 +562,14 @@ const PlayerInfo = ({
 };
 
 // TokenDisplay sub-component
-const TokenDisplay = ({ number, phase, isMyToken, canClick, onClick, isNewlyClaimed = false }) => {
+const TokenDisplay = ({
+  number,
+  phase,
+  isMyToken,
+  canClick,
+  onClick,
+  slideFrom = null,
+}) => {
   const roundColors = {
     betting_1: "#ffffff",
     betting_2: "#ffff00",
@@ -542,11 +579,14 @@ const TokenDisplay = ({ number, phase, isMyToken, canClick, onClick, isNewlyClai
 
   const color = roundColors[phase] || "#ffd700";
 
+  // Build animation class based on slideFrom position
+  const slideClass = slideFrom ? `token-slide-from-${slideFrom}` : '';
+
   return (
     <div
       className={`token-display ${canClick ? "token-clickable" : ""} ${
         isMyToken ? "token-mine" : ""
-      } ${isNewlyClaimed ? "token-claimed" : ""}`}
+      } ${slideClass}`}
       style={{ backgroundColor: color }}
       onClick={canClick ? () => onClick(number) : undefined}
     >

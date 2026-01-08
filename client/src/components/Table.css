@@ -453,21 +453,114 @@
   }
 }
 
-/* Token movement animation when claimed */
-.token-claimed {
-  animation: tokenClaim 0.5s ease-out;
+/* Token sliding animations from different positions */
+.token-slide-from-center {
+  animation: slideFromCenter 0.5s ease-out;
 }
 
-@keyframes tokenClaim {
+.token-slide-from-top-left {
+  animation: slideFromTopLeft 0.5s ease-out;
+}
+
+.token-slide-from-top-right {
+  animation: slideFromTopRight 0.5s ease-out;
+}
+
+.token-slide-from-left {
+  animation: slideFromLeft 0.5s ease-out;
+}
+
+.token-slide-from-right {
+  animation: slideFromRight 0.5s ease-out;
+}
+
+.token-slide-from-bottom-left {
+  animation: slideFromBottomLeft 0.5s ease-out;
+}
+
+.token-slide-from-bottom-right {
+  animation: slideFromBottomRight 0.5s ease-out;
+}
+
+/* Keyframes for sliding from center - uses a scale and fade effect since exact position varies */
+@keyframes slideFromCenter {
   from {
-    transform: scale(1.5);
-    opacity: 0.5;
+    transform: scale(0.3);
+    opacity: 0;
   }
   50% {
-    transform: scale(1.2);
+    transform: scale(0.7);
+    opacity: 0.7;
   }
   to {
     transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Keyframes for sliding between player positions */
+@keyframes slideFromTopLeft {
+  from {
+    transform: translate(-400px, -200px) scale(0.8);
+    opacity: 0.5;
+  }
+  to {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes slideFromTopRight {
+  from {
+    transform: translate(400px, -200px) scale(0.8);
+    opacity: 0.5;
+  }
+  to {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes slideFromLeft {
+  from {
+    transform: translate(-600px, 0) scale(0.8);
+    opacity: 0.5;
+  }
+  to {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes slideFromRight {
+  from {
+    transform: translate(600px, 0) scale(0.8);
+    opacity: 0.5;
+  }
+  to {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes slideFromBottomLeft {
+  from {
+    transform: translate(-400px, 200px) scale(0.8);
+    opacity: 0.5;
+  }
+  to {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes slideFromBottomRight {
+  from {
+    transform: translate(400px, 200px) scale(0.8);
+    opacity: 0.5;
+  }
+  to {
+    transform: translate(0, 0) scale(1);
     opacity: 1;
   }
 }
