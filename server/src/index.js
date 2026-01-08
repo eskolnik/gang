@@ -43,7 +43,7 @@ app.use((req, res, next) => {
 
 // Serve static files from client build in production
 if (config.isProduction) {
-  const clientDistPath = path.join(__dirname, '../../client/dist');
+  const clientDistPath = path.join(__dirname, '../client/dist');
   app.use(express.static(clientDistPath));
   console.log('📦 Serving static files from:', clientDistPath);
 }
@@ -78,7 +78,7 @@ io.engine.on("connection_error", (err) => {
 // Catch-all route for SPA (must be last, after Socket.io setup)
 if (config.isProduction) {
   app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../../client/dist/index.html'));
+    res.sendFile(path.join(__dirname, '../client/dist/index.html'));
   });
 }
 
