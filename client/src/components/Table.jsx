@@ -229,10 +229,9 @@ const Table = ({
                 ) : (
                   // Show token pool during game
                   <div className="token-pool-container">
-                    <div className="token-pool">
-                      {gameState.tokenPool &&
-                        gameState.tokenPool.length > 0 &&
-                        [...gameState.tokenPool]
+                    {gameState.tokenPool && gameState.tokenPool.length > 0 && (
+                      <div className="token-pool">
+                        {[...gameState.tokenPool]
                           .sort((a, b) => a - b)
                           .map((tokenNum) => (
                             <TokenDisplay
@@ -244,13 +243,22 @@ const Table = ({
                               onClick={() => onTokenClick(tokenNum)}
                             />
                           ))}
-                    </div>
-                    {/* Ready button - only shown when all players have tokens */}
-                    {gameState.phase.includes('betting') && gameState.allPlayersHaveTokens && (
-                      <button className="btn-ready-table" onClick={onSetReady}>
-                        {gameState.players?.find(p => p.id === myPlayerId)?.ready ? 'Unready' : 'Ready'}
-                      </button>
+                      </div>
                     )}
+
+                    {/* Ready button - only shown when all players have tokens */}
+                    {gameState.phase.includes("betting") &&
+                      gameState.allPlayersHaveTokens && (
+                        <button
+                          className="btn-ready-table"
+                          onClick={onSetReady}
+                        >
+                          {gameState.players?.find((p) => p.id === myPlayerId)
+                            ?.ready
+                            ? "Unready"
+                            : "Ready"}
+                        </button>
+                      )}
                   </div>
                 )}
               </div>
