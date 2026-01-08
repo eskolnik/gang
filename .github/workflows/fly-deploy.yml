@@ -31,5 +31,5 @@ jobs:
       - name: Deployment Summary
         run: |
           echo "🚀 Deployment complete!"
-          echo "🔗 App URL: https://the-gang.fly.dev"
+          echo "🔗 App URL: https://da-gang.fly.dev"
           echo "📊 Check status: flyctl status"

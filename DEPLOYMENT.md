@@ -19,7 +19,7 @@ This guide walks through deploying The Gang to Fly.io using GitHub Actions for a
 
 ```bash
 # From the project root
-flyctl apps create the-gang
+flyctl apps create da-gang
 
 # Or use the existing app name from fly.toml
 # The app name must be globally unique on Fly.io
@@ -29,7 +29,7 @@ flyctl apps create the-gang
 
 ```bash
 # Create a 1GB volume in your primary region (change region if needed)
-flyctl volumes create the_gang_data --region ewr --size 1
+flyctl volumes create da_gang_data --region ewr --size 1
 ```
 
 ### 3. Deploy Manually (First Time)
@@ -173,7 +173,7 @@ flyctl volumes extend <volume-id> --size 5
 flyctl logs
 
 # View recent logs
-flyctl logs --app the-gang
+flyctl logs --app the-gda
 ```
 
 ### Monitor Performance
