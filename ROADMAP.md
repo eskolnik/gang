@@ -286,9 +286,10 @@ server/                      # Node.js server
 - [ ] Smooth card animations (deal, flip)
 - [ ] Token movement animations
 - [ ] Transition effects between phases
-- [ ] Improved mobile responsiveness
+- [ ] Animated hand reveal in order at end of game
 - [ ] Tutorial/help system
 - [ ] Settings/options menu
+- [ ] Button placement improvements
 
 #### 6.3 Audio
 - [ ] Sound effects for game actions
@@ -302,3 +303,6 @@ server/                      # Node.js server
 - [ ] Performance optimization
 - [ ] Monitoring and logging
 - [ ] Deployment automation (CI/CD)
+
+#### 6.5 Mobile Version
+- [ ] Mobile UI
