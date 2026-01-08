@@ -227,10 +227,32 @@ export class NetworkManager {
       this.socket.emit('getRoomList', (response) => {
         if (response.success) {
           console.log('✅ Got room list:', response.rooms.length, 'rooms');
-          resolve(response.rooms);
+          resolve({ rooms: response.rooms, myActiveGameId: response.myActiveGameId });
         } else {
           console.error('❌ Failed to get room list:', response.error);
           reject(new Error(response.error));
+        }
+      });
+    });
+  }
+
+  /**
+   * Return to lobby while keeping seat in game
+   */
+  returnToLobby() {
+    return new Promise((resolve, reject) => {
+      if (!this.socket) {
+        reject(new Error('Not connected to server'));
+        return;
+      }
+
+      this.socket.emit('returnToLobby', (response) => {
+        if (response && response.success) {
+          console.log('✅ Returned to lobby');
+          resolve(response);
+        } else {
+          console.error('❌ Failed to return to lobby:', response?.error);
+          reject(new Error(response?.error || 'Failed to return to lobby'));
         }
       });
     });

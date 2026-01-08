@@ -386,11 +386,12 @@ const PlayerInfo = ({
     <div
       className={`player-info ${isCurrentTurn ? "player-info-active" : ""} ${
         isMe ? "player-info-me" : ""
-      }`}
+      } ${!player.atTable ? "player-info-away" : ""}`}
     >
       <div className="player-name">
         {isHost && "👑 "}
         {player.name}
+        {!player.atTable && " 🚪"}
         {player.ready && <span className="ready-check">✓</span>}
       </div>
 

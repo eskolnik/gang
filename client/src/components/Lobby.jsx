@@ -1,37 +1,49 @@
 import { useState, useEffect } from 'react';
 import { useNetwork } from '../context/NetworkContext';
+import { getSession, getPlayerName, savePlayerName } from '../game/utils/storage';
 import './Lobby.css';
 
 const Lobby = ({ onStartGame }) => {
-  const { connected, roomList, createRoom, joinRoom, getRoomList } = useNetwork();
-  const [playerName, setPlayerName] = useState('Player');
+  const { connected, roomList, createRoom, joinRoom, getRoomList, rejoinGame } = useNetwork();
+  const [playerName, setPlayerName] = useState(getPlayerName() || 'Player');
   const [roomCode, setRoomCode] = useState('');
   const [statusMessage, setStatusMessage] = useState('');
   const [statusType, setStatusType] = useState('info'); // 'info' | 'success' | 'error'
   const [isLoading, setIsLoading] = useState(false);
+  const [myActiveGameId, setMyActiveGameId] = useState(null);
+
+  // Fetch room list and update myActiveGameId
+  const fetchRoomList = async () => {
+    try {
+      const { myActiveGameId: activeId } = await getRoomList();
+      setMyActiveGameId(activeId);
+    } catch (error) {
+      console.error('Failed to get room list:', error);
+    }
+  };
 
   // Update status message based on connection
   useEffect(() => {
     if (connected) {
       setStatusMessage('✅ Connected to server');
       setStatusType('success');
-      getRoomList().catch(console.error);
+      fetchRoomList();
     } else {
       setStatusMessage('Connecting to server...');
       setStatusType('info');
     }
-  }, [connected, getRoomList]);
+  }, [connected]);
 
   // Auto-refresh room list every 3 seconds
   useEffect(() => {
     if (!connected) return;
 
     const interval = setInterval(() => {
-      getRoomList().catch(console.error);
+      fetchRoomList();
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [connected, getRoomList]);
+  }, [connected]);
 
   const handleCreateRoom = async () => {
     if (!playerName.trim()) {
@@ -99,10 +111,43 @@ const Lobby = ({ onStartGame }) => {
     handleJoinRoom(code);
   };
 
+  const handleRejoinGame = async (roomId) => {
+    try {
+      setIsLoading(true);
+      setStatusMessage('Rejoining game...');
+      setStatusType('info');
+
+      const session = getSession();
+      if (!session || session.roomId !== roomId) {
+        throw new Error('Session not found');
+      }
+
+      await rejoinGame(session.roomId, session.playerId);
+
+      setStatusMessage(`✅ Rejoined game: ${roomId}`);
+      setStatusType('success');
+
+      // Transition to game after brief delay
+      setTimeout(() => {
+        onStartGame();
+      }, 500);
+    } catch (error) {
+      setStatusMessage(`❌ ${error.message}`);
+      setStatusType('error');
+      setIsLoading(false);
+    }
+  };
+
   const handleRoomCodeKeyPress = (e) => {
     if (e.key === 'Enter') {
       handleJoinByCode();
     }
+  };
+
+  const handlePlayerNameChange = (e) => {
+    const name = e.target.value;
+    setPlayerName(name);
+    savePlayerName(name);
   };
 
   return (
@@ -124,33 +169,78 @@ const Lobby = ({ onStartGame }) => {
             id="player-name"
             type="text"
             value={playerName}
-            onChange={(e) => setPlayerName(e.target.value)}
+            onChange={handlePlayerNameChange}
             placeholder="Enter your name"
             disabled={isLoading}
             maxLength={20}
           />
         </div>
 
+        {/* My Active Game (if any) */}
+        {myActiveGameId && (
+          <div className="rooms-section">
+            <h2>Your Active Game</h2>
+            <div className="room-list">
+              {roomList.filter(r => r.roomId === myActiveGameId).map((room) => (
+                <div
+                  key={room.roomId}
+                  className="room-item room-item-active"
+                >
+                  <div className="room-id">{room.roomId}</div>
+                  <div className="room-count">{room.playerCount}/{room.maxPlayers}</div>
+                  <div className="room-players">{room.players.join(', ')}</div>
+                  <button
+                    className="btn btn-primary btn-rejoin"
+                    onClick={() => !isLoading && handleRejoinGame(room.roomId)}
+                    disabled={isLoading}
+                  >
+                    Rejoin Table
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Available Rooms */}
         <div className="rooms-section">
-          <h2>Available Rooms</h2>
+          <h2>All Rooms</h2>
           <div className="room-list">
             {!connected ? (
               <div className="room-list-empty">Connecting...</div>
             ) : roomList.length === 0 ? (
               <div className="room-list-empty">No rooms available. Create one!</div>
             ) : (
-              roomList.slice(0, 5).map((room) => (
-                <div
-                  key={room.roomId}
-                  className="room-item"
-                  onClick={() => !isLoading && handleJoinRoom(room.roomId)}
-                >
-                  <div className="room-id">{room.roomId}</div>
-                  <div className="room-count">{room.playerCount}/{room.maxPlayers}</div>
-                  <div className="room-players">{room.players.join(', ')}</div>
-                </div>
-              ))
+              roomList.slice(0, 10).map((room) => {
+                const isMyGame = room.roomId === myActiveGameId;
+                const isJoinable = room.isJoinable && !isMyGame;
+                const isInProgress = room.isStarted;
+
+                if (isMyGame) return null; // Already shown above
+
+                return (
+                  <div
+                    key={room.roomId}
+                    className={`room-item ${isInProgress ? 'room-item-in-progress' : ''}`}
+                  >
+                    <div className="room-id">{room.roomId}</div>
+                    <div className="room-count">{room.playerCount}/{room.maxPlayers}</div>
+                    <div className="room-players">{room.players.join(', ')}</div>
+                    <div className="room-status">
+                      {isInProgress ? '🎮 In Progress' : '⏳ Waiting'}
+                    </div>
+                    {isJoinable && (
+                      <button
+                        className="btn btn-secondary btn-join"
+                        onClick={() => !isLoading && handleJoinRoom(room.roomId)}
+                        disabled={isLoading}
+                      >
+                        Join
+                      </button>
+                    )}
+                  </div>
+                );
+              })
             )}
           </div>
         </div>

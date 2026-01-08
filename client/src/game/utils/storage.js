@@ -5,6 +5,7 @@
 
 const STORAGE_KEYS = {
   SESSION: 'game_session',
+  PLAYER_NAME: 'player_name',
 };
 
 // Session expiration time (4 hours in milliseconds)
@@ -96,4 +97,41 @@ export function hasActiveSession() {
  */
 export function clearAllData() {
   clearSession();
+  clearPlayerName();
+}
+
+/**
+ * Save player name to localStorage for persistence across sessions
+ * @param {string} name - Player name to save
+ */
+export function savePlayerName(name) {
+  try {
+    localStorage.setItem(STORAGE_KEYS.PLAYER_NAME, name);
+  } catch (error) {
+    console.error('Failed to save player name to localStorage:', error);
+  }
+}
+
+/**
+ * Get saved player name from localStorage
+ * @returns {string|null} Saved player name or null
+ */
+export function getPlayerName() {
+  try {
+    return localStorage.getItem(STORAGE_KEYS.PLAYER_NAME);
+  } catch (error) {
+    console.error('Failed to read player name from localStorage:', error);
+    return null;
+  }
+}
+
+/**
+ * Clear saved player name from localStorage
+ */
+export function clearPlayerName() {
+  try {
+    localStorage.removeItem(STORAGE_KEYS.PLAYER_NAME);
+  } catch (error) {
+    console.error('Failed to clear player name from localStorage:', error);
+  }
 }

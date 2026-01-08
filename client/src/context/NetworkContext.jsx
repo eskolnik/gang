@@ -92,9 +92,22 @@ export const NetworkProvider = ({ children }) => {
   }, []);
 
   const getRoomList = useCallback(async () => {
-    const rooms = await networkManager.getRoomList();
-    setRoomList(rooms);
-    return rooms;
+    const result = await networkManager.getRoomList();
+    setRoomList(result.rooms);
+    return result;
+  }, []);
+
+  const rejoinGame = useCallback(async (roomId, playerId) => {
+    const response = await networkManager.rejoinGame(roomId, playerId);
+    setRoomId(networkManager.roomId);
+    setPlayerId(networkManager.playerId);
+    setPlayerName(networkManager.playerName);
+    setGameState(networkManager.gameState);
+    return response;
+  }, []);
+
+  const returnToLobby = useCallback(async () => {
+    return await networkManager.returnToLobby();
   }, []);
 
   const startGame = useCallback(async () => {
@@ -138,6 +151,8 @@ export const NetworkProvider = ({ children }) => {
     createRoom,
     joinRoom,
     getRoomList,
+    rejoinGame,
+    returnToLobby,
     startGame,
     restartGame,
     claimToken,

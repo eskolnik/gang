@@ -21,12 +21,23 @@ const PHASE_NAMES = {
 };
 
 const Game = ({ onReturnToLobby }) => {
-  const { gameState, roomId, playerId, startGame, restartGame, claimToken, passTurn, setReady, leaveGame, networkManager } = useNetwork();
+  const { gameState, roomId, playerId, startGame, restartGame, claimToken, passTurn, setReady, leaveGame, returnToLobby, networkManager } = useNetwork();
   const [gameResult, setGameResult] = useState(null);
 
-  const handleReturnToLobby = useCallback(() => {
-    leaveGame();
-    onReturnToLobby();
+  const handleReturnToLobby = useCallback(async () => {
+    try {
+      await returnToLobby();
+      onReturnToLobby();
+    } catch (error) {
+      console.error('Failed to return to lobby:', error);
+    }
+  }, [returnToLobby, onReturnToLobby]);
+
+  const handleLeaveGame = useCallback(() => {
+    if (window.confirm('Are you sure you want to leave this game? You will lose your seat.')) {
+      leaveGame();
+      onReturnToLobby();
+    }
   }, [leaveGame, onReturnToLobby]);
 
   // Listen for game complete event
@@ -154,10 +165,15 @@ const Game = ({ onReturnToLobby }) => {
 
   return (
     <div className="game">
-      {/* TOP LEFT: Return to Lobby button */}
-      <button className="btn-return" onClick={handleReturnToLobby}>
-        Return to Lobby
-      </button>
+      {/* TOP LEFT: Navigation buttons */}
+      <div className="game-nav-buttons">
+        <button className="btn-return" onClick={handleReturnToLobby}>
+          Return to Lobby
+        </button>
+        <button className="btn-leave" onClick={handleLeaveGame}>
+          <i className="fas fa-right-from-bracket"></i> Leave Game
+        </button>
+      </div>
 
       {/* TOP RIGHT: Round Tracker */}
       {currentRound > 0 && (

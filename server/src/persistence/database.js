@@ -54,16 +54,18 @@ function createTables() {
     )
   `);
 
-  // Check if we need to migrate the players table (remove fingerprint column)
+  // Check if we need to migrate the players table
   const tableInfo = db.prepare("PRAGMA table_info(players)").all();
   const hasFingerprintColumn = tableInfo.some(col => col.name === 'fingerprint');
+  const hasAtTableColumn = tableInfo.some(col => col.name === 'at_table');
 
-  if (hasFingerprintColumn) {
-    console.log('🔄 Migrating players table to remove fingerprint column...');
+  if (hasFingerprintColumn || (tableInfo.length > 0 && !hasAtTableColumn)) {
+    console.log('🔄 Migrating players table...');
 
-    // SQLite doesn't support DROP COLUMN, so we need to recreate the table
+    // SQLite doesn't support DROP COLUMN or ADD COLUMN with constraints easily
+    // So we recreate the table
     db.exec(`
-      -- Create new table without fingerprint
+      -- Create new table with correct schema
       CREATE TABLE players_new (
         player_id TEXT PRIMARY KEY,
         room_id TEXT NOT NULL,
@@ -77,9 +79,13 @@ function createTables() {
         FOREIGN KEY (room_id) REFERENCES game_rooms(room_id) ON DELETE CASCADE
       );
 
-      -- Copy data from old table
+      -- Copy data from old table (handling both old schemas)
       INSERT INTO players_new (player_id, room_id, name, socket_id, pocket_cards, ready, connected, at_table, last_seen)
-      SELECT player_id, room_id, name, socket_id, pocket_cards, ready, connected, 1, last_seen
+      SELECT player_id, room_id, name, socket_id, pocket_cards,
+             COALESCE(ready, 0),
+             COALESCE(connected, 1),
+             1,
+             last_seen
       FROM players;
 
       -- Drop old table
@@ -91,7 +97,7 @@ function createTables() {
 
     console.log('✅ Players table migrated successfully');
   } else {
-    // Create players table without fingerprint
+    // Create players table with correct schema
     db.exec(`
       CREATE TABLE IF NOT EXISTS players (
         player_id TEXT PRIMARY KEY,
@@ -157,6 +163,21 @@ export function cleanupExpiredGames() {
   return result.changes;
 }
 
+/**
+ * Purge all game data (useful for development/testing)
+ * WARNING: This deletes ALL games and players
+ */
+export function purgeAllGames() {
+  const db = getDatabase();
+
+  db.exec(`
+    DELETE FROM players;
+    DELETE FROM game_rooms;
+  `);
+
+  console.log('🗑️ All game data purged');
+}
+
 // Initialize database on import
 initDatabase();
 
@@ -164,5 +185,6 @@ export default {
   initDatabase,
   getDatabase,
   closeDatabase,
-  cleanupExpiredGames
+  cleanupExpiredGames,
+  purgeAllGames
 };

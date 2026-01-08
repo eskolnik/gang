@@ -17,11 +17,18 @@
   font-size: 24px;
 }
 
-/* Return to Lobby button - TOP LEFT CORNER */
-.btn-return {
+/* Navigation buttons - TOP LEFT CORNER */
+.game-nav-buttons {
   position: fixed;
   top: 20px;
   left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 100;
+}
+
+.btn-return {
   padding: 10px 20px;
   font-family: Arial, sans-serif;
   font-size: 14px;
@@ -30,12 +37,34 @@
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  z-index: 100;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .btn-return:hover {
   background-color: #6ba3e8;
+}
+
+.btn-leave {
+  padding: 10px 20px;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  color: #ffffff;
+  background-color: #dc2626;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-leave:hover {
+  background-color: #ef4444;
+}
+
+.btn-leave i {
+  font-size: 14px;
 }
 
 /* Round Tracker - TOP RIGHT CORNER */
