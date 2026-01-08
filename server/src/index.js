@@ -24,6 +24,23 @@ const io = new Server(httpServer, {
 // Store active game rooms
 const gameRooms = new Map();
 
+// Set Content Security Policy that allows our app to function
+app.use((req, res, next) => {
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self'; " +
+    "script-src 'self' 'unsafe-inline'; " +
+    "style-src 'self' 'unsafe-inline'; " +
+    "img-src 'self' data:; " +
+    "font-src 'self' data:; " +
+    "connect-src 'self' ws: wss:; " +
+    "frame-ancestors 'none'; " +
+    "base-uri 'self'; " +
+    "form-action 'self'"
+  );
+  next();
+});
+
 // Serve static files from client build in production
 if (config.isProduction) {
   const clientDistPath = path.join(__dirname, '../../client/dist');
