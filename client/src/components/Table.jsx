@@ -29,11 +29,16 @@ const Table = ({
   const [visualTokenAssignments, setVisualTokenAssignments] = useState({}); // What we actually render
   const [visualTokenPool, setVisualTokenPool] = useState([]); // What we actually show in pool
   const [animatingTokens, setAnimatingTokens] = useState([]); // Phantom tokens currently animating: [{ tokenNum, fromPlayerId, toPlayerId, offsetX, offsetY }]
+  const [archivingTokens, setArchivingTokens] = useState([]); // Tokens being archived to history: [{ tokenNum, playerId, roundIndex, offsetX, offsetY }]
+  const [appearingTokens, setAppearingTokens] = useState([]); // Tokens appearing in pool at round start: [tokenNum, ...]
+  const [visualTokenHistory, setVisualTokenHistory] = useState({}); // { playerId: [token1, token2, token3, token4] }
+  const [lastPhase, setLastPhase] = useState(null);
 
   // Refs for token slot positions
   const tokenSlotRefs = useRef({});
   const centerPoolRef = useRef(null);
   const centerTokenSlotRefs = useRef({}); // Individual refs for each token slot in pool
+  const tokenHistoryRefs = useRef({}); // { playerId: { 0: ref, 1: ref, 2: ref, 3: ref } }
 
   // Helper to calculate position offset between two elements
   const calculateOffset = (fromPlayerId, toPlayerId, tokenNum = null) => {
@@ -78,10 +83,28 @@ const Table = ({
   useEffect(() => {
     if (!gameState?.tokenAssignments || !gameState?.tokenPool) return;
 
+    // Skip all token movement tracking if we're in the middle of an archiving animation
+    // This prevents phantom tokens from being created during phase transitions
+    if (archivingTokens.length > 0) return;
+
     const currentAssignments = gameState.tokenAssignments;
     const currentPool = gameState.tokenPool;
     const phantomTokens = [];
     const ANIMATION_DURATION = 700; // Slower animation
+
+    // Detect if this is a round start: pool went from empty/few tokens to full set (one per player)
+    // This happens at the start of each betting round
+    const playerCount = players?.length || 0;
+    const isRoundStart = currentPool.length === playerCount && visualTokenPool.length < playerCount && Object.keys(currentAssignments).length === 0;
+
+    if (isRoundStart) {
+      // At round start, tokens should only use flip animation, not sliding
+      // Update visual state immediately without creating phantom tokens
+      setVisualTokenAssignments({});
+      setVisualTokenPool(currentPool);
+      setLastTokenAssignments({});
+      return;
+    }
 
     // Build reverse maps: token -> playerId
     const currentTokenToPlayer = {};
@@ -115,8 +138,9 @@ const Table = ({
             offsetY,
             phase: gameState.phase
           });
-        } else if (visualTokenPool.includes(currentToken)) {
+        } else if (visualTokenPool.includes(currentToken) && !appearingTokens.includes(currentToken)) {
           // Token came from pool - calculate FROM pool TO player
+          // Skip if token is currently appearing (it will use flip animation instead)
           const { offsetX, offsetY } = calculateOffset('center', playerId, currentToken);
           phantomTokens.push({
             tokenNum: currentToken,
@@ -130,13 +154,15 @@ const Table = ({
       }
     });
 
-    // Check for tokens returning to pool
+    // Check for tokens returning to pool (but not during round transitions when they're archived)
     Object.keys(visualTokenAssignments).forEach((playerId) => {
       const visualToken = visualTokenAssignments[playerId];
       const currentToken = currentAssignments[playerId];
 
       // If player had a token but now has a different one or none, and the old token is now in pool
-      if (visualToken !== currentToken && currentPool.includes(visualToken)) {
+      // Skip if this token is being archived or appearing (will be handled by those animations)
+      if (visualToken !== currentToken && currentPool.includes(visualToken) &&
+          archivingTokens.length === 0 && !appearingTokens.includes(visualToken)) {
         // Calculate FROM player TO pool (specific slot for this token)
         const { offsetX, offsetY } = calculateOffset(playerId, 'center', visualToken);
         phantomTokens.push({
@@ -187,7 +213,141 @@ const Table = ({
     }
 
     setLastTokenAssignments(currentAssignments);
-  }, [gameState?.tokenAssignments, gameState?.tokenPool]);
+  }, [gameState?.tokenAssignments, gameState?.tokenPool, appearingTokens, archivingTokens.length]);
+
+  // Detect phase changes and trigger token archiving animations
+  useEffect(() => {
+    if (!gameState?.phase || !lastPhase) {
+      setLastPhase(gameState?.phase);
+      return;
+    }
+
+    const currentPhase = gameState.phase;
+    const ARCHIVE_DURATION = 700;
+
+    // Detect transition from one betting round to the next
+    const phaseTransitions = {
+      'betting_1': { next: 'betting_2', roundIndex: 0 },
+      'betting_2': { next: 'betting_3', roundIndex: 1 },
+      'betting_3': { next: 'betting_4', roundIndex: 2 },
+      'betting_4': { next: 'complete', roundIndex: 3 }
+    };
+
+    const transition = phaseTransitions[lastPhase];
+    if (transition && currentPhase === transition.next) {
+      // A betting round just completed - archive current tokens to history
+      const tokensToArchive = [];
+      const currentHistory = gameState.bettingRoundHistory || [];
+      const roundIndex = transition.roundIndex;
+
+      // IMMEDIATELY identify tokens that will appear in the new pool
+      // This prevents the movement tracking effect from creating sliding animations
+      const tokensInNewPool = gameState.tokenPool || [];
+      if (tokensInNewPool.length > 0) {
+        setAppearingTokens(tokensInNewPool);
+      }
+
+      Object.keys(visualTokenAssignments).forEach(playerId => {
+        const tokenNum = visualTokenAssignments[playerId];
+        if (tokenNum !== undefined) {
+          // Calculate offset from player's token slot to their history slot
+          const fromRef = tokenSlotRefs.current[playerId];
+          const toRef = tokenHistoryRefs.current[playerId]?.[roundIndex];
+
+          if (fromRef && toRef) {
+            const fromRect = fromRef.getBoundingClientRect();
+            const toRect = toRef.getBoundingClientRect();
+            const containerRect = fromRef.closest('.table-container')?.getBoundingClientRect();
+
+            if (containerRect) {
+              const fromCenterX = fromRect.left + fromRect.width / 2;
+              const fromCenterY = fromRect.top + fromRect.height / 2;
+              const toCenterX = toRect.left + toRect.width / 2;
+              const toCenterY = toRect.top + toRect.height / 2;
+
+              tokensToArchive.push({
+                tokenNum,
+                playerId,
+                roundIndex,
+                offsetX: fromCenterX - toCenterX,
+                offsetY: fromCenterY - toCenterY,
+                phase: lastPhase
+              });
+            }
+          }
+        }
+      });
+
+      if (tokensToArchive.length > 0) {
+        setArchivingTokens(tokensToArchive);
+
+        // Remove current tokens from visual state immediately
+        setVisualTokenAssignments({});
+
+        // After animation, update visual history and show appearing tokens in pool
+        setTimeout(() => {
+          const newHistory = { ...visualTokenHistory };
+          tokensToArchive.forEach(({ playerId, tokenNum, roundIndex }) => {
+            if (!newHistory[playerId]) {
+              newHistory[playerId] = [];
+            }
+            newHistory[playerId][roundIndex] = tokenNum;
+          });
+          setVisualTokenHistory(newHistory);
+          setArchivingTokens([]);
+
+          // Now show tokens in the pool (they're already marked as appearing)
+          setVisualTokenPool(tokensInNewPool);
+
+          // Clear appearing animation after it completes
+          setTimeout(() => {
+            setAppearingTokens([]);
+            // After all animations, sync visual history with actual state
+            const finalHistory = {};
+            players.forEach(player => {
+              const playerHistory = gameState.bettingRoundHistory
+                ?.map(round => round.tokenAssignments[player.id])
+                .filter(token => token !== undefined) || [];
+              finalHistory[player.id] = playerHistory;
+            });
+            setVisualTokenHistory(finalHistory);
+          }, 700);
+        }, ARCHIVE_DURATION);
+      }
+    }
+
+    setLastPhase(currentPhase);
+  }, [gameState?.phase, lastPhase, visualTokenAssignments, gameState?.bettingRoundHistory, gameState?.tokenPool]);
+
+  // Initialize visual token history from game state (only on mount and when not animating)
+  useEffect(() => {
+    // Don't update during animations or phase transitions
+    if (archivingTokens.length > 0 || appearingTokens.length > 0) return;
+
+    // Also don't update if we just transitioned phases (wait for animations to complete)
+    if (gameState?.phase !== lastPhase && lastPhase !== null) return;
+
+    // Only sync if visual history is empty or doesn't match game state
+    // (to avoid overwriting during animations)
+    const gameHistory = {};
+    players.forEach(player => {
+      const playerHistory = gameState.bettingRoundHistory
+        ?.map(round => round.tokenAssignments[player.id])
+        .filter(token => token !== undefined) || [];
+      gameHistory[player.id] = playerHistory;
+    });
+
+    // Only update if visual history is significantly different (prevents flicker)
+    const needsUpdate = Object.keys(gameHistory).some(playerId => {
+      const visual = visualTokenHistory[playerId] || [];
+      const game = gameHistory[playerId] || [];
+      return visual.length !== game.length;
+    });
+
+    if (needsUpdate) {
+      setVisualTokenHistory(gameHistory);
+    }
+  }, [gameState?.bettingRoundHistory, players, archivingTokens.length, appearingTokens.length, visualTokenHistory, gameState?.phase, lastPhase]);
 
   // Define fixed slots: 2 top, 1 left, 1 right, 2 bottom
   // Same view for all players - no reordering
@@ -241,6 +401,8 @@ const Table = ({
                 gameState={gameState}
                 gameResult={gameResult}
                 isRevealed={revealedHands.includes(playerSlots[0].player.id)}
+                visualTokenHistory={visualTokenHistory}
+                tokenHistoryRefs={tokenHistoryRefs}
               />
             </div>
           )}
@@ -256,6 +418,8 @@ const Table = ({
                 gameState={gameState}
                 gameResult={gameResult}
                 isRevealed={revealedHands.includes(playerSlots[1].player.id)}
+                visualTokenHistory={visualTokenHistory}
+                tokenHistoryRefs={tokenHistoryRefs}
               />
             </div>
           )}
@@ -276,6 +440,8 @@ const Table = ({
                 gameState={gameState}
                 gameResult={gameResult}
                 isRevealed={revealedHands.includes(playerSlots[2].player.id)}
+                visualTokenHistory={visualTokenHistory}
+                tokenHistoryRefs={tokenHistoryRefs}
               />
             )}
           </div>
@@ -422,6 +588,7 @@ const Table = ({
                     <div className="token-pool">
                       {[1, 2, 3, 4, 5, 6].map((tokenNum) => {
                         const isInPool = visualTokenPool.includes(tokenNum);
+                        const isAppearing = appearingTokens.includes(tokenNum);
 
                         return (
                           <div
@@ -434,6 +601,7 @@ const Table = ({
                                 number={tokenNum}
                                 phase={gameState.phase}
                                 isMyToken={false}
+                                appearing={isAppearing}
                                 canClick={gameState.currentTurn === myPlayerId}
                                 onClick={() => onTokenClick(tokenNum)}
                               />
@@ -543,6 +711,8 @@ const Table = ({
                 gameState={gameState}
                 gameResult={gameResult}
                 isRevealed={revealedHands.includes(playerSlots[3].player.id)}
+                visualTokenHistory={visualTokenHistory}
+                tokenHistoryRefs={tokenHistoryRefs}
               />
             )}
           </div>
@@ -562,6 +732,8 @@ const Table = ({
                 gameState={gameState}
                 gameResult={gameResult}
                 isRevealed={revealedHands.includes(playerSlots[4].player.id)}
+                visualTokenHistory={visualTokenHistory}
+                tokenHistoryRefs={tokenHistoryRefs}
               />
             </div>
           )}
@@ -577,6 +749,8 @@ const Table = ({
                 gameState={gameState}
                 gameResult={gameResult}
                 isRevealed={revealedHands.includes(playerSlots[5].player.id)}
+                visualTokenHistory={visualTokenHistory}
+                tokenHistoryRefs={tokenHistoryRefs}
               />
             </div>
           )}
@@ -624,6 +798,44 @@ const Table = ({
           </div>
         );
       })}
+
+      {/* Archiving tokens - tokens moving to history with shrink animation */}
+      {archivingTokens.map((archive, index) => {
+        const sourceRef = tokenSlotRefs.current[archive.playerId];
+        if (!sourceRef) return null;
+
+        const sourceRect = sourceRef.getBoundingClientRect();
+        const containerRect = sourceRef.closest('.table-container')?.getBoundingClientRect();
+        if (!containerRect) return null;
+
+        // Position at source (current token slot)
+        const left = sourceRect.left - containerRect.left + (sourceRect.width / 2) - 27;
+        const top = sourceRect.top - containerRect.top + (sourceRect.height / 2) - 27;
+
+        return (
+          <div
+            key={`archive-${archive.playerId}-${archive.tokenNum}-${index}`}
+            style={{
+              position: 'absolute',
+              left: `${left}px`,
+              top: `${top}px`,
+              pointerEvents: 'none',
+              zIndex: 1000,
+            }}
+          >
+            <TokenDisplay
+              number={archive.tokenNum}
+              phase={archive.phase}
+              isMyToken={false}
+              offsetX={-archive.offsetX}
+              offsetY={-archive.offsetY}
+              animating={true}
+              shrinking={true}
+              canClick={false}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 };
@@ -637,6 +849,8 @@ const PlayerInfo = ({
   gameState,
   gameResult,
   isRevealed = false,
+  visualTokenHistory,
+  tokenHistoryRefs,
 }) => {
   const hasPocketCards = gameState.phase !== "waiting";
   const isHost = player.id === gameState.hostId;
@@ -651,13 +865,8 @@ const PlayerInfo = ({
     ? gameResult.rankedHands.find((h) => h.playerId === player.id)
     : null;
 
-  // Get historical tokens for this player from previous rounds
-  const tokenHistory =
-    gameState.bettingRoundHistory
-      ?.map((round) => {
-        return round.tokenAssignments[player.id];
-      })
-      .filter((token) => token !== undefined) || [];
+  // Get historical tokens for this player from visual state (not actual state during animation)
+  const tokenHistory = visualTokenHistory[player.id] || [];
 
   return (
     <div
@@ -721,21 +930,33 @@ const PlayerInfo = ({
           </div>
         )}
 
-        {/* Token history from previous rounds - always render container for consistent height */}
+        {/* Token history from previous rounds - fixed slots for all 4 rounds */}
         <div className="token-history">
-          {tokenHistory.map((token, i) => (
-            <div
-              key={i}
-              className="token-history-item"
-              style={{
-                backgroundColor: ["#ffffff", "#ffff00", "#ff9900", "#ff0000"][
-                  i
-                ],
-              }}
-            >
-              {token}
-            </div>
-          ))}
+          {[0, 1, 2, 3].map((roundIndex) => {
+            const token = tokenHistory[roundIndex];
+            return (
+              <div
+                key={roundIndex}
+                className="token-history-item"
+                ref={(el) => {
+                  if (!tokenHistoryRefs.current[player.id]) {
+                    tokenHistoryRefs.current[player.id] = {};
+                  }
+                  tokenHistoryRefs.current[player.id][roundIndex] = el;
+                }}
+                style={{
+                  backgroundColor: token !== undefined
+                    ? ["#ffffff", "#ffff00", "#ff9900", "#ff0000"][roundIndex]
+                    : "transparent",
+                  border: token !== undefined
+                    ? "2px solid #333333"
+                    : "2px solid rgba(255, 255, 255, 0.2)",
+                }}
+              >
+                {token !== undefined ? token : ""}
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -752,6 +973,8 @@ const TokenDisplay = ({
   offsetX = 0,
   offsetY = 0,
   animating = false,
+  shrinking = false,
+  appearing = false,
 }) => {
   const roundColors = {
     betting_1: "#ffffff",
@@ -769,7 +992,10 @@ const TokenDisplay = ({
     ...(animating && {
       '--offset-x': `${offsetX}px`,
       '--offset-y': `${offsetY}px`,
-      animation: 'tokenSlide 0.7s ease-out both',
+      animation: shrinking ? 'tokenSlideShrink 0.7s ease-out both' : 'tokenSlide 0.7s ease-out both',
+    }),
+    ...(appearing && !animating && {
+      animation: 'tokenFlipBounce 0.7s ease-out both',
     }),
   };
 
