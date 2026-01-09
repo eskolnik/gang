@@ -388,14 +388,19 @@
   }
 }
 
-/* Hand description reveal */
+/* Hand description - always visible to maintain consistent size */
 .hand-description {
   font-size: 11px;
   color: #ffff00;
   text-align: center;
   margin-top: 4px;
+  min-height: 16px; /* Ensure space is always reserved */
   font-weight: bold;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* Animation only applied to revealed hands at game end */
+.hand-description-reveal {
   animation: fadeInUp 0.4s ease-out;
   animation-delay: 0.3s;
   animation-fill-mode: backwards;

@@ -350,14 +350,14 @@ const Table = ({
   }, [gameState?.bettingRoundHistory, players, archivingTokens.length, appearingTokens.length, visualTokenHistory, gameState?.phase, lastPhase]);
 
   // Define fixed slots: 2 top, 1 left, 1 right, 2 bottom
-  // Same view for all players - no reordering
+  // Players are seated clockwise around the table
   const FIXED_SLOTS = [
     { id: "seat-0", position: "top-left", index: 0 },
     { id: "seat-1", position: "top-right", index: 1 },
-    { id: "seat-2", position: "left", index: 2 },
-    { id: "seat-3", position: "right", index: 3 },
+    { id: "seat-2", position: "left", index: 5 },
+    { id: "seat-3", position: "right", index: 2 },
     { id: "seat-4", position: "bottom-left", index: 4 },
-    { id: "seat-5", position: "bottom-right", index: 5 },
+    { id: "seat-5", position: "bottom-right", index: 3 },
   ];
 
   // Map players to fixed slots
@@ -865,6 +865,11 @@ const PlayerInfo = ({
     ? gameResult.rankedHands.find((h) => h.playerId === player.id)
     : null;
 
+  // Evaluate current hand for the current player during the game
+  const currentHandEval = isMe && myPocketCards && myPocketCards.length > 0 && gameState.communityCards
+    ? HandEvaluator.evaluateHand(myPocketCards, gameState.communityCards)
+    : null;
+
   // Get historical tokens for this player from visual state (not actual state during animation)
   const tokenHistory = visualTokenHistory[player.id] || [];
 
@@ -923,12 +928,19 @@ const PlayerInfo = ({
           )}
         </div>
 
-        {/* Show hand description when revealed */}
-        {gameResult && isRevealed && playerHandEval && (
-          <div className="hand-description">
-            {playerHandEval.evaluation.description}
-          </div>
-        )}
+        {/* Always show hand description space to maintain consistent size */}
+        <div className={`hand-description ${gameResult && isRevealed ? 'hand-description-reveal' : ''}`}>
+          {gameResult && isRevealed && playerHandEval ? (
+            // Game complete and hand revealed - show final hand with animation
+            playerHandEval.evaluation.description
+          ) : !gameResult && isMe && currentHandEval ? (
+            // During game - show current player's current best hand (no animation)
+            currentHandEval.description
+          ) : (
+            // Empty space to maintain size (non-breaking space)
+            '\u00A0'
+          )}
+        </div>
 
         {/* Token history from previous rounds - fixed slots for all 4 rounds */}
         <div className="token-history">
