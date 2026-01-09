@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Card, { CardBack } from "./Card";
 import { HandEvaluator } from "../game/utils/handEvaluator";
 import "./Table.css";
@@ -26,49 +26,168 @@ const Table = ({
   visibleCommunityCards = 0,
 }) => {
   const [lastTokenAssignments, setLastTokenAssignments] = useState({});
-  const [tokenMovements, setTokenMovements] = useState({}); // { playerId: { from: 'center'|playerId, animating: true } }
+  const [visualTokenAssignments, setVisualTokenAssignments] = useState({}); // What we actually render
+  const [visualTokenPool, setVisualTokenPool] = useState([]); // What we actually show in pool
+  const [animatingTokens, setAnimatingTokens] = useState([]); // Phantom tokens currently animating: [{ tokenNum, fromPlayerId, toPlayerId, offsetX, offsetY }]
+
+  // Refs for token slot positions
+  const tokenSlotRefs = useRef({});
+  const centerPoolRef = useRef(null);
+  const centerTokenSlotRefs = useRef({}); // Individual refs for each token slot in pool
+
+  // Helper to calculate position offset between two elements
+  const calculateOffset = (fromPlayerId, toPlayerId, tokenNum = null) => {
+    // Get the appropriate ref for source
+    let fromRef;
+    if (fromPlayerId === 'center' && tokenNum !== null) {
+      fromRef = centerTokenSlotRefs.current[tokenNum];
+    } else if (fromPlayerId === 'center') {
+      fromRef = centerPoolRef.current;
+    } else {
+      fromRef = tokenSlotRefs.current[fromPlayerId];
+    }
+
+    // Get the appropriate ref for destination
+    let toRef;
+    if (toPlayerId === 'center' && tokenNum !== null) {
+      toRef = centerTokenSlotRefs.current[tokenNum];
+    } else if (toPlayerId === 'center') {
+      toRef = centerPoolRef.current;
+    } else {
+      toRef = tokenSlotRefs.current[toPlayerId];
+    }
+
+    if (!fromRef || !toRef) return { offsetX: 0, offsetY: 0 };
+
+    const fromRect = fromRef.getBoundingClientRect();
+    const toRect = toRef.getBoundingClientRect();
+
+    // Calculate center-to-center offset
+    const fromCenterX = fromRect.left + fromRect.width / 2;
+    const fromCenterY = fromRect.top + fromRect.height / 2;
+    const toCenterX = toRect.left + toRect.width / 2;
+    const toCenterY = toRect.top + toRect.height / 2;
+
+    return {
+      offsetX: fromCenterX - toCenterX,
+      offsetY: fromCenterY - toCenterY
+    };
+  };
 
   // Track token movements for sliding animations
   useEffect(() => {
-    if (!gameState?.tokenAssignments) return;
+    if (!gameState?.tokenAssignments || !gameState?.tokenPool) return;
 
     const currentAssignments = gameState.tokenAssignments;
-    const movements = {};
+    const currentPool = gameState.tokenPool;
+    const phantomTokens = [];
+    const ANIMATION_DURATION = 700; // Slower animation
 
-    // Check for new or changed token assignments
+    // Build reverse maps: token -> playerId
+    const currentTokenToPlayer = {};
+    Object.keys(currentAssignments).forEach(playerId => {
+      currentTokenToPlayer[currentAssignments[playerId]] = playerId;
+    });
+
+    const previousTokenToPlayer = {};
+    Object.keys(lastTokenAssignments).forEach(playerId => {
+      previousTokenToPlayer[lastTokenAssignments[playerId]] = playerId;
+    });
+
+    // Check each player who currently has a token
     Object.keys(currentAssignments).forEach((playerId) => {
       const currentToken = currentAssignments[playerId];
-      const previousToken = lastTokenAssignments[playerId];
+      const previousToken = visualTokenAssignments[playerId];
 
-      // Token newly claimed from pool
-      if (previousToken === undefined && currentToken !== undefined) {
-        movements[playerId] = { from: 'center', animating: true };
-      }
-      // Token changed (stolen from another player)
-      else if (previousToken !== undefined && previousToken !== currentToken) {
-        // Find who had this token before
-        const previousOwner = Object.keys(lastTokenAssignments).find(
-          pid => lastTokenAssignments[pid] === currentToken
-        );
-        movements[playerId] = { from: previousOwner || 'center', animating: true };
+      // Only animate if this player's token changed
+      if (currentToken !== previousToken) {
+        // Find where the current token came from
+        const previousOwner = previousTokenToPlayer[currentToken];
+
+        if (previousOwner && previousOwner !== playerId) {
+          // Token came from another player - calculate FROM source TO destination
+          const { offsetX, offsetY } = calculateOffset(previousOwner, playerId, currentToken);
+          phantomTokens.push({
+            tokenNum: currentToken,
+            fromPlayerId: previousOwner,
+            toPlayerId: playerId,
+            offsetX,
+            offsetY,
+            phase: gameState.phase
+          });
+        } else if (visualTokenPool.includes(currentToken)) {
+          // Token came from pool - calculate FROM pool TO player
+          const { offsetX, offsetY } = calculateOffset('center', playerId, currentToken);
+          phantomTokens.push({
+            tokenNum: currentToken,
+            fromPlayerId: 'center',
+            toPlayerId: playerId,
+            offsetX,
+            offsetY,
+            phase: gameState.phase
+          });
+        }
       }
     });
 
-    // Check for tokens returned to pool
-    Object.keys(lastTokenAssignments).forEach((playerId) => {
-      if (currentAssignments[playerId] === undefined && lastTokenAssignments[playerId] !== undefined) {
-        // Token was removed (returned to pool) - we don't animate this yet
+    // Check for tokens returning to pool
+    Object.keys(visualTokenAssignments).forEach((playerId) => {
+      const visualToken = visualTokenAssignments[playerId];
+      const currentToken = currentAssignments[playerId];
+
+      // If player had a token but now has a different one or none, and the old token is now in pool
+      if (visualToken !== currentToken && currentPool.includes(visualToken)) {
+        // Calculate FROM player TO pool (specific slot for this token)
+        const { offsetX, offsetY } = calculateOffset(playerId, 'center', visualToken);
+        phantomTokens.push({
+          tokenNum: visualToken,
+          fromPlayerId: playerId,
+          toPlayerId: 'center',
+          offsetX,
+          offsetY,
+          phase: gameState.phase
+        });
       }
     });
 
-    if (Object.keys(movements).length > 0) {
-      setTokenMovements(movements);
-      // Clear animation state after animation completes
-      setTimeout(() => setTokenMovements({}), 600);
+    if (phantomTokens.length > 0) {
+      setAnimatingTokens(phantomTokens);
+
+      // Immediately update visual state to REMOVE tokens from their source
+      // (so we don't see duplicates - only the phantom will be visible)
+      const newVisualAssignments = { ...visualTokenAssignments };
+      const newVisualPool = [...visualTokenPool];
+
+      phantomTokens.forEach(phantom => {
+        if (phantom.fromPlayerId === 'center') {
+          // Remove from pool
+          const poolIndex = newVisualPool.indexOf(phantom.tokenNum);
+          if (poolIndex > -1) {
+            newVisualPool.splice(poolIndex, 1);
+          }
+        } else {
+          // Remove from player
+          delete newVisualAssignments[phantom.fromPlayerId];
+        }
+      });
+
+      setVisualTokenAssignments(newVisualAssignments);
+      setVisualTokenPool(newVisualPool);
+
+      // After animation completes, update visual state to show tokens at destination
+      setTimeout(() => {
+        setVisualTokenAssignments(currentAssignments);
+        setVisualTokenPool(currentPool);
+        setAnimatingTokens([]);
+      }, ANIMATION_DURATION);
+    } else {
+      // No animation needed, update immediately
+      setVisualTokenAssignments(currentAssignments);
+      setVisualTokenPool(currentPool);
     }
 
     setLastTokenAssignments(currentAssignments);
-  }, [gameState?.tokenAssignments, lastTokenAssignments]);
+  }, [gameState?.tokenAssignments, gameState?.tokenPool]);
 
   // Define fixed slots: 2 top, 1 left, 1 right, 2 bottom
   // Same view for all players - no reordering
@@ -88,8 +207,7 @@ const Table = ({
 
     const isMe = player.id === myPlayerId;
     const isCurrentTurn = player.id === currentTurn;
-    const playerToken = gameState.tokenAssignments?.[player.id];
-    const movement = tokenMovements[player.id];
+    const playerToken = visualTokenAssignments[player.id]; // Use visual state, not actual
 
     return {
       ...slot,
@@ -97,7 +215,6 @@ const Table = ({
       isMe,
       isCurrentTurn,
       playerToken,
-      movement,
     };
   });
 
@@ -179,7 +296,10 @@ const Table = ({
                 </div>
               ) : (
                 <>
-                  <div className="token-slot token-slot-top-left">
+                  <div
+                    className="token-slot token-slot-top-left"
+                    ref={(el) => { if (playerSlots[0].player) tokenSlotRefs.current[playerSlots[0].player.id] = el; }}
+                  >
                     {!gameResult &&
                       playerSlots[0].player &&
                       playerSlots[0].playerToken !== undefined && (
@@ -187,7 +307,6 @@ const Table = ({
                           number={playerSlots[0].playerToken}
                           phase={gameState.phase}
                           isMyToken={playerSlots[0].isMe}
-                          slideFrom={playerSlots[0].movement?.animating ? getSlotPosition(playerSlots[0].movement.from) : null}
                           canClick={
                             !playerSlots[0].isMe &&
                             currentTurn === myPlayerId &&
@@ -197,7 +316,10 @@ const Table = ({
                         />
                       )}
                   </div>
-                  <div className="token-slot token-slot-top-right">
+                  <div
+                    className="token-slot token-slot-top-right"
+                    ref={(el) => { if (playerSlots[1].player) tokenSlotRefs.current[playerSlots[1].player.id] = el; }}
+                  >
                     {!gameResult &&
                       playerSlots[1].player &&
                       playerSlots[1].playerToken !== undefined && (
@@ -205,7 +327,6 @@ const Table = ({
                           number={playerSlots[1].playerToken}
                           phase={gameState.phase}
                           isMyToken={playerSlots[1].isMe}
-                          slideFrom={playerSlots[1].movement?.animating ? getSlotPosition(playerSlots[1].movement.from) : null}
                           canClick={
                             !playerSlots[1].isMe &&
                             currentTurn === myPlayerId &&
@@ -221,7 +342,10 @@ const Table = ({
 
             {/* Middle row: left token, center content, right token */}
             <div className="table-surface-middle">
-              <div className="token-slot token-slot-left">
+              <div
+                className="token-slot token-slot-left"
+                ref={(el) => { if (playerSlots[2].player) tokenSlotRefs.current[playerSlots[2].player.id] = el; }}
+              >
                 {!gameResult &&
                   playerSlots[2].player &&
                   playerSlots[2].playerToken !== undefined && (
@@ -229,7 +353,6 @@ const Table = ({
                       number={playerSlots[2].playerToken}
                       phase={gameState.phase}
                       isMyToken={playerSlots[2].isMe}
-                      slideFrom={playerSlots[2].movement?.animating ? getSlotPosition(playerSlots[2].movement.from) : null}
                       canClick={
                         !playerSlots[2].isMe &&
                         currentTurn === myPlayerId &&
@@ -294,24 +417,34 @@ const Table = ({
                   </div>
                 )}
                 {!gameResult && (
-                  // Show token pool during game
-                  <div className="token-pool-container">
-                    {gameState.tokenPool && gameState.tokenPool.length > 0 && (
-                      <div className="token-pool">
-                        {[...gameState.tokenPool]
-                          .sort((a, b) => a - b)
-                          .map((tokenNum) => (
-                            <TokenDisplay
-                              key={tokenNum}
-                              number={tokenNum}
-                              phase={gameState.phase}
-                              isMyToken={false}
-                              canClick={gameState.currentTurn === myPlayerId}
-                              onClick={() => onTokenClick(tokenNum)}
-                            />
-                          ))}
-                      </div>
-                    )}
+                  // Show token pool during game - with fixed positions for each token
+                  <div className="token-pool-container" ref={centerPoolRef}>
+                    <div className="token-pool">
+                      {[1, 2, 3, 4, 5, 6].map((tokenNum) => {
+                        const isInPool = visualTokenPool.includes(tokenNum);
+
+                        return (
+                          <div
+                            key={tokenNum}
+                            className="token-slot"
+                            ref={(el) => { centerTokenSlotRefs.current[tokenNum] = el; }}
+                          >
+                            {isInPool ? (
+                              <TokenDisplay
+                                number={tokenNum}
+                                phase={gameState.phase}
+                                isMyToken={false}
+                                canClick={gameState.currentTurn === myPlayerId}
+                                onClick={() => onTokenClick(tokenNum)}
+                              />
+                            ) : (
+                              // Empty slot to maintain spacing
+                              <div style={{ width: '54px', height: '54px' }} />
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
 
                     {/* Ready button - only shown when all players have tokens */}
                     {gameState.phase.includes("betting") &&
@@ -330,7 +463,10 @@ const Table = ({
                 )}
               </div>
 
-              <div className="token-slot token-slot-right">
+              <div
+                className="token-slot token-slot-right"
+                ref={(el) => { if (playerSlots[3].player) tokenSlotRefs.current[playerSlots[3].player.id] = el; }}
+              >
                 {!gameResult &&
                   playerSlots[3].player &&
                   playerSlots[3].playerToken !== undefined && (
@@ -338,7 +474,6 @@ const Table = ({
                       number={playerSlots[3].playerToken}
                       phase={gameState.phase}
                       isMyToken={playerSlots[3].isMe}
-                      slideFrom={playerSlots[3].movement?.animating ? getSlotPosition(playerSlots[3].movement.from) : null}
                       canClick={
                         !playerSlots[3].isMe &&
                         currentTurn === myPlayerId &&
@@ -352,7 +487,10 @@ const Table = ({
 
             {/* Bottom row: tokens for bottom-left and bottom-right seats */}
             <div className="table-surface-bottom">
-              <div className="token-slot token-slot-bottom-left">
+              <div
+                className="token-slot token-slot-bottom-left"
+                ref={(el) => { if (playerSlots[4].player) tokenSlotRefs.current[playerSlots[4].player.id] = el; }}
+              >
                 {!gameResult &&
                   playerSlots[4].player &&
                   playerSlots[4].playerToken !== undefined && (
@@ -360,7 +498,6 @@ const Table = ({
                       number={playerSlots[4].playerToken}
                       phase={gameState.phase}
                       isMyToken={playerSlots[4].isMe}
-                      slideFrom={playerSlots[4].movement?.animating ? getSlotPosition(playerSlots[4].movement.from) : null}
                       canClick={
                         !playerSlots[4].isMe &&
                         currentTurn === myPlayerId &&
@@ -370,7 +507,10 @@ const Table = ({
                     />
                   )}
               </div>
-              <div className="token-slot token-slot-bottom-right">
+              <div
+                className="token-slot token-slot-bottom-right"
+                ref={(el) => { if (playerSlots[5].player) tokenSlotRefs.current[playerSlots[5].player.id] = el; }}
+              >
                 {!gameResult &&
                   playerSlots[5].player &&
                   playerSlots[5].playerToken !== undefined && (
@@ -378,7 +518,6 @@ const Table = ({
                       number={playerSlots[5].playerToken}
                       phase={gameState.phase}
                       isMyToken={playerSlots[5].isMe}
-                      slideFrom={playerSlots[5].movement?.animating ? getSlotPosition(playerSlots[5].movement.from) : null}
                       canClick={
                         !playerSlots[5].isMe &&
                         currentTurn === myPlayerId &&
@@ -443,6 +582,48 @@ const Table = ({
           )}
         </div>
       </div>
+
+      {/* Phantom tokens layer - animating tokens overlay */}
+      {animatingTokens.map((phantom, index) => {
+        // Get the specific source ref
+        const sourceRef = phantom.fromPlayerId === 'center'
+          ? centerTokenSlotRefs.current[phantom.tokenNum]
+          : tokenSlotRefs.current[phantom.fromPlayerId];
+
+        if (!sourceRef) return null;
+
+        const sourceRect = sourceRef.getBoundingClientRect();
+        const containerRect = sourceRef.closest('.table-container')?.getBoundingClientRect();
+
+        if (!containerRect) return null;
+
+        // Position phantom token at SOURCE (where it will animate FROM)
+        const left = sourceRect.left - containerRect.left + (sourceRect.width / 2) - 27; // 27 = half of 54px token
+        const top = sourceRect.top - containerRect.top + (sourceRect.height / 2) - 27;
+
+        return (
+          <div
+            key={`phantom-${phantom.tokenNum}-${index}`}
+            style={{
+              position: 'absolute',
+              left: `${left}px`,
+              top: `${top}px`,
+              pointerEvents: 'none',
+              zIndex: 1000,
+            }}
+          >
+            <TokenDisplay
+              number={phantom.tokenNum}
+              phase={phantom.phase}
+              isMyToken={false}
+              offsetX={-phantom.offsetX}
+              offsetY={-phantom.offsetY}
+              animating={true}
+              canClick={false}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 };
@@ -568,7 +749,9 @@ const TokenDisplay = ({
   isMyToken,
   canClick,
   onClick,
-  slideFrom = null,
+  offsetX = 0,
+  offsetY = 0,
+  animating = false,
 }) => {
   const roundColors = {
     betting_1: "#ffffff",
@@ -579,15 +762,23 @@ const TokenDisplay = ({
 
   const color = roundColors[phase] || "#ffd700";
 
-  // Build animation class based on slideFrom position
-  const slideClass = slideFrom ? `token-slide-from-${slideFrom}` : '';
+  // Build inline style with CSS custom properties for dynamic animation
+  // Set initial transform immediately to prevent flicker
+  const inlineStyle = {
+    backgroundColor: color,
+    ...(animating && {
+      '--offset-x': `${offsetX}px`,
+      '--offset-y': `${offsetY}px`,
+      animation: 'tokenSlide 0.7s ease-out both',
+    }),
+  };
 
   return (
     <div
       className={`token-display ${canClick ? "token-clickable" : ""} ${
         isMyToken ? "token-mine" : ""
-      } ${slideClass}`}
-      style={{ backgroundColor: color }}
+      }`}
+      style={inlineStyle}
       onClick={canClick ? () => onClick(number) : undefined}
     >
       {number}
