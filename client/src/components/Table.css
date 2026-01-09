@@ -342,6 +342,7 @@
 
 /* Ready button in table center */
 .btn-ready-table {
+  position: absolute;
   height: 54px;
   padding: 0 24px;
   background-color: #4a90e2;
@@ -351,7 +352,9 @@
   font-size: 16px;
   font-weight: bold;
   cursor: pointer;
-  transition: background-color 0.2s, transform 0.1s;
+  transition:
+    background-color 0.2s,
+    transform 0.1s;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
