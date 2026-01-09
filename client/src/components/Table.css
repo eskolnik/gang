@@ -195,6 +195,14 @@
   opacity: 0.7;
 }
 
+.player-info-correct {
+  border-color: #00ff00;
+}
+
+.player-info-incorrect {
+  border-color: #ff0000;
+}
+
 .player-name {
   font-size: 14px;
   color: #ffffff;

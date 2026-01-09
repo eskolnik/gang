@@ -271,6 +271,8 @@ const Game = ({ onReturnToLobby }) => {
           gameState={gameState}
           onTokenClick={handleClaimToken}
           onSetReady={handleSetReady}
+          onRestartGame={handleRestartGame}
+          isHost={isHost}
           gameResult={gameResult}
           revealedHands={revealedHands}
           showFinalResult={showFinalResult}
@@ -296,14 +298,6 @@ const Game = ({ onReturnToLobby }) => {
         )}
       </div>
 
-      {/* TOP RIGHT: Round Tracker or Play Again */}
-      {gameResult && isHost ? (
-        <div className="play-again-container">
-          <button className="btn-action btn-play-again" onClick={handleRestartGame}>
-            Play Again
-          </button>
-        </div>
-      ) : null}
 
       {/* BOTTOM RIGHT: Status/Game Log */}
       {/* {statusText && <div className="game-status">{statusText}</div>} */}
