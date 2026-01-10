@@ -62,14 +62,20 @@ const Game = ({ onReturnToLobby }) => {
   useEffect(() => {
     if (!gameResult || !gameResult.rankedHands) return;
 
-    // Sort hands by token assignment (rank) - lowest to highest
-    const sortedByRank = [...gameResult.rankedHands].sort((a, b) => a.rank - b.rank);
+    // Reveal hands in clockwise order around the table (by player index 0-5)
+    // This matches the join order and clockwise seating
+    const sortedClockwise = [...gameResult.rankedHands].sort((a, b) => {
+      // Find player index in the players array
+      const indexA = gameState.players.findIndex(p => p.id === a.playerId);
+      const indexB = gameState.players.findIndex(p => p.id === b.playerId);
+      return indexA - indexB;
+    });
 
     // Reveal hands one by one
     let currentIndex = 0;
     const revealInterval = setInterval(() => {
-      if (currentIndex < sortedByRank.length) {
-        const hand = sortedByRank[currentIndex];
+      if (currentIndex < sortedClockwise.length) {
+        const hand = sortedClockwise[currentIndex];
         setRevealedHands(prev => [...prev, hand.playerId]);
         currentIndex++;
       } else {
@@ -82,7 +88,7 @@ const Game = ({ onReturnToLobby }) => {
     }, 1200); // Reveal each hand every 1.2 seconds
 
     return () => clearInterval(revealInterval);
-  }, [gameResult]);
+  }, [gameResult, gameState.players]);
 
   // Animate community card dealing
   useEffect(() => {
