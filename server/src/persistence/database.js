@@ -54,7 +54,10 @@ function createTables() {
       betting_round_history TEXT,
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL,
-      last_action INTEGER
+      last_action INTEGER,
+      game_mode TEXT DEFAULT 'single',
+      series_wins INTEGER DEFAULT 0,
+      series_losses INTEGER DEFAULT 0
     )
   `);
 
@@ -134,6 +137,21 @@ function createTables() {
     // Set existing games' last_action to their updated_at time
     db.exec(`UPDATE game_rooms SET last_action = updated_at WHERE last_action IS NULL`);
     console.log('✅ last_action column added successfully');
+  }
+
+  // Check if we need to add series tracking columns to game_rooms
+  const hasGameModeColumn = roomTableInfo.some(col => col.name === 'game_mode');
+  const hasSeriesWinsColumn = roomTableInfo.some(col => col.name === 'series_wins');
+  const hasSeriesLossesColumn = roomTableInfo.some(col => col.name === 'series_losses');
+
+  if (!hasGameModeColumn && roomTableInfo.length > 0) {
+    console.log('🔄 Adding series tracking columns to game_rooms...');
+    db.exec(`ALTER TABLE game_rooms ADD COLUMN game_mode TEXT DEFAULT 'single'`);
+    db.exec(`ALTER TABLE game_rooms ADD COLUMN series_wins INTEGER DEFAULT 0`);
+    db.exec(`ALTER TABLE game_rooms ADD COLUMN series_losses INTEGER DEFAULT 0`);
+    // Set existing games to single mode
+    db.exec(`UPDATE game_rooms SET game_mode = 'single', series_wins = 0, series_losses = 0 WHERE game_mode IS NULL`);
+    console.log('✅ Series tracking columns added successfully');
   }
 
   console.log('✅ Database tables created/verified');

@@ -40,6 +40,9 @@ export class GameRoom {
     this.hostId = null; // Player ID of the room host
     this.createdAt = options.createdAt || Date.now();
     this.lastAction = null; // Timestamp of last player action (for inactive game cleanup)
+    this.gameMode = options.gameMode || 'single'; // 'single' or 'best-of-5'
+    this.seriesWins = options.seriesWins || 0; // Number of rounds won in the series
+    this.seriesLosses = options.seriesLosses || 0; // Number of rounds lost in the series
   }
 
   /**
@@ -152,13 +155,54 @@ export class GameRoom {
 
   /**
    * Restart the game with same players (from any phase)
+   * Resets series wins/losses (for single mode or starting a new series)
    */
   restartGame() {
     if (this.players.size < this.minPlayers) {
       throw new Error('Not enough players to restart');
     }
 
-    // Reset game state
+    // Reset game state and series
+    this.deck.reset();
+    this.deck.shuffle();
+    this.communityCards = [];
+    this.tokenAssignments = {};
+    this.bettingRoundHistory = [];
+    this.playerReadyStatus = {};
+    this.seriesWins = 0;
+    this.seriesLosses = 0;
+
+    // Deal pocket cards to each player
+    this.phase = GAME_PHASES.INITIAL_DEAL;
+    for (const [playerId, player] of this.players) {
+      player.pocketCards = this.deck.dealMultiple(2);
+      player.ready = false;
+      this.playerReadyStatus[playerId] = false;
+    }
+
+    // Start first betting round
+    this.startBettingRound(GAME_PHASES.BETTING_1);
+
+    // Persist state
+    this.save();
+  }
+
+  /**
+   * Start the next round in a best-of-5 series
+   * Preserves series wins/losses
+   */
+  nextRound() {
+    if (this.gameMode !== 'best-of-5') {
+      throw new Error('Can only advance to next round in best-of-5 mode');
+    }
+    if (this.players.size < this.minPlayers) {
+      throw new Error('Not enough players for next round');
+    }
+    if (this.seriesWins >= 3 || this.seriesLosses >= 3) {
+      throw new Error('Series is already complete');
+    }
+
+    // Reset round state but keep series state
     this.deck.reset();
     this.deck.shuffle();
     this.communityCards = [];
@@ -389,12 +433,28 @@ export class GameRoom {
     const rankedHands = HandEvaluator.rankHands(playerHands, this.communityCards);
     const validation = HandEvaluator.validateTokenAssignments(rankedHands, this.tokenAssignments);
 
+    // Update series wins/losses if in best-of-5 mode
+    if (this.gameMode === 'best-of-5') {
+      if (validation.success) {
+        this.seriesWins++;
+      } else {
+        this.seriesLosses++;
+      }
+    }
+
     this.phase = GAME_PHASES.COMPLETE;
+
+    // Determine if the series is complete
+    const seriesComplete = this.gameMode === 'best-of-5' && (this.seriesWins >= 3 || this.seriesLosses >= 3);
 
     return {
       rankedHands,
       validation,
-      success: validation.success
+      success: validation.success,
+      gameMode: this.gameMode,
+      seriesWins: this.seriesWins,
+      seriesLosses: this.seriesLosses,
+      seriesComplete
     };
   }
 
@@ -430,7 +490,10 @@ export class GameRoom {
       currentTurn: this.currentTurn,
       bettingRoundHistory: this.bettingRoundHistory,
       allPlayersHaveTokens: this.allPlayersHaveTokens(),
-      hostId: this.hostId
+      hostId: this.hostId,
+      gameMode: this.gameMode,
+      seriesWins: this.seriesWins,
+      seriesLosses: this.seriesLosses
     };
   }
 

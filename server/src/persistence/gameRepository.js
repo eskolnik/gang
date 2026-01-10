@@ -13,8 +13,9 @@ export function saveGameRoom(gameRoom) {
       room_id, phase, host_id, max_players, min_players,
       community_cards, token_pool, token_assignments,
       current_turn, betting_round_history,
-      created_at, updated_at, last_action
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      created_at, updated_at, last_action,
+      game_mode, series_wins, series_losses
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   stmt.run(
@@ -30,7 +31,10 @@ export function saveGameRoom(gameRoom) {
     JSON.stringify(gameRoom.bettingRoundHistory),
     gameRoom.createdAt || now,
     now,
-    gameRoom.lastAction || now
+    gameRoom.lastAction || now,
+    gameRoom.gameMode || 'single',
+    gameRoom.seriesWins || 0,
+    gameRoom.seriesLosses || 0
   );
 }
 
@@ -66,7 +70,10 @@ export function loadGameRoom(roomId) {
     bettingRoundHistory: JSON.parse(row.betting_round_history),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-    lastAction: row.last_action
+    lastAction: row.last_action,
+    gameMode: row.game_mode || 'single',
+    seriesWins: row.series_wins || 0,
+    seriesLosses: row.series_losses || 0
   };
 }
 
