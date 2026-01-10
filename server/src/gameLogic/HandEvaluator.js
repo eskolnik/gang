@@ -56,15 +56,46 @@ export class HandEvaluator {
       return -1; // b is stronger
     });
 
-    // Add rank numbers (1 = weakest)
-    return evaluatedHands.map((player, index) => ({
-      ...player,
-      rank: index + 1
-    }));
+    // Group tied hands and assign ranks
+    // Players with identical hands get the same rank (the minimum rank in their group)
+    const rankedHands = [];
+    let currentRank = 1;
+    let i = 0;
+
+    while (i < evaluatedHands.length) {
+      // Find all players tied with the current player
+      const tiedPlayers = [evaluatedHands[i]];
+
+      for (let j = i + 1; j < evaluatedHands.length; j++) {
+        const winners = Hand.winners([evaluatedHands[i].hand, evaluatedHands[j].hand]);
+        if (winners.length === 2) {
+          // These hands are tied
+          tiedPlayers.push(evaluatedHands[j]);
+        } else {
+          // No more ties
+          break;
+        }
+      }
+
+      // All tied players get the same rank
+      for (const player of tiedPlayers) {
+        rankedHands.push({
+          ...player,
+          rank: currentRank
+        });
+      }
+
+      // Next rank is current rank + number of tied players
+      currentRank += tiedPlayers.length;
+      i += tiedPlayers.length;
+    }
+
+    return rankedHands;
   }
 
   /**
    * Check if player token assignments match actual hand rankings
+   * Handles ties: players with identical hands can choose any token within the tie group's range
    * @param {Array} rankedHands - Output from rankHands()
    * @param {Object} tokenAssignments - Map of playerId -> token number
    * @returns {Object} {success: boolean, errors: Array}
@@ -72,19 +103,52 @@ export class HandEvaluator {
   static validateTokenAssignments(rankedHands, tokenAssignments) {
     const errors = [];
 
+    // Group players by their rank (to find ties)
+    const rankGroups = {};
+    for (const playerHand of rankedHands) {
+      const rank = playerHand.rank;
+      if (!rankGroups[rank]) {
+        rankGroups[rank] = [];
+      }
+      rankGroups[rank].push(playerHand);
+    }
+
+    // For each player, check if their token is valid
     for (const playerHand of rankedHands) {
       const playerId = playerHand.playerId;
       const actualRank = playerHand.rank;
       const assignedToken = tokenAssignments[playerId];
 
-      if (actualRank !== assignedToken) {
-        errors.push({
-          playerId,
-          playerName: playerHand.playerName,
-          actualRank,
-          assignedToken,
-          hand: playerHand.evaluation.description
-        });
+      // Find all players with the same rank (tied players)
+      const tiedPlayers = rankGroups[actualRank];
+
+      if (tiedPlayers.length === 1) {
+        // No tie - must match exactly
+        if (actualRank !== assignedToken) {
+          errors.push({
+            playerId,
+            playerName: playerHand.playerName,
+            actualRank,
+            assignedToken,
+            hand: playerHand.evaluation.description
+          });
+        }
+      } else {
+        // Tie - token must be within the valid range for this tie group
+        // Valid range is [actualRank, actualRank + tiedPlayers.length - 1]
+        const minValidToken = actualRank;
+        const maxValidToken = actualRank + tiedPlayers.length - 1;
+
+        if (assignedToken < minValidToken || assignedToken > maxValidToken) {
+          errors.push({
+            playerId,
+            playerName: playerHand.playerName,
+            actualRank,
+            assignedToken,
+            hand: playerHand.evaluation.description,
+            validRange: `${minValidToken}-${maxValidToken}`
+          });
+        }
       }
     }
 

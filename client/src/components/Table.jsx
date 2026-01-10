@@ -387,11 +387,27 @@ const Table = ({
   };
 
   // Helper to determine if a player's guess was correct
+  // Handles ties: players with identical hands are correct if they chose any token within the tie group's range
   const isPlayerCorrect = (playerId) => {
     if (!gameResult || !gameState?.tokenAssignments) return null;
     const playerHand = gameResult.rankedHands.find(h => h.playerId === playerId);
     if (!playerHand) return null;
-    return playerHand.rank === gameState.tokenAssignments[playerId];
+
+    const actualRank = playerHand.rank;
+    const assignedToken = gameState.tokenAssignments[playerId];
+
+    // Find all players with the same rank (tied players)
+    const tiedPlayers = gameResult.rankedHands.filter(h => h.rank === actualRank);
+
+    if (tiedPlayers.length === 1) {
+      // No tie - must match exactly
+      return actualRank === assignedToken;
+    } else {
+      // Tie - token must be within the valid range for this tie group
+      const minValidToken = actualRank;
+      const maxValidToken = actualRank + tiedPlayers.length - 1;
+      return assignedToken >= minValidToken && assignedToken <= maxValidToken;
+    }
   };
 
   return (
