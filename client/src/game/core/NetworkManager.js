@@ -73,6 +73,11 @@ export class NetworkManager {
       console.log('📋 Room list update:', roomList.length, 'rooms');
       this.emit('roomListUpdate', roomList);
     });
+
+    this.socket.on('gameDeleted', (data) => {
+      console.log('🗑️ Game deleted:', data.reason);
+      this.emit('gameDeleted', data);
+    });
   }
 
   /**

@@ -93,9 +93,22 @@ httpServer.listen(config.port, () => {
 cron.schedule(config.cleanupCron, () => {
   const deletedRoomIds = runScheduledCleanup();
 
-  // Remove deleted rooms from memory
+  // Remove deleted rooms from memory and notify players
   deletedRoomIds.forEach(roomId => {
     if (gameRooms.has(roomId)) {
+      const room = gameRooms.get(roomId);
+
+      // Notify all players that the game has been deleted
+      const playerSocketIds = Array.from(room.players.values())
+        .map(p => p.socketId)
+        .filter(sid => sid); // Filter out null/undefined
+
+      playerSocketIds.forEach(socketId => {
+        io.to(socketId).emit('gameDeleted', {
+          reason: 'Game removed due to inactivity'
+        });
+      });
+
       gameRooms.delete(roomId);
       console.log(`🗑️  Removed ${roomId} from memory (cleaned up by scheduler)`);
     }

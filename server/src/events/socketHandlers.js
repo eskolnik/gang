@@ -544,12 +544,24 @@ export function setupSocketHandlers(io, gameRooms) {
         if (currentRoomId && currentPlayerId) {
           const room = gameRooms.get(currentRoomId);
           if (room) {
+            // Get all player socket IDs before removing the player
+            const playerSocketIds = Array.from(room.players.values())
+              .map(p => p.socketId)
+              .filter(sid => sid); // Filter out null/undefined
+
             const wasAutoDeleted = room.removePlayer(currentPlayerId);
 
             console.log(`👋 Player ${currentPlayerId} left room ${currentRoomId}`);
 
             // If room was auto-deleted or is now empty, remove from memory
             if (wasAutoDeleted || room.getPlayerCount() === 0) {
+              // Notify all players that the game has been deleted
+              playerSocketIds.forEach(socketId => {
+                io.to(socketId).emit('gameDeleted', {
+                  reason: wasAutoDeleted ? 'Not enough players to continue' : 'Game ended'
+                });
+              });
+
               gameRooms.delete(currentRoomId);
               if (!wasAutoDeleted) {
                 room.delete();

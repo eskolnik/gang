@@ -27,6 +27,7 @@ const Game = ({ onReturnToLobby }) => {
   const [showFinalResult, setShowFinalResult] = useState(false);
   const [visibleCommunityCards, setVisibleCommunityCards] = useState(0); // Number of community cards to show
   const [isInitialLoad, setIsInitialLoad] = useState(true); // Track if this is the initial load
+  const [gameDeleted, setGameDeleted] = useState(null); // Track if game was deleted {reason: string}
 
   const handleReturnToLobby = useCallback(async () => {
     try {
@@ -42,6 +43,11 @@ const Game = ({ onReturnToLobby }) => {
       leaveGame();
       onReturnToLobby();
     }
+  }, [leaveGame, onReturnToLobby]);
+
+  const handleGameDeletedReturn = useCallback(() => {
+    leaveGame();
+    onReturnToLobby();
   }, [leaveGame, onReturnToLobby]);
 
   // Handle initial load - set state without animations
@@ -92,6 +98,19 @@ const Game = ({ onReturnToLobby }) => {
       networkManager.off('gameComplete', handleGameComplete);
     };
   }, [networkManager, isInitialLoad]);
+
+  // Listen for game deleted event
+  useEffect(() => {
+    const handleGameDeleted = (data) => {
+      setGameDeleted(data);
+    };
+
+    networkManager.on('gameDeleted', handleGameDeleted);
+
+    return () => {
+      networkManager.off('gameDeleted', handleGameDeleted);
+    };
+  }, [networkManager]);
 
   // Sequential hand reveal animation when game completes
   useEffect(() => {
@@ -398,6 +417,19 @@ const Game = ({ onReturnToLobby }) => {
 
       {/* BOTTOM RIGHT: Status/Game Log */}
       {/* {statusText && <div className="game-status">{statusText}</div>} */}
+
+      {/* Game Deleted Modal */}
+      {gameDeleted && (
+        <div className="game-deleted-overlay">
+          <div className="game-deleted-modal">
+            <h2>The game has ended</h2>
+            <p>{gameDeleted.reason}</p>
+            <button className="btn-action" onClick={handleGameDeletedReturn}>
+              Return to Lobby
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

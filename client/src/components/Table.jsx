@@ -936,8 +936,8 @@ const PlayerInfo = ({
       className={`player-info ${isCurrentTurn ? "player-info-active" : ""} ${
         isMe ? "player-info-me" : ""
       } ${!player.atTable ? "player-info-away" : ""} ${
-        gameResult && isCorrect === true ? "player-info-correct" : ""
-      } ${gameResult && isCorrect === false ? "player-info-incorrect" : ""}`}
+        gameResult && isRevealed && isCorrect === true ? "player-info-correct" : ""
+      } ${gameResult && isRevealed && isCorrect === false ? "player-info-incorrect" : ""}`}
     >
       <div className="player-name">
         {isHost && "👑 "}
