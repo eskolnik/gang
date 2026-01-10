@@ -105,7 +105,8 @@ export function setupSocketHandlers(io, gameRooms) {
 
         const room = new GameRoom(roomId, {
           maxPlayers: data.maxPlayers || 6,
-          minPlayers: data.minPlayers || 2
+          minPlayers: data.minPlayers || 2,
+          gameMode: data.gameMode || 'single'
         });
 
         room.addPlayer(playerId, playerName, socket.id);
@@ -316,6 +317,43 @@ export function setupSocketHandlers(io, gameRooms) {
         }
       } catch (error) {
         console.error('Error restarting game:', error);
+        callback({ success: false, error: error.message });
+      }
+    });
+
+    /**
+     * Start next round in best-of-5 series
+     */
+    socket.on('nextRound', (callback) => {
+      try {
+        if (!currentRoomId) {
+          return callback({ success: false, error: 'Not in a room' });
+        }
+
+        const room = gameRooms.get(currentRoomId);
+        if (!room) {
+          return callback({ success: false, error: 'Room not found' });
+        }
+
+        if (room.hostId !== currentPlayerId) {
+          return callback({ success: false, error: 'Only host can start next round' });
+        }
+
+        room.nextRound();
+
+        console.log(`🔄 Next round started in room ${currentRoomId}`);
+
+        callback({ success: true });
+
+        // Send each player their private state (with new pocket cards)
+        for (const [playerId, player] of room.players) {
+          const playerSocket = io.sockets.sockets.get(player.socketId);
+          if (playerSocket) {
+            playerSocket.emit('gameStateUpdate', room.getPlayerState(playerId));
+          }
+        }
+      } catch (error) {
+        console.error('Error starting next round:', error);
         callback({ success: false, error: error.message });
       }
     });
