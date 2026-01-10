@@ -21,11 +21,12 @@ const PHASE_NAMES = {
 };
 
 const Game = ({ onReturnToLobby }) => {
-  const { gameState, roomId, playerId, startGame, restartGame, claimToken, passTurn, setReady, leaveGame, returnToLobby, networkManager } = useNetwork();
+  const { gameState, roomId, playerId, rejoinSuccess, startGame, restartGame, nextRound, claimToken, passTurn, setReady, leaveGame, returnToLobby, networkManager } = useNetwork();
   const [gameResult, setGameResult] = useState(null);
   const [revealedHands, setRevealedHands] = useState([]); // Array of player IDs whose hands have been revealed
   const [showFinalResult, setShowFinalResult] = useState(false);
   const [visibleCommunityCards, setVisibleCommunityCards] = useState(0); // Number of community cards to show
+  const [isInitialLoad, setIsInitialLoad] = useState(true); // Track if this is the initial load
 
   const handleReturnToLobby = useCallback(async () => {
     try {
@@ -43,12 +44,46 @@ const Game = ({ onReturnToLobby }) => {
     }
   }, [leaveGame, onReturnToLobby]);
 
+  // Handle initial load - set state without animations
+  useEffect(() => {
+    if (isInitialLoad && gameState) {
+      // Immediately show all community cards without animation
+      if (gameState.communityCards) {
+        setVisibleCommunityCards(gameState.communityCards.length);
+      }
+
+      // If game is complete on load, immediately show everything
+      if (gameState.phase === GAME_PHASES.COMPLETE) {
+        // Note: gameResult will be null initially on rejoin
+        // It will be set via the evaluateHands call or gameComplete event
+        // We'll reveal all hands and show final result immediately when gameResult arrives
+      }
+
+      // Mark that initial load is complete after a short delay
+      const timer = setTimeout(() => {
+        setIsInitialLoad(false);
+      }, 500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isInitialLoad, gameState]);
+
   // Listen for game complete event
   useEffect(() => {
     const handleGameComplete = (result) => {
       setGameResult(result);
-      setRevealedHands([]); // Reset revealed hands
-      setShowFinalResult(false); // Reset final result display
+
+      // If this is initial load and game is already complete, skip animations
+      if (isInitialLoad) {
+        // Immediately reveal all hands and show final result
+        const allPlayerIds = result.rankedHands.map(h => h.playerId);
+        setRevealedHands(allPlayerIds);
+        setShowFinalResult(true);
+      } else {
+        // Normal gameplay - reset for animation
+        setRevealedHands([]);
+        setShowFinalResult(false);
+      }
     };
 
     networkManager.on('gameComplete', handleGameComplete);
@@ -56,11 +91,14 @@ const Game = ({ onReturnToLobby }) => {
     return () => {
       networkManager.off('gameComplete', handleGameComplete);
     };
-  }, [networkManager]);
+  }, [networkManager, isInitialLoad]);
 
   // Sequential hand reveal animation when game completes
   useEffect(() => {
     if (!gameResult || !gameResult.rankedHands) return;
+
+    // Skip animation if this is initial load (already handled in gameComplete event)
+    if (isInitialLoad) return;
 
     // Reveal hands in clockwise order around the table (by player index 0-5)
     // This matches the join order and clockwise seating
@@ -88,7 +126,7 @@ const Game = ({ onReturnToLobby }) => {
     }, 1200); // Reveal each hand every 1.2 seconds
 
     return () => clearInterval(revealInterval);
-  }, [gameResult, gameState.players]);
+  }, [gameResult, gameState.players, isInitialLoad]);
 
   // Animate community card dealing
   useEffect(() => {
@@ -98,6 +136,12 @@ const Game = ({ onReturnToLobby }) => {
     }
 
     const targetCount = gameState.communityCards.length;
+
+    // Skip animation on initial load
+    if (isInitialLoad) {
+      setVisibleCommunityCards(targetCount);
+      return;
+    }
 
     // If we need to show more cards, animate them one by one
     if (visibleCommunityCards < targetCount) {
@@ -113,7 +157,7 @@ const Game = ({ onReturnToLobby }) => {
 
       return () => clearInterval(dealInterval);
     }
-  }, [gameState?.communityCards?.length]);
+  }, [gameState?.communityCards?.length, isInitialLoad]);
 
   // Reset game result when game restarts
   useEffect(() => {
@@ -123,11 +167,11 @@ const Game = ({ onReturnToLobby }) => {
       setShowFinalResult(false);
     }
 
-    // Reset visible community cards when game restarts
-    if (gameState?.phase === GAME_PHASES.WAITING) {
+    // Reset visible community cards when game restarts (but not on initial load)
+    if (gameState?.phase === GAME_PHASES.WAITING && !isInitialLoad) {
       setVisibleCommunityCards(0);
     }
-  }, [gameState?.phase, gameResult]);
+  }, [gameState?.phase, gameResult, isInitialLoad]);
 
   const handleClaimToken = useCallback(async (tokenNumber) => {
     try {
@@ -156,6 +200,16 @@ const Game = ({ onReturnToLobby }) => {
       alert('Failed to restart game: ' + error.message);
     }
   }, [restartGame]);
+
+  const handleNextRound = useCallback(async () => {
+    try {
+      await nextRound();
+      setGameResult(null);
+    } catch (error) {
+      console.error('Failed to start next round:', error);
+      alert('Failed to start next round: ' + error.message);
+    }
+  }, [nextRound]);
 
   const handlePassTurn = useCallback(async () => {
     try {
@@ -244,29 +298,65 @@ const Game = ({ onReturnToLobby }) => {
         </button>
       </div>
 
-      {/* TOP RIGHT: Round Tracker */}
-      {currentRound > 0 && (
-        <div className="round-tracker">
-          <div className="round-circles">
-            {[1, 2, 3, 4].map((round) => (
-              <div
-                key={round}
-                className={`round-circle ${round === currentRound ? 'round-circle-active' : ''}`}
-                style={{
-                  backgroundColor: ['#ffffff', '#ffff00', '#ff9900', '#ff0000'][round - 1]
-                }}
-              />
-            ))}
+      {/* TOP RIGHT: Info Container */}
+      <div className="game-info-container">
+        {/* Round Tracker */}
+        {currentRound > 0 && (
+          <div className="round-tracker">
+            <div className="round-circles">
+              {[1, 2, 3, 4].map((round) => (
+                <div
+                  key={round}
+                  className={`round-circle ${round === currentRound ? 'round-circle-active' : ''}`}
+                  style={{
+                    backgroundColor: ['#ffffff', '#ffff00', '#ff9900', '#ff0000'][round - 1]
+                  }}
+                />
+              ))}
+            </div>
+            <div
+              className="round-name"
+              style={{ color: ['#ffffff', '#ffff00', '#ff9900', '#ff0000'][currentRound - 1] }}
+            >
+              {phaseName}
+            </div>
           </div>
-          <div
-            className="round-name"
-            style={{ color: ['#ffffff', '#ffff00', '#ff9900', '#ff0000'][currentRound - 1] }}
-          >
-            {phaseName}
+        )}
+
+        {/* Series Tracker (Best of 5) */}
+        {gameState.gameMode === 'best-of-5' && (
+          <div className="series-tracker">
+            <div className="series-record">
+              <span className="series-label">Won:</span>
+              <div className="series-markers">
+                {[0, 1, 2].map((index) => (
+                  <span
+                    key={`win-${index}`}
+                    className={`series-marker ${index < gameState.seriesWins ? 'series-marker-win' : ''}`}
+                  >
+                    {index < gameState.seriesWins ? '✓' : 'o'}
+                  </span>
+                ))}
+              </div>
+              <span className="series-separator">:</span>
+              <span className="series-label">Lost:</span>
+              <div className="series-markers">
+                {[0, 1, 2].map((index) => (
+                  <span
+                    key={`loss-${index}`}
+                    className={`series-marker ${index < gameState.seriesLosses ? 'series-marker-loss' : ''}`}
+                  >
+                    {index < gameState.seriesLosses ? '✗' : 'o'}
+                  </span>
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
-      )}
-      {statusText && <div className="game-status">{statusText}</div>}
+        )}
+
+        {/* Status Message */}
+        {statusText && <div className="game-status">{statusText}</div>}
+      </div>
 
       {/* Game Table */}
       <div className="game-table">
@@ -278,6 +368,7 @@ const Game = ({ onReturnToLobby }) => {
           onTokenClick={handleClaimToken}
           onSetReady={handleSetReady}
           onRestartGame={handleRestartGame}
+          onNextRound={handleNextRound}
           isHost={isHost}
           gameResult={gameResult}
           revealedHands={revealedHands}

@@ -73,8 +73,8 @@ export const NetworkProvider = ({ children }) => {
   }, []);
 
   // Wrapper methods that update local state after NetworkManager calls
-  const createRoom = useCallback(async (playerName, maxPlayers = 6, minPlayers = 2) => {
-    const response = await networkManager.createRoom(playerName, maxPlayers, minPlayers);
+  const createRoom = useCallback(async (playerName, maxPlayers = 6, minPlayers = 2, gameMode = 'single') => {
+    const response = await networkManager.createRoom(playerName, maxPlayers, minPlayers, gameMode);
     setRoomId(networkManager.roomId);
     setPlayerId(networkManager.playerId);
     setPlayerName(networkManager.playerName);
@@ -118,6 +118,10 @@ export const NetworkProvider = ({ children }) => {
     return await networkManager.restartGame();
   }, []);
 
+  const nextRound = useCallback(async () => {
+    return await networkManager.nextRound();
+  }, []);
+
   const claimToken = useCallback(async (tokenNumber) => {
     return await networkManager.claimToken(tokenNumber);
   }, []);
@@ -155,6 +159,7 @@ export const NetworkProvider = ({ children }) => {
     returnToLobby,
     startGame,
     restartGame,
+    nextRound,
     claimToken,
     passTurn,
     setReady,

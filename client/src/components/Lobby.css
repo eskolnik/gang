@@ -85,6 +85,51 @@
   border-color: #4a90e2;
 }
 
+/* Game Mode Section */
+.game-mode-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.game-mode-section > label {
+  font-size: 16px;
+  color: #ffffff;
+}
+
+.game-mode-options {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+}
+
+.game-mode-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  color: #cccccc;
+}
+
+.game-mode-option input[type="radio"] {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  accent-color: #4a90e2;
+}
+
+.game-mode-option span {
+  user-select: none;
+}
+
+.game-mode-option input[type="radio"]:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 /* Rooms Section */
 .rooms-section {
   width: 100%;

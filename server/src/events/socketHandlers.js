@@ -244,6 +244,11 @@ export function setupSocketHandlers(io, gameRooms) {
           gameState: room.getPlayerState(playerId)
         });
 
+        // If game is complete, send the game result to the rejoining player
+        if (room.phase === 'complete' && room.lastGameResult) {
+          socket.emit('gameComplete', room.lastGameResult);
+        }
+
         // Broadcast room update to all players
         broadcastGameState(io, room);
       } catch (error) {

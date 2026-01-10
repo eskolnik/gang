@@ -43,6 +43,7 @@ export class GameRoom {
     this.gameMode = options.gameMode || 'single'; // 'single' or 'best-of-5'
     this.seriesWins = options.seriesWins || 0; // Number of rounds won in the series
     this.seriesLosses = options.seriesLosses || 0; // Number of rounds lost in the series
+    this.lastGameResult = null; // Last game result for rejoining players
   }
 
   /**
@@ -94,10 +95,11 @@ export class GameRoom {
     }
 
     // Auto-delete game if it drops to 1 or fewer players and is in progress
-    const shouldDelete = this.players.size <= 1 && this.phase !== GAME_PHASES.WAITING;
+    // OR if the room is completely empty (0 players)
+    const shouldDelete = (this.players.size <= 1 && this.phase !== GAME_PHASES.WAITING) || this.players.size === 0;
 
     if (shouldDelete) {
-      console.log(`🗑️ Auto-deleting game ${this.roomId} - only ${this.players.size} player(s) remaining`);
+      console.log(`🗑️ Auto-deleting game ${this.roomId} - ${this.players.size === 0 ? 'no players remaining' : `only ${this.players.size} player(s) remaining`}`);
       this.delete();
       return true;
     }
@@ -171,6 +173,7 @@ export class GameRoom {
     this.playerReadyStatus = {};
     this.seriesWins = 0;
     this.seriesLosses = 0;
+    this.lastGameResult = null;
 
     // Deal pocket cards to each player
     this.phase = GAME_PHASES.INITIAL_DEAL;
@@ -209,6 +212,7 @@ export class GameRoom {
     this.tokenAssignments = {};
     this.bettingRoundHistory = [];
     this.playerReadyStatus = {};
+    this.lastGameResult = null;
 
     // Deal pocket cards to each player
     this.phase = GAME_PHASES.INITIAL_DEAL;
@@ -444,10 +448,15 @@ export class GameRoom {
 
     this.phase = GAME_PHASES.COMPLETE;
 
+    // Reset ready status for all players at end of round
+    for (const playerId of this.players.keys()) {
+      this.playerReadyStatus[playerId] = false;
+    }
+
     // Determine if the series is complete
     const seriesComplete = this.gameMode === 'best-of-5' && (this.seriesWins >= 3 || this.seriesLosses >= 3);
 
-    return {
+    const result = {
       rankedHands,
       validation,
       success: validation.success,
@@ -456,6 +465,11 @@ export class GameRoom {
       seriesLosses: this.seriesLosses,
       seriesComplete
     };
+
+    // Store the result for rejoining players
+    this.lastGameResult = result;
+
+    return result;
   }
 
   /**

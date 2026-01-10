@@ -89,7 +89,7 @@ export class NetworkManager {
   /**
    * Create a new game room
    */
-  createRoom(playerName, maxPlayers = 6, minPlayers = 2) {
+  createRoom(playerName, maxPlayers = 6, minPlayers = 2, gameMode = 'single') {
     if (!this.connected) {
       throw new Error('Not connected to server');
     }
@@ -98,7 +98,8 @@ export class NetworkManager {
       this.socket.emit('createRoom', {
         playerName,
         maxPlayers,
-        minPlayers
+        minPlayers,
+        gameMode
       }, (response) => {
         if (response.success) {
           this.roomId = response.roomId;
@@ -296,6 +297,28 @@ export class NetworkManager {
           resolve(response);
         } else {
           console.error('❌ Failed to restart game:', response.error);
+          reject(new Error(response.error));
+        }
+      });
+    });
+  }
+
+  /**
+   * Start next round in best-of-5 series
+   */
+  nextRound() {
+    return new Promise((resolve, reject) => {
+      if (!this.connected) {
+        reject(new Error('Not connected to server'));
+        return;
+      }
+
+      this.socket.emit('nextRound', (response) => {
+        if (response.success) {
+          console.log('✅ Next round started');
+          resolve(response);
+        } else {
+          console.error('❌ Failed to start next round:', response.error);
           reject(new Error(response.error));
         }
       });

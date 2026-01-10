@@ -12,6 +12,7 @@ const Lobby = ({ onStartGame }) => {
     useNetwork();
   const [playerName, setPlayerName] = useState(getPlayerName());
   const [roomCode, setRoomCode] = useState("");
+  const [gameMode, setGameMode] = useState("single"); // 'single' | 'best-of-5'
   const [statusMessage, setStatusMessage] = useState("");
   const [statusType, setStatusType] = useState("info"); // 'info' | 'success' | 'error'
   const [isLoading, setIsLoading] = useState(false);
@@ -62,7 +63,7 @@ const Lobby = ({ onStartGame }) => {
       setStatusMessage("Creating room...");
       setStatusType("info");
 
-      const response = await createRoom(playerName.trim(), 6, 2);
+      const response = await createRoom(playerName.trim(), 6, 2, gameMode);
 
       setStatusMessage(`✅ Room created: ${response.roomId}`);
       setStatusType("success");
@@ -180,6 +181,35 @@ const Lobby = ({ onStartGame }) => {
             disabled={isLoading}
             maxLength={20}
           />
+        </div>
+
+        {/* Game Mode Selection */}
+        <div className="game-mode-section">
+          <label>Game Mode:</label>
+          <div className="game-mode-options">
+            <label className="game-mode-option">
+              <input
+                type="radio"
+                name="gameMode"
+                value="single"
+                checked={gameMode === "single"}
+                onChange={(e) => setGameMode(e.target.value)}
+                disabled={isLoading}
+              />
+              <span>Single Round</span>
+            </label>
+            <label className="game-mode-option">
+              <input
+                type="radio"
+                name="gameMode"
+                value="best-of-5"
+                checked={gameMode === "best-of-5"}
+                onChange={(e) => setGameMode(e.target.value)}
+                disabled={isLoading}
+              />
+              <span>Best of 5</span>
+            </label>
+          </div>
         </div>
 
         {/* Create Room Button */}

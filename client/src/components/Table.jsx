@@ -21,6 +21,7 @@ const Table = ({
   onTokenClick,
   onSetReady,
   onRestartGame,
+  onNextRound,
   isHost,
   gameResult,
   revealedHands = [],
@@ -486,7 +487,10 @@ const Table = ({
                       gameResult.success ? "result-win" : "result-lose"
                     }
                   >
-                    {gameResult.success ? "Victory!" : "Defeat"}
+                    {/* Show Success/Failure for non-final rounds in best-of-5, Victory/Defeat otherwise */}
+                    {gameResult.gameMode === 'best-of-5' && !gameResult.seriesComplete
+                      ? (gameResult.success ? "Success!" : "Failure")
+                      : (gameResult.success ? "Victory!" : "Defeat")}
                   </h2>
                 </div>
               ) : (
@@ -641,14 +645,41 @@ const Table = ({
                         )}
                     </>
                   ) : (
-                    // Game complete - show Play Again button for host
-                    showFinalResult && isHost && (
-                      <button
-                        className="btn-ready-table"
-                        onClick={onRestartGame}
-                      >
-                        Play Again
-                      </button>
+                    // Game complete - show appropriate button based on game mode and player role
+                    showFinalResult && (
+                      gameResult.gameMode === 'best-of-5' && !gameResult.seriesComplete ? (
+                        // Best-of-5 non-final round
+                        isHost ? (
+                          // Host sees "Next Round" button, enabled only when all non-host players are ready
+                          <button
+                            className="btn-ready-table"
+                            onClick={onNextRound}
+                            disabled={!gameState.players?.filter(p => p.id !== gameState.hostId).every(p => p.ready)}
+                          >
+                            Next Round
+                          </button>
+                        ) : (
+                          // Non-host sees "Ready" button
+                          <button
+                            className="btn-ready-table"
+                            onClick={onSetReady}
+                          >
+                            {gameState.players?.find((p) => p.id === myPlayerId)?.ready
+                              ? "Unready"
+                              : "Ready"}
+                          </button>
+                        )
+                      ) : (
+                        // Single round or final round of best-of-5 - show Play Again for host only
+                        isHost && (
+                          <button
+                            className="btn-ready-table"
+                            onClick={onRestartGame}
+                          >
+                            Play Again
+                          </button>
+                        )
+                      )
                     )
                   )}
                 </div>
