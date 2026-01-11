@@ -52,6 +52,7 @@ function createTables() {
       token_assignments TEXT,
       current_turn TEXT,
       betting_round_history TEXT,
+      action_log TEXT DEFAULT '[]',
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL,
       last_action INTEGER,
@@ -152,6 +153,17 @@ function createTables() {
     // Set existing games to single mode
     db.exec(`UPDATE game_rooms SET game_mode = 'single', series_wins = 0, series_losses = 0 WHERE game_mode IS NULL`);
     console.log('✅ Series tracking columns added successfully');
+  }
+
+  // Check if we need to add action_log column to game_rooms
+  const hasActionLogColumn = roomTableInfo.some(col => col.name === 'action_log');
+
+  if (!hasActionLogColumn && roomTableInfo.length > 0) {
+    console.log('🔄 Adding action_log column to game_rooms...');
+    db.exec(`ALTER TABLE game_rooms ADD COLUMN action_log TEXT DEFAULT '[]'`);
+    // Set existing games to empty action log
+    db.exec(`UPDATE game_rooms SET action_log = '[]' WHERE action_log IS NULL`);
+    console.log('✅ action_log column added successfully');
   }
 
   console.log('✅ Database tables created/verified');

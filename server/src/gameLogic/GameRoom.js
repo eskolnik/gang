@@ -34,6 +34,7 @@ export class GameRoom {
     this.tokenAssignments = {}; // playerId -> token number
     this.tokenPool = []; // Available tokens in the center
     this.bettingRoundHistory = []; // History of token assignments per round
+    this.actionLog = []; // Detailed log of all token claims
     this.maxPlayers = options.maxPlayers || 6;
     this.minPlayers = options.minPlayers || 2;
     this.playerReadyStatus = {}; // playerId -> boolean
@@ -139,6 +140,7 @@ export class GameRoom {
     this.communityCards = [];
     this.tokenAssignments = {};
     this.bettingRoundHistory = [];
+    this.actionLog = [];
     this.playerReadyStatus = {};
 
     // Deal pocket cards to each player
@@ -170,6 +172,7 @@ export class GameRoom {
     this.communityCards = [];
     this.tokenAssignments = {};
     this.bettingRoundHistory = [];
+    this.actionLog = [];
     this.playerReadyStatus = {};
     this.seriesWins = 0;
     this.seriesLosses = 0;
@@ -211,6 +214,7 @@ export class GameRoom {
     this.communityCards = [];
     this.tokenAssignments = {};
     this.bettingRoundHistory = [];
+    this.actionLog = [];
     this.playerReadyStatus = {};
     this.lastGameResult = null;
 
@@ -276,16 +280,37 @@ export class GameRoom {
       throw new Error('Token not available');
     }
 
+    // Get player names for logging
+    const player = this.players.get(playerId);
+    const playerName = player ? player.name : 'Unknown';
+    let fromPlayerId = null;
+    let fromPlayerName = null;
+
     // Remove token from pool or from other player
     if (tokenInPool) {
       this.tokenPool = this.tokenPool.filter(t => t !== tokenNumber);
     } else {
       const [ownerId] = tokenOwner;
+      const ownerPlayer = this.players.get(ownerId);
+      fromPlayerId = ownerId;
+      fromPlayerName = ownerPlayer ? ownerPlayer.name : 'Unknown';
       delete this.tokenAssignments[ownerId];
     }
 
     // Assign token to player
     this.tokenAssignments[playerId] = tokenNumber;
+
+    // Log the action
+    this.actionLog.push({
+      playerId,
+      playerName,
+      tokenNumber,
+      phase: this.phase,
+      fromPool: tokenInPool,
+      fromPlayerId,
+      fromPlayerName,
+      timestamp: Date.now()
+    });
 
     // Un-ready all players when a token is claimed
     for (const pid of this.players.keys()) {
@@ -503,6 +528,7 @@ export class GameRoom {
       tokenAssignments: this.tokenAssignments,
       currentTurn: this.currentTurn,
       bettingRoundHistory: this.bettingRoundHistory,
+      actionLog: this.actionLog,
       allPlayersHaveTokens: this.allPlayersHaveTokens(),
       hostId: this.hostId,
       gameMode: this.gameMode,
@@ -536,7 +562,8 @@ export class GameRoom {
       maxPlayers: this.maxPlayers,
       players: Array.from(this.players.values()).map(p => p.name),
       isStarted: this.phase !== GAME_PHASES.WAITING,
-      isJoinable: this.phase === GAME_PHASES.WAITING && this.players.size < this.maxPlayers
+      isJoinable: this.phase === GAME_PHASES.WAITING && this.players.size < this.maxPlayers,
+      gameMode: this.gameMode
     };
   }
 
@@ -597,6 +624,7 @@ export class GameRoom {
     room.tokenAssignments = gameData.tokenAssignments;
     room.currentTurn = gameData.currentTurn;
     room.bettingRoundHistory = gameData.bettingRoundHistory;
+    room.actionLog = gameData.actionLog || [];
     room.lastAction = gameData.lastAction;
 
     // Load players

@@ -12,10 +12,10 @@ export function saveGameRoom(gameRoom) {
     INSERT OR REPLACE INTO game_rooms (
       room_id, phase, host_id, max_players, min_players,
       community_cards, token_pool, token_assignments,
-      current_turn, betting_round_history,
+      current_turn, betting_round_history, action_log,
       created_at, updated_at, last_action,
       game_mode, series_wins, series_losses
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   stmt.run(
@@ -29,6 +29,7 @@ export function saveGameRoom(gameRoom) {
     JSON.stringify(gameRoom.tokenAssignments),
     gameRoom.currentTurn,
     JSON.stringify(gameRoom.bettingRoundHistory),
+    JSON.stringify(gameRoom.actionLog || []),
     gameRoom.createdAt || now,
     now,
     gameRoom.lastAction || now,
@@ -68,6 +69,7 @@ export function loadGameRoom(roomId) {
     tokenAssignments: JSON.parse(row.token_assignments),
     currentTurn: row.current_turn,
     bettingRoundHistory: JSON.parse(row.betting_round_history),
+    actionLog: JSON.parse(row.action_log || '[]'),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     lastAction: row.last_action,
