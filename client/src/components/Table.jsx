@@ -584,7 +584,11 @@ const Table = ({
                             )
                           : false;
                       return (
-                        <div key={i} className="community-card-deal">
+                        // Change key when card becomes visible to trigger animation
+                        <div
+                          key={isVisible && card ? `card-${i}` : `empty-${i}`}
+                          className={isVisible && card ? "community-card-deal" : ""}
+                        >
                           {isVisible && card ? (
                             <Card
                               card={card}
