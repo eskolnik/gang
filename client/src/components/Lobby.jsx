@@ -12,7 +12,6 @@ const Lobby = ({ onStartGame }) => {
     useNetwork();
   const [playerName, setPlayerName] = useState(getPlayerName());
   const [roomCode, setRoomCode] = useState("");
-  const [gameMode, setGameMode] = useState("single"); // 'single' | 'best-of-5'
   const [statusMessage, setStatusMessage] = useState("");
   const [statusType, setStatusType] = useState("info"); // 'info' | 'success' | 'error'
   const [isLoading, setIsLoading] = useState(false);
@@ -51,7 +50,7 @@ const Lobby = ({ onStartGame }) => {
     return () => clearInterval(interval);
   }, [connected]);
 
-  const handleCreateRoom = async () => {
+  const handleCreateRoom = async (gameMode) => {
     if (!playerName.trim()) {
       setStatusMessage("❌ Please enter your name");
       setStatusType("error");
@@ -183,43 +182,21 @@ const Lobby = ({ onStartGame }) => {
           />
         </div>
 
-        {/* Game Mode Selection */}
-        <div className="game-mode-section">
-          <label>Game Mode:</label>
-          <div className="game-mode-options">
-            <label className="game-mode-option">
-              <input
-                type="radio"
-                name="gameMode"
-                value="single"
-                checked={gameMode === "single"}
-                onChange={(e) => setGameMode(e.target.value)}
-                disabled={isLoading}
-              />
-              <span>Single Round</span>
-            </label>
-            <label className="game-mode-option">
-              <input
-                type="radio"
-                name="gameMode"
-                value="best-of-5"
-                checked={gameMode === "best-of-5"}
-                onChange={(e) => setGameMode(e.target.value)}
-                disabled={isLoading}
-              />
-              <span>Best of 5</span>
-            </label>
-          </div>
-        </div>
-
-        {/* Create Room Button */}
-        <div className="new-room-button">
+        {/* Create Game Buttons */}
+        <div className="create-game-buttons">
           <button
             className="btn btn-primary"
-            onClick={handleCreateRoom}
+            onClick={() => handleCreateRoom("single")}
             disabled={!connected || isLoading}
           >
-            New Table
+            New Single Round Table
+          </button>
+          <button
+            className="btn btn-primary"
+            onClick={() => handleCreateRoom("best-of-5")}
+            disabled={!connected || isLoading}
+          >
+            New Best of 5 Table
           </button>
         </div>
 
@@ -235,6 +212,9 @@ const Lobby = ({ onStartGame }) => {
                     <div className="room-id">{room.roomId}</div>
                     <div className="room-count">
                       {room.playerCount}/{room.maxPlayers}
+                    </div>
+                    <div className="room-game-type">
+                      {room.gameMode === "best-of-5" ? "Best of 5" : "Single Round"}
                     </div>
                     <div className="room-players">
                       {room.players.join(", ")}
@@ -272,16 +252,20 @@ const Lobby = ({ onStartGame }) => {
 
                 if (isMyGame) return null; // Already shown above
 
+                // Determine CSS class for color coding
+                const roomClass = isInProgress ? "room-item-in-progress" : "";
+
                 return (
                   <div
                     key={room.roomId}
-                    className={`room-item ${
-                      isInProgress ? "room-item-in-progress" : ""
-                    }`}
+                    className={`room-item ${roomClass}`}
                   >
                     <div className="room-id">{room.roomId}</div>
                     <div className="room-count">
                       {room.playerCount}/{room.maxPlayers}
+                    </div>
+                    <div className="room-game-type">
+                      {room.gameMode === "best-of-5" ? "Best of 5" : "Single Round"}
                     </div>
                     <div className="room-players">
                       {room.players.join(", ")}
