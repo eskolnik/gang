@@ -289,9 +289,9 @@ export class GameRoom {
       this.playerReadyStatus[playerId] = false;
     }
 
-    // Set first player's turn
+    // Set first player's turn (dealer goes first)
     const playerIds = Array.from(this.players.keys());
-    this.currentTurn = playerIds[0];
+    this.currentTurn = playerIds[this.dealerIndex % playerIds.length];
   }
 
   /**
