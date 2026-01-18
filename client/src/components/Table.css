@@ -209,6 +209,10 @@
   font-weight: bold;
   text-align: center;
   white-space: nowrap;
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  gap: 5px;
 }
 
 .ready-check {
@@ -218,7 +222,9 @@
 }
 
 .dealer-button {
-  display: inline-block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 18px;
   height: 18px;
   border-radius: 50%;
@@ -230,7 +236,6 @@
   text-align: center;
   margin-left: 4px;
   border: 2px solid #ffd700;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* Cards container and display - standardized for all players */

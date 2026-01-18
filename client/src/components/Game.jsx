@@ -28,6 +28,7 @@ const Game = ({ onReturnToLobby }) => {
   const [visibleCommunityCards, setVisibleCommunityCards] = useState(0); // Number of community cards to show
   const [isInitialLoad, setIsInitialLoad] = useState(true); // Track if this is the initial load
   const [gameDeleted, setGameDeleted] = useState(null); // Track if game was deleted {reason: string}
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false); // Track if leave confirmation modal is shown
 
   const handleReturnToLobby = useCallback(async () => {
     try {
@@ -46,11 +47,17 @@ const Game = ({ onReturnToLobby }) => {
   }, [returnToLobby, onReturnToLobby, leaveGame, gameState]);
 
   const handleLeaveGame = useCallback(() => {
-    if (window.confirm('Are you sure you want to leave this game? You will lose your seat.')) {
-      leaveGame();
-      onReturnToLobby();
-    }
+    setShowLeaveConfirm(true);
+  }, []);
+
+  const handleConfirmLeave = useCallback(() => {
+    leaveGame();
+    onReturnToLobby();
   }, [leaveGame, onReturnToLobby]);
+
+  const handleCancelLeave = useCallback(() => {
+    setShowLeaveConfirm(false);
+  }, []);
 
   const handleGameDeletedReturn = useCallback(() => {
     leaveGame();
@@ -447,6 +454,24 @@ const Game = ({ onReturnToLobby }) => {
             <button className="btn-action" onClick={handleGameDeletedReturn}>
               Return to Lobby
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Leave Game Confirmation Modal */}
+      {showLeaveConfirm && (
+        <div className="leave-confirm-overlay">
+          <div className="leave-confirm-modal">
+            <h2>Leave Game?</h2>
+            <p>Are you sure you want to leave this game? You will lose your seat.</p>
+            <div className="leave-confirm-buttons">
+              <button className="btn-action btn-cancel" onClick={handleCancelLeave}>
+                Cancel
+              </button>
+              <button className="btn-action btn-confirm-leave" onClick={handleConfirmLeave}>
+                Leave Game
+              </button>
+            </div>
           </div>
         </div>
       )}

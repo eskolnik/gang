@@ -955,11 +955,10 @@ const PlayerInfo = ({
       } ${gameResult && isRevealed && isCorrect === false ? "player-info-incorrect" : ""}`}
     >
       <div className="player-name">
-        {isHost && "👑 "}
-        {player.name}
-        {!player.atTable && " 🚪"}
-        {player.ready && <span className="ready-check">✓</span>}
+        {isHost && <span>👑</span>}
         {isDealer && <span className="dealer-button">D</span>}
+        {player.name}
+        {player.ready && <span className="ready-check">✓</span>}
       </div>
 
       {/* Always show cards container to maintain consistent size */}
