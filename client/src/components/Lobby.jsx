@@ -8,7 +8,7 @@ import {
 import "./Lobby.css";
 
 const Lobby = ({ onStartGame }) => {
-  const { connected, roomList, createRoom, joinRoom, getRoomList, rejoinGame } =
+  const { connected, roomList, createRoom, joinRoom, getRoomList, rejoinGame, joinAsSpectator } =
     useNetwork();
   const [playerName, setPlayerName] = useState(getPlayerName());
   const [roomCode, setRoomCode] = useState("");
@@ -143,6 +143,34 @@ const Lobby = ({ onStartGame }) => {
     }
   };
 
+  const handleSpectate = async (roomId) => {
+    if (!playerName.trim()) {
+      setStatusMessage("❌ Please enter your name");
+      setStatusType("error");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setStatusMessage("Joining as spectator...");
+      setStatusType("info");
+
+      await joinAsSpectator(roomId, playerName.trim());
+
+      setStatusMessage(`✅ Joined as spectator: ${roomId}`);
+      setStatusType("success");
+
+      // Transition to game after brief delay
+      setTimeout(() => {
+        onStartGame();
+      }, 500);
+    } catch (error) {
+      setStatusMessage(`❌ ${error.message}`);
+      setStatusType("error");
+      setIsLoading(false);
+    }
+  };
+
   const handleRoomCodeKeyPress = (e) => {
     if (e.key === "Enter") {
       handleJoinByCode();
@@ -219,6 +247,11 @@ const Lobby = ({ onStartGame }) => {
                     <div className="room-players">
                       {room.players.join(", ")}
                     </div>
+                    <div className="room-spectators">
+                      {room.spectators && room.spectators.length > 0
+                        ? `👁️ ${room.spectators.join(", ")}`
+                        : "No spectators"}
+                    </div>
                     <button
                       className="btn btn-primary btn-rejoin"
                       onClick={() =>
@@ -270,20 +303,33 @@ const Lobby = ({ onStartGame }) => {
                     <div className="room-players">
                       {room.players.join(", ")}
                     </div>
-                    <div className="room-status">
-                      {isInProgress ? "🎮 In Progress" : "⏳ Waiting"}
+                    <div className="room-spectators">
+                      {room.spectators && room.spectators.length > 0
+                        ? `👁️ ${room.spectators.join(", ")}`
+                        : "No spectators"}
                     </div>
-                    {isJoinable && (
+                    <div className="room-buttons">
+                      {isJoinable && (
+                        <button
+                          className="btn btn-secondary btn-join"
+                          onClick={() =>
+                            !isLoading && handleJoinRoom(room.roomId)
+                          }
+                          disabled={isLoading}
+                        >
+                          Join
+                        </button>
+                      )}
                       <button
-                        className="btn btn-secondary btn-join"
+                        className="btn btn-spectate"
                         onClick={() =>
-                          !isLoading && handleJoinRoom(room.roomId)
+                          !isLoading && handleSpectate(room.roomId)
                         }
                         disabled={isLoading}
                       >
-                        Join
+                        Spectate
                       </button>
-                    )}
+                    </div>
                   </div>
                 );
               })

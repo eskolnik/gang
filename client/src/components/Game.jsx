@@ -31,12 +31,19 @@ const Game = ({ onReturnToLobby }) => {
 
   const handleReturnToLobby = useCallback(async () => {
     try {
-      await returnToLobby();
-      onReturnToLobby();
+      // Spectators leave immediately without keeping their seat
+      if (gameState?.isSpectator) {
+        leaveGame();
+        onReturnToLobby();
+      } else {
+        // Players return to lobby but keep their seat
+        await returnToLobby();
+        onReturnToLobby();
+      }
     } catch (error) {
       console.error('Failed to return to lobby:', error);
     }
-  }, [returnToLobby, onReturnToLobby]);
+  }, [returnToLobby, onReturnToLobby, leaveGame, gameState]);
 
   const handleLeaveGame = useCallback(() => {
     if (window.confirm('Are you sure you want to leave this game? You will lose your seat.')) {
@@ -312,9 +319,22 @@ const Game = ({ onReturnToLobby }) => {
         <button className="btn-return" onClick={handleReturnToLobby}>
           Return to Lobby
         </button>
-        <button className="btn-leave" onClick={handleLeaveGame}>
-          <i className="fas fa-right-from-bracket"></i> Leave Game
-        </button>
+        {/* Only show Leave Game button for players, not spectators */}
+        {!gameState?.isSpectator && (
+          <button className="btn-leave" onClick={handleLeaveGame}>
+            <i className="fas fa-right-from-bracket"></i> Leave Game
+          </button>
+        )}
+        {/* Spectator indicator */}
+        {gameState?.spectators && gameState.spectators.length > 0 && (
+          <div className="spectator-indicator">
+            <i className="fas fa-eye"></i>
+            <span className="spectator-names">{gameState.spectators.map(s => s.name).join(', ')}</span>
+            <div className="spectator-popover">
+              {gameState.spectators.map(s => s.name).join(', ')}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* TOP RIGHT: Info Container */}

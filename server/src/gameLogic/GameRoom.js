@@ -27,6 +27,7 @@ export class GameRoom {
   constructor(roomId, options = {}) {
     this.roomId = roomId;
     this.players = new Map(); // playerId -> {id, name, socketId, pocketCards, ready, atTable}
+    this.spectators = new Map(); // spectatorId -> {id, name, socketId}
     this.phase = GAME_PHASES.WAITING;
     this.deck = new Deck();
     this.communityCards = [];
@@ -108,6 +109,42 @@ export class GameRoom {
     // Persist state
     this.save();
     return false;
+  }
+
+  /**
+   * Add a spectator to the room
+   */
+  addSpectator(spectatorId, spectatorName, socketId) {
+    const spectatorData = {
+      id: spectatorId,
+      name: spectatorName,
+      socketId: socketId
+    };
+
+    this.spectators.set(spectatorId, spectatorData);
+    console.log(`👁️  Spectator ${spectatorName} joined room ${this.roomId}`);
+  }
+
+  /**
+   * Remove a spectator from the room
+   * Spectators can leave at any time without affecting the game
+   */
+  removeSpectator(spectatorId) {
+    const spectator = this.spectators.get(spectatorId);
+    if (spectator) {
+      console.log(`👁️  Spectator ${spectator.name} left room ${this.roomId}`);
+      this.spectators.delete(spectatorId);
+    }
+  }
+
+  /**
+   * Update spectator socket ID (for reconnection)
+   */
+  updateSpectatorSocket(spectatorId, newSocketId) {
+    const spectator = this.spectators.get(spectatorId);
+    if (spectator) {
+      spectator.socketId = newSocketId;
+    }
   }
 
   /**
@@ -523,6 +560,10 @@ export class GameRoom {
         ready: this.playerReadyStatus[p.id],
         atTable: p.atTable
       })),
+      spectators: Array.from(this.spectators.values()).map(s => ({
+        id: s.id,
+        name: s.name
+      })),
       communityCards: this.communityCards,
       tokenPool: this.tokenPool,
       tokenAssignments: this.tokenAssignments,
@@ -548,7 +589,30 @@ export class GameRoom {
 
     return {
       ...this.getPublicState(),
-      myPocketCards: player.pocketCards
+      myPocketCards: player.pocketCards,
+      isSpectator: false
+    };
+  }
+
+  /**
+   * Get spectator-specific state (includes ALL pocket cards)
+   */
+  getSpectatorState(spectatorId) {
+    const spectator = this.spectators.get(spectatorId);
+    if (!spectator) {
+      throw new Error('Spectator not found');
+    }
+
+    // Spectators can see all pocket cards
+    const allPocketCards = {};
+    for (const [playerId, player] of this.players) {
+      allPocketCards[playerId] = player.pocketCards;
+    }
+
+    return {
+      ...this.getPublicState(),
+      allPocketCards: allPocketCards,
+      isSpectator: true
     };
   }
 
@@ -561,6 +625,7 @@ export class GameRoom {
       playerCount: this.players.size,
       maxPlayers: this.maxPlayers,
       players: Array.from(this.players.values()).map(p => p.name),
+      spectators: Array.from(this.spectators.values()).map(s => s.name),
       isStarted: this.phase !== GAME_PHASES.WAITING,
       isJoinable: this.phase === GAME_PHASES.WAITING && this.players.size < this.maxPlayers,
       gameMode: this.gameMode

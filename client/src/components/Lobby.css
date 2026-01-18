@@ -168,7 +168,7 @@
   cursor: pointer;
   transition: background-color 0.2s;
   display: grid;
-  grid-template-columns: 100px 80px 120px 1fr auto;
+  grid-template-columns: 100px 80px 120px 1fr 150px auto;
   gap: 15px;
   align-items: center;
 }
@@ -223,6 +223,27 @@
 .room-status {
   font-size: 14px;
   color: #000000;
+}
+
+.room-spectators {
+  font-size: 12px;
+  color: #666666;
+  font-style: italic;
+}
+
+.room-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-spectate {
+  background-color: #9370db;
+  padding: 8px 16px;
+  font-size: 14px;
+}
+
+.btn-spectate:hover:not(:disabled) {
+  background-color: #a589e6;
 }
 
 /* Create Game Buttons */

@@ -106,6 +106,23 @@ export const NetworkProvider = ({ children }) => {
     return response;
   }, []);
 
+  const joinAsSpectator = useCallback(async (roomId, spectatorName) => {
+    const response = await networkManager.joinAsSpectator(roomId, spectatorName);
+    setRoomId(networkManager.roomId);
+    setPlayerId(networkManager.playerId);
+    setPlayerName(networkManager.playerName);
+    setGameState(networkManager.gameState);
+    return response;
+  }, []);
+
+  const leaveSpectator = useCallback(async () => {
+    await networkManager.leaveSpectator();
+    setRoomId(null);
+    setPlayerId(null);
+    setPlayerName(null);
+    setGameState(null);
+  }, []);
+
   const returnToLobby = useCallback(async () => {
     return await networkManager.returnToLobby();
   }, []);
@@ -156,6 +173,8 @@ export const NetworkProvider = ({ children }) => {
     joinRoom,
     getRoomList,
     rejoinGame,
+    joinAsSpectator,
+    leaveSpectator,
     returnToLobby,
     startGame,
     restartGame,

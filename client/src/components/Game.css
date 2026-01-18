@@ -26,6 +26,7 @@
   flex-direction: column;
   gap: 10px;
   z-index: 100;
+  width: 200px;
 }
 
 .btn-return {
@@ -65,6 +66,53 @@
 
 .btn-leave i {
   font-size: 14px;
+}
+
+/* Spectator Indicator */
+.spectator-indicator {
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  position: relative;
+  cursor: default;
+}
+
+.spectator-indicator i {
+  font-size: 16px;
+  color: #9370db;
+  flex-shrink: 0;
+}
+
+.spectator-names {
+  font-size: 14px;
+  color: #cccccc;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.spectator-popover {
+  display: none;
+  position: absolute;
+  left: 20px;
+  background-color: rgba(0, 0, 0, 0.9);
+  color: #ffffff;
+  padding: 10px 15px;
+  border-radius: 5px;
+  font-size: 14px;
+  white-space: nowrap;
+  z-index: 1000;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+.spectator-indicator:hover .spectator-popover {
+  display: block;
 }
 
 /* Game Info Container - TOP RIGHT CORNER */
@@ -380,7 +428,9 @@
 }
 
 .game-deleted-modal h2 {
-  font-family: Arial Black, sans-serif;
+  font-family:
+    Arial Black,
+    sans-serif;
   font-size: 28px;
   color: #ff0000;
   margin: 0;

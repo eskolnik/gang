@@ -423,7 +423,9 @@ const Table = ({
                 isMe={playerSlots[0].isMe}
                 isCurrentTurn={playerSlots[0].isCurrentTurn}
                 myPocketCards={
-                  playerSlots[0].isMe ? gameState.myPocketCards : null
+                  playerSlots[0].isMe
+                    ? gameState.myPocketCards
+                    : (gameState.allPocketCards ? gameState.allPocketCards[playerSlots[0].player.id] : null)
                 }
                 gameState={gameState}
                 gameResult={gameResult}
@@ -441,7 +443,9 @@ const Table = ({
                 isMe={playerSlots[1].isMe}
                 isCurrentTurn={playerSlots[1].isCurrentTurn}
                 myPocketCards={
-                  playerSlots[1].isMe ? gameState.myPocketCards : null
+                  playerSlots[1].isMe
+                    ? gameState.myPocketCards
+                    : (gameState.allPocketCards ? gameState.allPocketCards[playerSlots[1].player.id] : null)
                 }
                 gameState={gameState}
                 gameResult={gameResult}
@@ -464,7 +468,9 @@ const Table = ({
                 isMe={playerSlots[2].isMe}
                 isCurrentTurn={playerSlots[2].isCurrentTurn}
                 myPocketCards={
-                  playerSlots[2].isMe ? gameState.myPocketCards : null
+                  playerSlots[2].isMe
+                    ? gameState.myPocketCards
+                    : (gameState.allPocketCards ? gameState.allPocketCards[playerSlots[2].player.id] : null)
                 }
                 gameState={gameState}
                 gameResult={gameResult}
@@ -760,7 +766,9 @@ const Table = ({
                 isMe={playerSlots[3].isMe}
                 isCurrentTurn={playerSlots[3].isCurrentTurn}
                 myPocketCards={
-                  playerSlots[3].isMe ? gameState.myPocketCards : null
+                  playerSlots[3].isMe
+                    ? gameState.myPocketCards
+                    : (gameState.allPocketCards ? gameState.allPocketCards[playerSlots[3].player.id] : null)
                 }
                 gameState={gameState}
                 gameResult={gameResult}
@@ -782,7 +790,9 @@ const Table = ({
                 isMe={playerSlots[4].isMe}
                 isCurrentTurn={playerSlots[4].isCurrentTurn}
                 myPocketCards={
-                  playerSlots[4].isMe ? gameState.myPocketCards : null
+                  playerSlots[4].isMe
+                    ? gameState.myPocketCards
+                    : (gameState.allPocketCards ? gameState.allPocketCards[playerSlots[4].player.id] : null)
                 }
                 gameState={gameState}
                 gameResult={gameResult}
@@ -800,7 +810,9 @@ const Table = ({
                 isMe={playerSlots[5].isMe}
                 isCurrentTurn={playerSlots[5].isCurrentTurn}
                 myPocketCards={
-                  playerSlots[5].isMe ? gameState.myPocketCards : null
+                  playerSlots[5].isMe
+                    ? gameState.myPocketCards
+                    : (gameState.allPocketCards ? gameState.allPocketCards[playerSlots[5].player.id] : null)
                 }
                 gameState={gameState}
                 gameResult={gameResult}
@@ -923,8 +935,8 @@ const PlayerInfo = ({
     ? gameResult.rankedHands.find((h) => h.playerId === player.id)
     : null;
 
-  // Evaluate current hand for the current player during the game
-  const currentHandEval = isMe && myPocketCards && myPocketCards.length > 0 && gameState.communityCards
+  // Evaluate current hand during the game (for current player or spectator viewing any player)
+  const currentHandEval = myPocketCards && myPocketCards.length > 0 && gameState.communityCards
     ? HandEvaluator.evaluateHand(myPocketCards, gameState.communityCards)
     : null;
 
@@ -965,15 +977,15 @@ const PlayerInfo = ({
                   <CardBack size="small" />
                 </div>
               )
-            ) : isMe && myPocketCards && myPocketCards.length > 0 ? (
-              // Show actual cards for me during game
+            ) : myPocketCards && myPocketCards.length > 0 ? (
+              // Show actual cards (for current player or spectator viewing any player)
               <div className="pocket-cards">
                 {myPocketCards.map((card, i) => (
                   <Card key={i} card={card} size="small" />
                 ))}
               </div>
             ) : (
-              // Show card backs for others during game
+              // Show card backs for others (when not spectating)
               <div className="card-backs">
                 <CardBack size="small" />
                 <CardBack size="small" />

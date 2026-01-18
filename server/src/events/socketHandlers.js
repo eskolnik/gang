@@ -17,14 +17,26 @@ function generatePlayerId() {
 
 /**
  * Helper function to broadcast private game state to all players in a room
+ * Also broadcasts to spectators with all pocket cards visible
  */
 function broadcastGameState(io, room) {
+  // Broadcast to players
   for (const [playerId, player] of room.players) {
     const playerSocket = io.sockets.sockets.get(player.socketId);
     if (playerSocket) {
       const playerState = room.getPlayerState(playerId);
-      console.log(`Broadcasting to ${playerId}: myPocketCards =`, playerState.myPocketCards);
+      console.log(`Broadcasting to player ${playerId}: myPocketCards =`, playerState.myPocketCards);
       playerSocket.emit('gameStateUpdate', playerState);
+    }
+  }
+
+  // Broadcast to spectators
+  for (const [spectatorId, spectator] of room.spectators) {
+    const spectatorSocket = io.sockets.sockets.get(spectator.socketId);
+    if (spectatorSocket) {
+      const spectatorState = room.getSpectatorState(spectatorId);
+      console.log(`Broadcasting to spectator ${spectatorId}`);
+      spectatorSocket.emit('gameStateUpdate', spectatorState);
     }
   }
 }
@@ -254,6 +266,75 @@ export function setupSocketHandlers(io, gameRooms) {
       } catch (error) {
         console.error('Error rejoining game:', error);
         callback({ success: false, error: error.message });
+      }
+    });
+
+    /**
+     * Join as spectator
+     */
+    socket.on('joinAsSpectator', (data, callback) => {
+      try {
+        const { roomId, spectatorName } = data;
+
+        const room = gameRooms.get(roomId);
+        if (!room) {
+          return callback({ success: false, error: 'Room not found' });
+        }
+
+        // Generate spectator ID or reuse if already spectating
+        if (!currentPlayerId) {
+          currentPlayerId = generatePlayerId();
+        }
+
+        // Add spectator to room
+        room.addSpectator(currentPlayerId, spectatorName, socket.id);
+        currentRoomId = roomId;
+
+        console.log(`👁️  ${spectatorName} joined as spectator in room ${roomId}`);
+
+        // Send initial game state to spectator
+        const spectatorState = room.getSpectatorState(currentPlayerId);
+        callback({ success: true, roomId, spectatorId: currentPlayerId });
+        socket.emit('gameStateUpdate', spectatorState);
+
+        // Broadcast updated state to all players and spectators (to show new spectator in list)
+        broadcastGameState(io, room);
+        broadcastRoomList(io, gameRooms);
+      } catch (error) {
+        console.error('Error joining as spectator:', error);
+        callback({ success: false, error: error.message });
+      }
+    });
+
+    /**
+     * Leave as spectator
+     */
+    socket.on('leaveSpectator', (callback) => {
+      try {
+        if (currentRoomId && currentPlayerId) {
+          const room = gameRooms.get(currentRoomId);
+          if (room) {
+            room.removeSpectator(currentPlayerId);
+            console.log(`👁️  Spectator ${currentPlayerId} left room ${currentRoomId}`);
+
+            // Broadcast updated state to remaining players and spectators
+            broadcastGameState(io, room);
+            broadcastRoomList(io, gameRooms);
+
+            // Clear current room and player
+            currentRoomId = null;
+            currentPlayerId = null;
+
+            if (callback && typeof callback === 'function') {
+              callback({ success: true });
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error leaving as spectator:', error);
+        if (callback && typeof callback === 'function') {
+          callback({ success: false, error: error.message });
+        }
       }
     });
 
@@ -518,6 +599,7 @@ export function setupSocketHandlers(io, gameRooms) {
 
     /**
      * Handle disconnect - mark player as disconnected but don't remove them
+     * Spectators are removed immediately on disconnect
      */
     socket.on('disconnect', () => {
       console.log(`🔌 Client disconnected: ${socket.id}`);
@@ -525,13 +607,24 @@ export function setupSocketHandlers(io, gameRooms) {
       if (currentRoomId && currentPlayerId) {
         const room = gameRooms.get(currentRoomId);
         if (room) {
-          // Mark player as disconnected in database
-          markPlayerDisconnected(currentPlayerId);
+          // Check if this is a spectator
+          if (room.spectators.has(currentPlayerId)) {
+            // Remove spectator immediately (they don't have a seat to protect)
+            room.removeSpectator(currentPlayerId);
+            console.log(`👁️  Spectator ${currentPlayerId} disconnected and removed from room ${currentRoomId}`);
 
-          console.log(`📴 Player ${currentPlayerId} disconnected from room ${currentRoomId} (can rejoin)`);
+            // Broadcast updated state
+            broadcastGameState(io, room);
+            broadcastRoomList(io, gameRooms);
+          } else if (room.players.has(currentPlayerId)) {
+            // Mark player as disconnected in database (they can rejoin)
+            markPlayerDisconnected(currentPlayerId);
 
-          // Broadcast updated state to remaining connected players
-          broadcastGameState(io, room);
+            console.log(`📴 Player ${currentPlayerId} disconnected from room ${currentRoomId} (can rejoin)`);
+
+            // Broadcast updated state to remaining connected players
+            broadcastGameState(io, room);
+          }
         }
       }
     });

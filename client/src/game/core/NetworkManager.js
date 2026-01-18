@@ -203,19 +203,80 @@ export class NetworkManager {
   }
 
   /**
+   * Join a room as a spectator
+   */
+  joinAsSpectator(roomId, spectatorName) {
+    if (!this.connected) {
+      throw new Error('Not connected to server');
+    }
+
+    return new Promise((resolve, reject) => {
+      this.socket.emit('joinAsSpectator', {
+        roomId: roomId.toUpperCase(),
+        spectatorName
+      }, (response) => {
+        if (response.success) {
+          this.roomId = response.roomId;
+          this.playerId = response.spectatorId; // Spectators still get an ID
+          this.playerName = spectatorName;
+          this.isSpectator = true;
+
+          console.log('✅ Joined as spectator:', this.roomId);
+          resolve(response);
+        } else {
+          console.error('❌ Failed to join as spectator:', response.error);
+          reject(new Error(response.error));
+        }
+      });
+    });
+  }
+
+  /**
+   * Leave spectator mode and return to lobby
+   */
+  leaveSpectator() {
+    return new Promise((resolve, reject) => {
+      if (!this.socket || !this.roomId) {
+        reject(new Error('Not spectating any game'));
+        return;
+      }
+
+      this.socket.emit('leaveSpectator', (response) => {
+        if (response && response.success) {
+          this.roomId = null;
+          this.playerId = null;
+          this.playerName = null;
+          this.gameState = null;
+          this.isSpectator = false;
+          console.log('👁️  Left spectator mode');
+          resolve(response);
+        } else {
+          console.error('❌ Failed to leave spectator:', response?.error);
+          reject(new Error(response?.error || 'Failed to leave spectator'));
+        }
+      });
+    });
+  }
+
+  /**
    * Leave the current game and return to lobby
    * Clears the session from localStorage
    */
   leaveGame() {
     // Notify server that we're explicitly leaving
     if (this.socket && this.roomId) {
-      this.socket.emit('leaveGame');
+      if (this.isSpectator) {
+        this.socket.emit('leaveSpectator');
+      } else {
+        this.socket.emit('leaveGame');
+      }
     }
 
     this.roomId = null;
     this.playerId = null;
     this.playerName = null;
     this.gameState = null;
+    this.isSpectator = false;
     clearSession();
     console.log('👋 Left game');
   }
