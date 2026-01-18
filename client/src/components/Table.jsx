@@ -926,6 +926,7 @@ const PlayerInfo = ({
 }) => {
   const hasPocketCards = gameState.phase !== "waiting";
   const isHost = player.id === gameState.hostId;
+  const isDealer = player.id === gameState.dealerId;
 
   // Get player's actual cards from game result if game is complete
   const playerCards = gameResult
@@ -958,6 +959,7 @@ const PlayerInfo = ({
         {player.name}
         {!player.atTable && " 🚪"}
         {player.ready && <span className="ready-check">✓</span>}
+        {isDealer && <span className="dealer-button">D</span>}
       </div>
 
       {/* Always show cards container to maintain consistent size */}

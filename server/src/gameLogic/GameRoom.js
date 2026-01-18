@@ -46,6 +46,7 @@ export class GameRoom {
     this.seriesWins = options.seriesWins || 0; // Number of rounds won in the series
     this.seriesLosses = options.seriesLosses || 0; // Number of rounds lost in the series
     this.lastGameResult = null; // Last game result for rejoining players
+    this.dealerIndex = options.dealerIndex || 0; // Index of the dealer (rotates in best-of-5)
   }
 
   /**
@@ -232,7 +233,7 @@ export class GameRoom {
 
   /**
    * Start the next round in a best-of-5 series
-   * Preserves series wins/losses
+   * Preserves series wins/losses and rotates dealer
    */
   nextRound() {
     if (this.gameMode !== 'best-of-5') {
@@ -244,6 +245,9 @@ export class GameRoom {
     if (this.seriesWins >= 3 || this.seriesLosses >= 3) {
       throw new Error('Series is already complete');
     }
+
+    // Rotate dealer one position clockwise in best-of-5
+    this.dealerIndex = (this.dealerIndex + 1) % this.players.size;
 
     // Reset round state but keep series state
     this.deck.reset();
@@ -550,6 +554,10 @@ export class GameRoom {
    * Get public game state (for broadcasting to all players)
    */
   getPublicState() {
+    // Determine dealer player ID from dealer index
+    const playerIds = Array.from(this.players.keys());
+    const dealerId = playerIds.length > 0 ? playerIds[this.dealerIndex % playerIds.length] : null;
+
     return {
       roomId: this.roomId,
       phase: this.phase,
@@ -572,6 +580,7 @@ export class GameRoom {
       actionLog: this.actionLog,
       allPlayersHaveTokens: this.allPlayersHaveTokens(),
       hostId: this.hostId,
+      dealerId: dealerId,
       gameMode: this.gameMode,
       seriesWins: this.seriesWins,
       seriesLosses: this.seriesLosses
