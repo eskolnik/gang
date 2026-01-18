@@ -569,36 +569,34 @@ const Table = ({
               </div>
 
               <div className="table-center">
-                {/* Community cards - always visible to maintain consistent layout */}
+                {/* Community cards - always render 5 slots to maintain consistent layout */}
                 <div className="community-cards-container">
                   <div className="community-cards">
-                    {gameState.communityCards &&
-                      gameState.communityCards
-                        .slice(0, visibleCommunityCards)
-                        .map((card, i) => {
-                          const isInBestHand =
-                            myPlayerId && gameState.myPocketCards
-                              ? isCardInBestHand(
-                                  card,
-                                  gameState.myPocketCards,
-                                  gameState.communityCards
-                                )
-                              : false;
-                          return (
-                            <div key={i} className="community-card-deal">
-                              <Card
-                                card={card}
-                                isInBestHand={isInBestHand}
-                                size="small"
-                              />
-                            </div>
-                          );
-                        })}
-                    {[1, 2, 3, 4, 5]
-                      .slice(visibleCommunityCards)
-                      .map((i) => (
-                        <div key={`empty-${i}`} className="card-small" />
-                      ))}
+                    {[0, 1, 2, 3, 4].map((i) => {
+                      const card = gameState.communityCards?.[i];
+                      const isVisible = i < visibleCommunityCards;
+                      const isInBestHand =
+                        card && myPlayerId && gameState.myPocketCards
+                          ? isCardInBestHand(
+                              card,
+                              gameState.myPocketCards,
+                              gameState.communityCards
+                            )
+                          : false;
+                      return (
+                        <div key={i} className="community-card-deal">
+                          {isVisible && card ? (
+                            <Card
+                              card={card}
+                              isInBestHand={isInBestHand}
+                              size="small"
+                            />
+                          ) : (
+                            <div className="card-small" />
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 
