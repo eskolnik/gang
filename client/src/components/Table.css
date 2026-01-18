@@ -257,10 +257,11 @@
 
 /* Token display - standardized */
 .token-display {
+  color: #333333;
   width: 54px;
   height: 54px;
   border-radius: 50%;
-  border: 3px solid #333333;
+  border: 5px dashed #333333;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -272,11 +273,27 @@
   user-select: none;
   transition: transform 0.2s;
   will-change: transform;
+  box-shadow: 3px 5px 5px rgba(0, 0, 0, 0.3);
 }
 
-.token-mine {
-  border-color: #000000;
-  border-width: 4px;
+.token-display::before {
+  width: 44px;
+  height: 44px;
+  position: absolute;
+  float: left;
+  border-radius: 50%;
+  content: " ";
+  border: 1px solid #333333;
+}
+
+.token-display::after {
+  width: 54px;
+  height: 54px;
+  position: absolute;
+  float: left;
+  border-radius: 50%;
+  content: " ";
+  border: 1px solid #333333;
 }
 
 .token-clickable {
