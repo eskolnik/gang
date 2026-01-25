@@ -18,7 +18,9 @@
 
 /* Header */
 .lobby-title {
-  font-family: Arial Black, sans-serif;
+  font-family:
+    Arial Black,
+    sans-serif;
   font-size: 48px;
   color: #ffffff;
   text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.8);
@@ -26,9 +28,10 @@
 }
 
 .lobby-subtitle {
-  font-size: 20px;
+  font-size: 16px;
   color: #cccccc;
   margin: -10px 0 0 0;
+  font-style: italic;
 }
 
 /* Status Message */
@@ -139,7 +142,9 @@
 }
 
 .rooms-section h2 {
-  font-family: Arial Black, sans-serif;
+  font-family:
+    Arial Black,
+    sans-serif;
   font-size: 24px;
   color: #ffffff;
   text-align: center;
@@ -194,7 +199,9 @@
 }
 
 .room-id {
-  font-family: Arial Black, sans-serif;
+  font-family:
+    Arial Black,
+    sans-serif;
   font-size: 14px;
   color: #000000;
 }
@@ -257,7 +264,9 @@
 /* Buttons */
 .btn {
   padding: 12px 30px;
-  font-family: Arial Black, sans-serif;
+  font-family:
+    Arial Black,
+    sans-serif;
   font-size: 16px;
   color: #ffffff;
   border: none;

@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useNetwork } from '../context/NetworkContext';
 import Table from './Table';
 import { HandEvaluator } from '../game/utils/handEvaluator';
+import SettingsMenu from './SettingsMenu';
 import './Game.css';
 
 const GAME_PHASES = {
@@ -469,6 +470,9 @@ const Game = ({ onReturnToLobby }) => {
           </div>
         </div>
       )}
+
+      {/* Settings Menu */}
+      <SettingsMenu />
     </div>
   );
 };

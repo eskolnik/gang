@@ -1,4 +1,5 @@
 import './Card.css';
+import { useSettings } from '../context/SettingsContext';
 
 const SUIT_SYMBOLS = {
   h: '♥',
@@ -15,12 +16,17 @@ const SUIT_COLORS = {
 };
 
 const Card = ({ card, isInBestHand = false, size = 'normal' }) => {
+  const { cardFaceId } = useSettings();
+
   if (!card) return null;
 
   const sizeClass = size === 'small' ? 'card-small' : '';
+  const faceClass = `card-face-${cardFaceId}`;
 
   return (
-    <div className={`card ${isInBestHand ? 'card-highlighted' : ''} ${sizeClass}`}>
+    <div
+      className={`card ${isInBestHand ? 'card-highlighted' : ''} ${sizeClass} ${faceClass}`}
+    >
       <span className="card-text" style={{ color: SUIT_COLORS[card.suit] }}>
         {card.rank}{SUIT_SYMBOLS[card.suit]}
       </span>
@@ -32,9 +38,7 @@ export const CardBack = ({ size = 'small' }) => {
   const sizeClass = size === 'small' ? 'card-back-small' : '';
 
   return (
-    <div className={`card-back ${sizeClass}`}>
-      <div className="card-back-pattern" />
-    </div>
+    <div className={`card-back ${sizeClass}`} />
   );
 };
 

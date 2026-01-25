@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { NetworkProvider, useNetwork } from './context/NetworkContext';
+import { SettingsProvider } from './context/SettingsContext';
 import Lobby from './components/Lobby';
 import Game from './components/Game';
 
@@ -58,9 +59,11 @@ function AppContent() {
 
 function App() {
   return (
-    <NetworkProvider>
-      <AppContent />
-    </NetworkProvider>
+    <SettingsProvider>
+      <NetworkProvider>
+        <AppContent />
+      </NetworkProvider>
+    </SettingsProvider>
   );
 }
 

@@ -6,6 +6,7 @@ import {
   savePlayerName,
 } from "../game/utils/storage";
 import "./Lobby.css";
+import SettingsMenu from "./SettingsMenu";
 
 const Lobby = ({ onStartGame }) => {
   const { connected, roomList, createRoom, joinRoom, getRoomList, rejoinGame, joinAsSpectator } =
@@ -188,6 +189,7 @@ const Lobby = ({ onStartGame }) => {
       <div className="lobby-container">
         {/* Header */}
         <h1 className="lobby-title">DA GANG</h1>
+        <h4 className="lobby-subtitle">A game about friendship and cooperation</h4>
 
         {/* Connection Status */}
         {statusType == "error" && (
@@ -337,6 +339,7 @@ const Lobby = ({ onStartGame }) => {
           </div>
         </div>
       </div>
+      <SettingsMenu />
     </div>
   );
 };
