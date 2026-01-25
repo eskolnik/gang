@@ -413,6 +413,7 @@ const Game = ({ onReturnToLobby }) => {
           gameState={gameState}
           onTokenClick={handleClaimToken}
           onSetReady={handleSetReady}
+          onPassTurn={handlePassTurn}
           onRestartGame={handleRestartGame}
           onNextRound={handleNextRound}
           isHost={isHost}
@@ -432,13 +433,6 @@ const Game = ({ onReturnToLobby }) => {
 
       {/* BOTTOM LEFT: Action Buttons (during gameplay) */}
       <div className="game-actions">
-        {gameState.phase.includes('betting') &&
-         gameState.currentTurn === playerId &&
-         gameState.tokenAssignments?.[playerId] !== undefined && (
-          <button className="btn-action btn-pass" onClick={handlePassTurn}>
-            Pass
-          </button>
-        )}
       </div>
 
 

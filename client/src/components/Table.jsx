@@ -20,6 +20,7 @@ const Table = ({
   gameState,
   onTokenClick,
   onSetReady,
+  onPassTurn,
   onRestartGame,
   onNextRound,
   isHost,
@@ -353,19 +354,20 @@ const Table = ({
   }, [gameState?.bettingRoundHistory, players, archivingTokens.length, appearingTokens.length, visualTokenHistory, gameState?.phase, lastPhase]);
 
   // Define fixed slots: 2 top, 1 left, 1 right, 2 bottom
-  // Players are seated clockwise around the table
+  // Array index corresponds to JSX rendering position
+  // seatIndex corresponds to clockwise seat assignment from server (0=top-left, 1=top-right, 2=right, 3=bottom-right, 4=bottom-left, 5=left)
   const FIXED_SLOTS = [
-    { id: "seat-0", position: "top-left", index: 0 },
-    { id: "seat-1", position: "top-right", index: 1 },
-    { id: "seat-2", position: "left", index: 5 },
-    { id: "seat-3", position: "right", index: 2 },
-    { id: "seat-4", position: "bottom-left", index: 4 },
-    { id: "seat-5", position: "bottom-right", index: 3 },
+    { id: "seat-0", position: "top-left", seatIndex: 0 },      // JSX position 0 = seatIndex 0 (top-left)
+    { id: "seat-1", position: "top-right", seatIndex: 1 },     // JSX position 1 = seatIndex 1 (top-right)
+    { id: "seat-2", position: "left", seatIndex: 5 },          // JSX position 2 = seatIndex 5 (left)
+    { id: "seat-3", position: "right", seatIndex: 2 },         // JSX position 3 = seatIndex 2 (right)
+    { id: "seat-4", position: "bottom-left", seatIndex: 4 },   // JSX position 4 = seatIndex 4 (bottom-left)
+    { id: "seat-5", position: "bottom-right", seatIndex: 3 },  // JSX position 5 = seatIndex 3 (bottom-right)
   ];
 
-  // Map players to fixed slots
+  // Map players to fixed slots based on their seatIndex
   const playerSlots = FIXED_SLOTS.map((slot) => {
-    const player = players[slot.index];
+    const player = players.find(p => p.seatIndex === slot.seatIndex);
     if (!player) return { ...slot, player: null };
 
     const isMe = player.id === myPlayerId;
@@ -416,8 +418,8 @@ const Table = ({
       <div className="table-layout">
         {/* Top seats - 2 seats */}
         <div className="seat-row seat-top">
-          {playerSlots[0].player && (
-            <div className="seat-area">
+          <div className="seat-area">
+            {playerSlots[0].player && (
               <PlayerInfo
                 player={playerSlots[0].player}
                 isMe={playerSlots[0].isMe}
@@ -434,10 +436,10 @@ const Table = ({
                 visualTokenHistory={visualTokenHistory}
                 tokenHistoryRefs={tokenHistoryRefs}
               />
-            </div>
-          )}
-          {playerSlots[1].player && (
-            <div className="seat-area">
+            )}
+          </div>
+          <div className="seat-area">
+            {playerSlots[1].player && (
               <PlayerInfo
                 player={playerSlots[1].player}
                 isMe={playerSlots[1].isMe}
@@ -454,13 +456,13 @@ const Table = ({
                 visualTokenHistory={visualTokenHistory}
                 tokenHistoryRefs={tokenHistoryRefs}
               />
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Middle section with left seat, table, right seat */}
         <div className="table-middle">
-          {/* Left seat */}
+          {/* Left seat - always render seat-area to maintain layout */}
           <div className="seat-area seat-left">
             {playerSlots[2].player && (
               <PlayerInfo
@@ -638,6 +640,18 @@ const Table = ({
                         })}
                       </div>
 
+                      {/* Pass button - shown when it's player's turn and they have a token */}
+                      {gameState.phase.includes("betting") &&
+                        gameState.currentTurn === myPlayerId &&
+                        gameState.tokenAssignments?.[myPlayerId] !== undefined && (
+                          <button
+                            className="btn-ready-table btn-pass"
+                            onClick={onPassTurn}
+                          >
+                            Pass
+                          </button>
+                        )}
+
                       {/* Ready button - only shown when all players have tokens */}
                       {gameState.phase.includes("betting") &&
                         gameState.allPlayersHaveTokens && (
@@ -760,7 +774,7 @@ const Table = ({
             </div>
           </div>
 
-          {/* Right seat */}
+          {/* Right seat - always render seat-area to maintain layout */}
           <div className="seat-area seat-right">
             {playerSlots[3].player && (
               <PlayerInfo
@@ -785,8 +799,8 @@ const Table = ({
 
         {/* Bottom seats - 2 seats */}
         <div className="seat-row seat-bottom">
-          {playerSlots[4].player && (
-            <div className="seat-area">
+          <div className="seat-area">
+            {playerSlots[4].player && (
               <PlayerInfo
                 player={playerSlots[4].player}
                 isMe={playerSlots[4].isMe}
@@ -803,10 +817,10 @@ const Table = ({
                 visualTokenHistory={visualTokenHistory}
                 tokenHistoryRefs={tokenHistoryRefs}
               />
-            </div>
-          )}
-          {playerSlots[5].player && (
-            <div className="seat-area">
+            )}
+          </div>
+          <div className="seat-area">
+            {playerSlots[5].player && (
               <PlayerInfo
                 player={playerSlots[5].player}
                 isMe={playerSlots[5].isMe}
@@ -823,8 +837,8 @@ const Table = ({
                 visualTokenHistory={visualTokenHistory}
                 tokenHistoryRefs={tokenHistoryRefs}
               />
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 

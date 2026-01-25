@@ -60,13 +60,24 @@ export class GameRoom {
       throw new Error('Game already in progress');
     }
 
+    // Find the first available seat index (0-5)
+    const occupiedSeats = new Set(Array.from(this.players.values()).map(p => p.seatIndex));
+    let seatIndex = 0;
+    for (let i = 0; i < 6; i++) {
+      if (!occupiedSeats.has(i)) {
+        seatIndex = i;
+        break;
+      }
+    }
+
     const playerData = {
       id: playerId,
       name: playerName,
       socketId: socketId,
       pocketCards: [],
       ready: false,
-      atTable: true
+      atTable: true,
+      seatIndex: seatIndex
     };
 
     this.players.set(playerId, playerData);
@@ -424,11 +435,38 @@ export class GameRoom {
     // Toggle ready status
     this.playerReadyStatus[playerId] = !this.playerReadyStatus[playerId];
 
+    // If player just marked themselves as ready and it's their turn, advance to next unready player
+    if (this.playerReadyStatus[playerId] && this.currentTurn === playerId) {
+      this.advanceToNextUnreadyPlayer();
+    }
+
     // Update last action timestamp
     this.lastAction = Date.now();
 
     // Persist state
     this.save();
+  }
+
+  /**
+   * Advance turn to the next unready player
+   */
+  advanceToNextUnreadyPlayer() {
+    const playerIds = Array.from(this.players.keys());
+    const currentIndex = playerIds.indexOf(this.currentTurn);
+
+    // Try to find next unready player (loop through all players once)
+    for (let i = 1; i <= playerIds.length; i++) {
+      const nextIndex = (currentIndex + i) % playerIds.length;
+      const nextPlayerId = playerIds[nextIndex];
+
+      // Stop at the first unready player
+      if (!this.playerReadyStatus[nextPlayerId]) {
+        this.currentTurn = nextPlayerId;
+        return;
+      }
+    }
+
+    // If all players are ready, keep current turn (shouldn't happen normally)
   }
 
   /**
@@ -566,7 +604,8 @@ export class GameRoom {
         id: p.id,
         name: p.name,
         ready: this.playerReadyStatus[p.id],
-        atTable: p.atTable
+        atTable: p.atTable,
+        seatIndex: p.seatIndex
       })),
       spectators: Array.from(this.spectators.values()).map(s => ({
         id: s.id,
