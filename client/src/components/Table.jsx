@@ -100,8 +100,14 @@ const Table = ({
 
     // Detect if this is a round start: pool went from empty/few tokens to full set (one per player)
     // This happens at the start of each betting round
+    // To avoid false positives (like when last player returns their token), also check that
+    // nobody had tokens in the previous visual state
     const playerCount = players?.length || 0;
-    const isRoundStart = currentPool.length === playerCount && visualTokenPool.length < playerCount && Object.keys(currentAssignments).length === 0;
+    const hadTokensBefore = Object.keys(visualTokenAssignments).length > 0;
+    const isRoundStart = currentPool.length === playerCount &&
+                         visualTokenPool.length < playerCount &&
+                         Object.keys(currentAssignments).length === 0 &&
+                         !hadTokensBefore; // Only a round start if nobody had tokens before
 
     if (isRoundStart) {
       // At round start, tokens should only use flip animation, not sliding
