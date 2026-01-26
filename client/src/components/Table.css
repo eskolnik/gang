@@ -325,6 +325,33 @@
   transform: scale(1.15);
 }
 
+.token-returnable {
+  cursor: pointer;
+  position: relative;
+}
+
+.token-returnable:hover {
+  transform: scale(1.15);
+}
+
+.token-returnable:hover::after {
+  content: attr(data-return-text);
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 18px;
+  font-weight: bold;
+  color: #ff0000;
+  text-shadow:
+    0 0 3px #ffffff,
+    0 0 3px #ffffff;
+  z-index: 20;
+  pointer-events: none;
+  letter-spacing: 0.5px;
+  border: none;
+}
+
 /* Token History - horizontal line below pocket cards */
 .token-history {
   display: flex;

@@ -502,6 +502,34 @@ export function setupSocketHandlers(io, gameRooms) {
     });
 
     /**
+     * Return token to pool (non-turn-based action)
+     */
+    socket.on('returnToken', (callback) => {
+      try {
+        if (!currentRoomId || !currentPlayerId) {
+          return callback({ success: false, error: 'Not in a game' });
+        }
+
+        const room = gameRooms.get(currentRoomId);
+        if (!room) {
+          return callback({ success: false, error: 'Room not found' });
+        }
+
+        const result = room.returnToken(currentPlayerId);
+
+        console.log(`↩️ Player ${currentPlayerId} returned token to pool in room ${currentRoomId}`);
+
+        callback({ success: true, ...result });
+
+        // Broadcast updated state to all players (with private pocket cards)
+        broadcastGameState(io, room);
+      } catch (error) {
+        console.error('Error returning token:', error);
+        callback({ success: false, error: error.message });
+      }
+    });
+
+    /**
      * Mark player as ready
      */
     socket.on('playerReady', (callback) => {

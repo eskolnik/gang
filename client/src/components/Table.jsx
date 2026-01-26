@@ -21,6 +21,7 @@ const Table = ({
   onTokenClick,
   onSetReady,
   onPassTurn,
+  onReturnToken,
   onRestartGame,
   onNextRound,
   isHost,
@@ -520,6 +521,11 @@ const Table = ({
                             gameState.phase.includes("betting")
                           }
                           onClick={onTokenClick}
+                          canReturn={
+                            playerSlots[0].isMe &&
+                            gameState.phase.includes("betting")
+                          }
+                          onReturn={onReturnToken}
                         />
                       )}
                   </div>
@@ -540,6 +546,11 @@ const Table = ({
                             gameState.phase.includes("betting")
                           }
                           onClick={onTokenClick}
+                          canReturn={
+                            playerSlots[1].isMe &&
+                            gameState.phase.includes("betting")
+                          }
+                          onReturn={onReturnToken}
                         />
                       )}
                   </div>
@@ -566,6 +577,11 @@ const Table = ({
                         gameState.phase.includes("betting")
                       }
                       onClick={onTokenClick}
+                      canReturn={
+                        playerSlots[2].isMe &&
+                        gameState.phase.includes("betting")
+                      }
+                      onReturn={onReturnToken}
                     />
                   )}
               </div>
@@ -724,6 +740,11 @@ const Table = ({
                         gameState.phase.includes("betting")
                       }
                       onClick={onTokenClick}
+                      canReturn={
+                        playerSlots[3].isMe &&
+                        gameState.phase.includes("betting")
+                      }
+                      onReturn={onReturnToken}
                     />
                   )}
               </div>
@@ -748,6 +769,11 @@ const Table = ({
                         gameState.phase.includes("betting")
                       }
                       onClick={onTokenClick}
+                      canReturn={
+                        playerSlots[4].isMe &&
+                        gameState.phase.includes("betting")
+                      }
+                      onReturn={onReturnToken}
                     />
                   )}
               </div>
@@ -768,6 +794,11 @@ const Table = ({
                         gameState.phase.includes("betting")
                       }
                       onClick={onTokenClick}
+                      canReturn={
+                        playerSlots[5].isMe &&
+                        gameState.phase.includes("betting")
+                      }
+                      onReturn={onReturnToken}
                     />
                   )}
               </div>
@@ -1071,6 +1102,8 @@ const TokenDisplay = ({
   isMyToken,
   canClick,
   onClick,
+  canReturn,
+  onReturn,
   offsetX = 0,
   offsetY = 0,
   animating = false,
@@ -1100,13 +1133,22 @@ const TokenDisplay = ({
     }),
   };
 
+  const handleClick = () => {
+    if (canReturn && onReturn) {
+      onReturn();
+    } else if (canClick && onClick) {
+      onClick(number);
+    }
+  };
+
   return (
     <div
       className={`token-display ${canClick ? "token-clickable" : ""} ${
-        isMyToken ? "token-mine" : ""
-      }`}
+        canReturn ? "token-returnable" : ""
+      } ${isMyToken ? "token-mine" : ""}`}
       style={inlineStyle}
-      onClick={canClick ? () => onClick(number) : undefined}
+      onClick={(canClick || canReturn) ? handleClick : undefined}
+      data-return-text="RETURN"
     >
       {number}
     </div>

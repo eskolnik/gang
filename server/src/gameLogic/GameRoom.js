@@ -416,6 +416,53 @@ export class GameRoom {
   }
 
   /**
+   * Return token to pool (can be done at any time, not turn-based)
+   */
+  returnToken(playerId) {
+    const currentToken = this.tokenAssignments[playerId];
+
+    if (currentToken === undefined) {
+      throw new Error('You do not have a token to return');
+    }
+
+    // Return token to pool
+    this.tokenPool.push(currentToken);
+    delete this.tokenAssignments[playerId];
+
+    // Get player name for logging
+    const player = this.players.get(playerId);
+    const playerName = player ? player.name : 'Unknown';
+
+    // Log the action
+    this.actionLog.push({
+      playerId,
+      playerName,
+      action: 'returned',
+      tokenNumber: currentToken,
+      phase: this.phase,
+      timestamp: Date.now()
+    });
+
+    // Un-ready the player who returned their token
+    this.playerReadyStatus[playerId] = false;
+    if (player) {
+      player.ready = false;
+    }
+
+    // Update last action timestamp
+    this.lastAction = Date.now();
+
+    // Persist state
+    this.save();
+
+    return {
+      tokenAssignments: { ...this.tokenAssignments },
+      tokenPool: [...this.tokenPool],
+      currentTurn: this.currentTurn
+    };
+  }
+
+  /**
    * Advance to next player's turn
    */
   advanceTurn() {

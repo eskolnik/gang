@@ -147,6 +147,10 @@ export const NetworkProvider = ({ children }) => {
     return await networkManager.passTurn();
   }, []);
 
+  const returnToken = useCallback(async () => {
+    return await networkManager.returnToken();
+  }, []);
+
   const setReady = useCallback(async () => {
     return await networkManager.setReady();
   }, []);
@@ -181,6 +185,7 @@ export const NetworkProvider = ({ children }) => {
     nextRound,
     claimToken,
     passTurn,
+    returnToken,
     setReady,
     leaveGame,
     networkManager // Expose the raw manager for advanced use cases

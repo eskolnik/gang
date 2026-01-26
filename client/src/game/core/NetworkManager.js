@@ -436,6 +436,28 @@ export class NetworkManager {
   }
 
   /**
+   * Return token to pool (non-turn-based action)
+   */
+  returnToken() {
+    return new Promise((resolve, reject) => {
+      if (!this.connected) {
+        reject(new Error('Not connected to server'));
+        return;
+      }
+
+      this.socket.emit('returnToken', (response) => {
+        if (response.success) {
+          console.log('✅ Returned token to pool');
+          resolve(response);
+        } else {
+          console.error('❌ Failed to return token:', response.error);
+          reject(new Error(response.error));
+        }
+      });
+    });
+  }
+
+  /**
    * Mark player as ready
    */
   setReady() {
