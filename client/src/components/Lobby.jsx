@@ -12,6 +12,8 @@ const Lobby = ({ onStartGame }) => {
   const { connected, roomList, createRoom, joinRoom, getRoomList, rejoinGame, joinAsSpectator } =
     useNetwork();
   const [playerName, setPlayerName] = useState(getPlayerName());
+  const [tempName, setTempName] = useState(getPlayerName()); // Temporary name during editing
+  const [isEditingName, setIsEditingName] = useState(!getPlayerName()); // Start in edit mode if no name
   const [roomCode, setRoomCode] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
   const [statusType, setStatusType] = useState("info"); // 'info' | 'success' | 'error'
@@ -180,9 +182,74 @@ const Lobby = ({ onStartGame }) => {
 
   const handlePlayerNameChange = (e) => {
     const name = e.target.value;
-    setPlayerName(name);
-    savePlayerName(name);
+    setTempName(name);
   };
+
+  const handleNameDone = () => {
+    if (!tempName.trim()) {
+      setStatusMessage("❌ Please enter your name");
+      setStatusType("error");
+      return;
+    }
+    setPlayerName(tempName.trim());
+    savePlayerName(tempName.trim());
+    setIsEditingName(false);
+    setStatusMessage("");
+  };
+
+  const handleNameEdit = () => {
+    setTempName(playerName);
+    setIsEditingName(true);
+  };
+
+  const handleNameKeyPress = (e) => {
+    if (e.key === "Enter") {
+      handleNameDone();
+    }
+  };
+
+  // If no player name set or editing, show only name entry
+  if (!playerName || isEditingName) {
+    return (
+      <div className="lobby">
+        <div className="lobby-container lobby-container-centered">
+          {/* Header */}
+          <h1 className="lobby-title">DA GANG</h1>
+          <h4 className="lobby-subtitle">A game about friendship and cooperation</h4>
+
+          {/* Connection Status */}
+          {statusType == "error" && (
+            <div className={`status-message status-${statusType}`}>
+              {statusMessage}
+            </div>
+          )}
+
+          {/* Player Name Input - Large and Centered */}
+          <div className="name-entry-form">
+            <label htmlFor="player-name">Enter Your Name:</label>
+            <input
+              id="player-name"
+              type="text"
+              value={tempName}
+              onChange={handlePlayerNameChange}
+              onKeyPress={handleNameKeyPress}
+              placeholder="Your name"
+              autoFocus
+              maxLength={20}
+            />
+            <button
+              className="btn btn-primary btn-done"
+              onClick={handleNameDone}
+              disabled={!tempName.trim()}
+            >
+              Done
+            </button>
+          </div>
+        </div>
+        <SettingsMenu />
+      </div>
+    );
+  }
 
   return (
     <div className="lobby">
@@ -198,18 +265,19 @@ const Lobby = ({ onStartGame }) => {
           </div>
         )}
 
-        {/* Player Name Input */}
+        {/* Player Name Display with Edit Button */}
         <div className="name-section">
-          <label htmlFor="player-name">Your Name:</label>
-          <input
-            id="player-name"
-            type="text"
-            value={playerName}
-            onChange={handlePlayerNameChange}
-            placeholder="Enter your name"
-            disabled={isLoading}
-            maxLength={20}
-          />
+          <label>Your Name:</label>
+          <div className="name-display">
+            <span className="player-name-text">{playerName}</span>
+            <button
+              className="btn-edit-name"
+              onClick={handleNameEdit}
+              title="Edit name"
+            >
+              <i className="fas fa-pencil"></i>
+            </button>
+          </div>
         </div>
 
         {/* Create Game Buttons */}

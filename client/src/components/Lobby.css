@@ -16,6 +16,10 @@
   gap: 20px;
 }
 
+.lobby-container-centered {
+  justify-content: center;
+}
+
 /* Header */
 .lobby-title {
   font-family:
@@ -86,6 +90,80 @@
 .name-section input:focus {
   outline: none;
   border-color: #4a90e2;
+}
+
+/* Name Entry Form (Initial/Edit Mode) */
+.name-entry-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 40px;
+  background-color: rgba(0, 0, 0, 0.5);
+  border: 2px solid #555555;
+  border-radius: 10px;
+  min-width: 400px;
+}
+
+.name-entry-form label {
+  font-size: 24px;
+  color: #ffffff;
+  font-weight: bold;
+}
+
+.name-entry-form input {
+  width: 100%;
+  padding: 15px 20px;
+  font-size: 24px;
+  text-align: center;
+  background-color: #333333;
+  color: #ffffff;
+  border: 2px solid #555555;
+  border-radius: 5px;
+}
+
+.name-entry-form input:focus {
+  outline: none;
+  border-color: #4a90e2;
+  box-shadow: 0 0 10px rgba(74, 144, 226, 0.5);
+}
+
+.btn-done {
+  width: 100%;
+  padding: 15px;
+  font-size: 20px;
+}
+
+/* Name Display with Edit Button */
+.name-display {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.player-name-text {
+  font-size: 20px;
+  color: #ffffff;
+  font-weight: bold;
+  padding: 8px 15px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 5px;
+}
+
+.btn-edit-name {
+  background: none;
+  border: none;
+  color: #4a90e2;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 8px 12px;
+  border-radius: 5px;
+  transition: all 0.2s ease;
+}
+
+.btn-edit-name:hover {
+  background-color: rgba(74, 144, 226, 0.2);
+  color: #6bb0ff;
 }
 
 /* Game Mode Section */
