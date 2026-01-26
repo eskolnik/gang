@@ -221,21 +221,22 @@
   margin-left: 4px;
 }
 
-.dealer-button {
+.dealer-chip {
+  position: absolute;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
-  height: 18px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   background-color: #ffffff;
   color: #000000;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: bold;
-  line-height: 18px;
   text-align: center;
-  margin-left: 4px;
-  border: 2px solid #ffd700;
+  border: 3px solid #ffd700;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  z-index: 10;
 }
 
 /* Cards container and display - standardized for all players */

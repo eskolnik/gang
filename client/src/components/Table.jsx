@@ -437,6 +437,7 @@ const Table = ({
                 isCorrect={isPlayerCorrect(playerSlots[0].player.id)}
                 visualTokenHistory={visualTokenHistory}
                 tokenHistoryRefs={tokenHistoryRefs}
+                position={0}
               />
             )}
           </div>
@@ -457,6 +458,7 @@ const Table = ({
                 isCorrect={isPlayerCorrect(playerSlots[1].player.id)}
                 visualTokenHistory={visualTokenHistory}
                 tokenHistoryRefs={tokenHistoryRefs}
+                position={1}
               />
             )}
           </div>
@@ -482,6 +484,7 @@ const Table = ({
                 isCorrect={isPlayerCorrect(playerSlots[2].player.id)}
                 visualTokenHistory={visualTokenHistory}
                 tokenHistoryRefs={tokenHistoryRefs}
+                position={2}
               />
             )}
           </div>
@@ -819,6 +822,7 @@ const Table = ({
                 isCorrect={isPlayerCorrect(playerSlots[3].player.id)}
                 visualTokenHistory={visualTokenHistory}
                 tokenHistoryRefs={tokenHistoryRefs}
+                position={3}
               />
             )}
           </div>
@@ -843,6 +847,7 @@ const Table = ({
                 isCorrect={isPlayerCorrect(playerSlots[4].player.id)}
                 visualTokenHistory={visualTokenHistory}
                 tokenHistoryRefs={tokenHistoryRefs}
+                position={4}
               />
             )}
           </div>
@@ -863,6 +868,7 @@ const Table = ({
                 isCorrect={isPlayerCorrect(playerSlots[5].player.id)}
                 visualTokenHistory={visualTokenHistory}
                 tokenHistoryRefs={tokenHistoryRefs}
+                position={5}
               />
             )}
           </div>
@@ -964,10 +970,31 @@ const PlayerInfo = ({
   isCorrect = null,
   visualTokenHistory,
   tokenHistoryRefs,
+  position = 0, // 0-5 for seat positions
 }) => {
   const hasPocketCards = gameState.phase !== "waiting";
   const isHost = player.id === gameState.hostId;
   const isDealer = player.id === gameState.dealerId;
+
+  // Determine dealer chip position based on seat
+  const getDealerChipPosition = () => {
+    switch (position) {
+      case 0: // top-left
+        return { bottom: '-12px', left: '-12px' };
+      case 1: // top-right
+        return { bottom: '-12px', right: '-12px' };
+      case 2: // left
+        return { top: '-12px', left: '-12px' };
+      case 3: // right
+        return { top: '-12px', right: '-12px' };
+      case 4: // bottom-left
+        return { top: '-12px', left: '-12px' };
+      case 5: // bottom-right
+        return { top: '-12px', right: '-12px' };
+      default:
+        return { bottom: '-12px', left: '-12px' };
+    }
+  };
 
   // Get player's actual cards from game result if game is complete
   const playerCards = gameResult
@@ -994,10 +1021,15 @@ const PlayerInfo = ({
       } ${!player.atTable ? "player-info-away" : ""} ${
         gameResult && isRevealed && isCorrect === true ? "player-info-correct" : ""
       } ${gameResult && isRevealed && isCorrect === false ? "player-info-incorrect" : ""}`}
+      style={{ position: 'relative' }}
     >
+      {isDealer && (
+        <span className="dealer-chip" style={getDealerChipPosition()}>
+          D
+        </span>
+      )}
       <div className="player-name">
         {isHost && <span>👑</span>}
-        {isDealer && <span className="dealer-button">D</span>}
         {player.name}
         {player.ready && <span className="ready-check">✓</span>}
       </div>
