@@ -15,14 +15,25 @@ export const SettingsProvider = ({ children }) => {
     return saved && CARD_FACE_OPTIONS[saved] ? saved : 'white';
   });
 
+  const [useStarTokens, setUseStarTokens] = useState(() => {
+    const saved = localStorage.getItem('useStarTokens');
+    return saved === 'true';
+  });
+
   useEffect(() => {
     localStorage.setItem('cardFace', cardFaceId);
   }, [cardFaceId]);
 
+  useEffect(() => {
+    localStorage.setItem('useStarTokens', useStarTokens);
+  }, [useStarTokens]);
+
   const value = {
     cardFaceId,
     setCardFaceId,
-    CARD_FACE_OPTIONS
+    CARD_FACE_OPTIONS,
+    useStarTokens,
+    setUseStarTokens
   };
 
   return (

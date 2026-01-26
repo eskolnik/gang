@@ -122,6 +122,32 @@
   font-size: 15px;
 }
 
+.settings-checkbox-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.settings-checkbox-option:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.settings-checkbox-option input[type="checkbox"] {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  accent-color: #62fe01;
+}
+
+.settings-checkbox-option span {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
 .card-face-preview {
   appearance: none;
   background-color: #fff;

@@ -317,6 +317,19 @@
   border: 1px solid #333333;
 }
 
+.token-stars {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.token-star {
+  font-size: 14px;
+  color: #000000;
+  line-height: 1;
+  pointer-events: none;
+}
+
 .token-clickable {
   cursor: pointer;
 }

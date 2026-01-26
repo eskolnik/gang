@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import Card, { CardBack } from "./Card";
 import { HandEvaluator } from "../game/utils/handEvaluator";
+import { useSettings } from "../context/SettingsContext";
 import "./Table.css";
 
 // Helper to check if a card is in best hand for highlighting
@@ -29,6 +30,7 @@ const Table = ({
   showFinalResult = false,
   visibleCommunityCards = 0,
 }) => {
+  const { useStarTokens } = useSettings();
   const [lastTokenAssignments, setLastTokenAssignments] = useState({});
   const [visualTokenAssignments, setVisualTokenAssignments] = useState({}); // What we actually render
   const [visualTokenPool, setVisualTokenPool] = useState([]); // What we actually show in pool
@@ -520,6 +522,7 @@ const Table = ({
                             gameState.phase.includes("betting")
                           }
                           onClick={onTokenClick}
+                          useStars={useStarTokens}
                           canReturn={
                             playerSlots[0].isMe &&
                             gameState.phase.includes("betting")
@@ -545,6 +548,7 @@ const Table = ({
                             gameState.phase.includes("betting")
                           }
                           onClick={onTokenClick}
+                          useStars={useStarTokens}
                           canReturn={
                             playerSlots[1].isMe &&
                             gameState.phase.includes("betting")
@@ -576,6 +580,7 @@ const Table = ({
                         gameState.phase.includes("betting")
                       }
                       onClick={onTokenClick}
+                      useStars={useStarTokens}
                       canReturn={
                         playerSlots[2].isMe &&
                         gameState.phase.includes("betting")
@@ -645,6 +650,7 @@ const Table = ({
                                   appearing={isAppearing}
                                   canClick={gameState.currentTurn === myPlayerId}
                                   onClick={() => onTokenClick(tokenNum)}
+                                  useStars={useStarTokens}
                                 />
                               ) : (
                                 // Empty slot to maintain spacing
@@ -727,6 +733,7 @@ const Table = ({
                         gameState.phase.includes("betting")
                       }
                       onClick={onTokenClick}
+                      useStars={useStarTokens}
                       canReturn={
                         playerSlots[3].isMe &&
                         gameState.phase.includes("betting")
@@ -756,6 +763,7 @@ const Table = ({
                         gameState.phase.includes("betting")
                       }
                       onClick={onTokenClick}
+                      useStars={useStarTokens}
                       canReturn={
                         playerSlots[4].isMe &&
                         gameState.phase.includes("betting")
@@ -781,6 +789,7 @@ const Table = ({
                         gameState.phase.includes("betting")
                       }
                       onClick={onTokenClick}
+                      useStars={useStarTokens}
                       canReturn={
                         playerSlots[5].isMe &&
                         gameState.phase.includes("betting")
@@ -1083,6 +1092,55 @@ const PlayerInfo = ({
 };
 
 // TokenDisplay sub-component
+// Helper to generate star positions for a token
+const getStarPositions = (count) => {
+  const radius = 15; // Distance from center
+  const positions = [];
+
+  if (count === 1) {
+    return [{ x: 0, y: 0 }];
+  } else if (count === 2) {
+    return [{ x: -8, y: 0 }, { x: 8, y: 0 }];
+  } else if (count === 3) {
+    // Triangle
+    return [
+      { x: 0, y: -10 },
+      { x: -9, y: 6 },
+      { x: 9, y: 6 }
+    ];
+  } else if (count === 4) {
+    // Square
+    return [
+      { x: -7, y: -7 },
+      { x: 7, y: -7 },
+      { x: -7, y: 7 },
+      { x: 7, y: 7 }
+    ];
+  } else if (count === 5) {
+    // Pentagon
+    for (let i = 0; i < 5; i++) {
+      const angle = (i * 2 * Math.PI / 5) - (Math.PI / 2);
+      positions.push({
+        x: Math.cos(angle) * radius,
+        y: Math.sin(angle) * radius
+      });
+    }
+    return positions;
+  } else if (count === 6) {
+    // Hexagon
+    for (let i = 0; i < 6; i++) {
+      const angle = (i * 2 * Math.PI / 6) - (Math.PI / 2);
+      positions.push({
+        x: Math.cos(angle) * radius,
+        y: Math.sin(angle) * radius
+      });
+    }
+    return positions;
+  }
+
+  return [{ x: 0, y: 0 }];
+};
+
 const TokenDisplay = ({
   number,
   phase,
@@ -1096,6 +1154,7 @@ const TokenDisplay = ({
   animating = false,
   shrinking = false,
   appearing = false,
+  useStars = false,
 }) => {
   const roundColors = {
     betting_1: "#ffffff",
@@ -1137,7 +1196,26 @@ const TokenDisplay = ({
       onClick={(canClick || canReturn) ? handleClick : undefined}
       data-return-text="RETURN"
     >
-      {number}
+      {useStars ? (
+        <div className="token-stars">
+          {getStarPositions(number).map((pos, i) => (
+            <span
+              key={i}
+              className="token-star"
+              style={{
+                position: 'absolute',
+                left: '50%',
+                top: '50%',
+                transform: `translate(calc(-50% + ${pos.x}px), calc(-50% + ${pos.y}px))`
+              }}
+            >
+              ★
+            </span>
+          ))}
+        </div>
+      ) : (
+        number
+      )}
     </div>
   );
 };
