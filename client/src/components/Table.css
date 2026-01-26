@@ -442,14 +442,6 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-.btn-ready-table.btn-pass {
-  background-color: #ff9900;
-}
-
-.btn-ready-table.btn-pass:hover {
-  background-color: #ffaa33;
-}
-
 /* Card flip reveal animation */
 .card-flip-reveal {
   animation: cardFlip 0.6s ease-in-out;

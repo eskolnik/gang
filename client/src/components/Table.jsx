@@ -20,7 +20,6 @@ const Table = ({
   gameState,
   onTokenClick,
   onSetReady,
-  onPassTurn,
   onReturnToken,
   onRestartGame,
   onNextRound,
@@ -655,18 +654,6 @@ const Table = ({
                           );
                         })}
                       </div>
-
-                      {/* Pass button - shown when it's player's turn and they have a token */}
-                      {gameState.phase.includes("betting") &&
-                        gameState.currentTurn === myPlayerId &&
-                        gameState.tokenAssignments?.[myPlayerId] !== undefined && (
-                          <button
-                            className="btn-ready-table btn-pass"
-                            onClick={onPassTurn}
-                          >
-                            Pass
-                          </button>
-                        )}
 
                       {/* Ready button - only shown when all players have tokens */}
                       {gameState.phase.includes("betting") &&

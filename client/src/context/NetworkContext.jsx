@@ -143,10 +143,6 @@ export const NetworkProvider = ({ children }) => {
     return await networkManager.claimToken(tokenNumber);
   }, []);
 
-  const passTurn = useCallback(async () => {
-    return await networkManager.passTurn();
-  }, []);
-
   const returnToken = useCallback(async () => {
     return await networkManager.returnToken();
   }, []);
@@ -184,7 +180,6 @@ export const NetworkProvider = ({ children }) => {
     restartGame,
     nextRound,
     claimToken,
-    passTurn,
     returnToken,
     setReady,
     leaveGame,

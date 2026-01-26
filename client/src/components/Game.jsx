@@ -22,7 +22,7 @@ const PHASE_NAMES = {
 };
 
 const Game = ({ onReturnToLobby }) => {
-  const { gameState, roomId, playerId, rejoinSuccess, startGame, restartGame, nextRound, claimToken, passTurn, returnToken, setReady, leaveGame, returnToLobby, networkManager } = useNetwork();
+  const { gameState, roomId, playerId, rejoinSuccess, startGame, restartGame, nextRound, claimToken, returnToken, setReady, leaveGame, returnToLobby, networkManager } = useNetwork();
   const [gameResult, setGameResult] = useState(null);
   const [revealedHands, setRevealedHands] = useState([]); // Array of player IDs whose hands have been revealed
   const [showFinalResult, setShowFinalResult] = useState(false);
@@ -245,15 +245,6 @@ const Game = ({ onReturnToLobby }) => {
     }
   }, [nextRound]);
 
-  const handlePassTurn = useCallback(async () => {
-    try {
-      await passTurn();
-    } catch (error) {
-      console.error('Failed to pass turn:', error);
-      alert('Failed to pass turn: ' + error.message);
-    }
-  }, [passTurn]);
-
   const handleReturnToken = useCallback(async () => {
     try {
       await returnToken();
@@ -423,7 +414,6 @@ const Game = ({ onReturnToLobby }) => {
           gameState={gameState}
           onTokenClick={handleClaimToken}
           onSetReady={handleSetReady}
-          onPassTurn={handlePassTurn}
           onReturnToken={handleReturnToken}
           onRestartGame={handleRestartGame}
           onNextRound={handleNextRound}

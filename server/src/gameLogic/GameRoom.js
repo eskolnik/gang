@@ -443,10 +443,13 @@ export class GameRoom {
       timestamp: Date.now()
     });
 
-    // Un-ready the player who returned their token
-    this.playerReadyStatus[playerId] = false;
-    if (player) {
-      player.ready = false;
+    // Un-ready ALL players when a token is returned
+    for (const pid of this.players.keys()) {
+      this.playerReadyStatus[pid] = false;
+      const p = this.players.get(pid);
+      if (p) {
+        p.ready = false;
+      }
     }
 
     // Update last action timestamp
@@ -464,10 +467,35 @@ export class GameRoom {
 
   /**
    * Advance to next player's turn
+   * Skips players who already have tokens (when not all players have tokens)
    */
   advanceTurn() {
     const playerIds = Array.from(this.players.keys());
     const currentIndex = playerIds.indexOf(this.currentTurn);
+
+    // Check if all players have tokens
+    const allHaveTokens = playerIds.every(pid => this.tokenAssignments[pid] !== undefined);
+
+    // If all players have tokens, just cycle to next player
+    if (allHaveTokens) {
+      const nextIndex = (currentIndex + 1) % playerIds.length;
+      this.currentTurn = playerIds[nextIndex];
+      return;
+    }
+
+    // Otherwise, find next player WITHOUT a token
+    for (let i = 1; i <= playerIds.length; i++) {
+      const nextIndex = (currentIndex + i) % playerIds.length;
+      const nextPlayerId = playerIds[nextIndex];
+
+      // Stop at the first player who doesn't have a token
+      if (this.tokenAssignments[nextPlayerId] === undefined) {
+        this.currentTurn = nextPlayerId;
+        return;
+      }
+    }
+
+    // Fallback: if somehow all have tokens, just go to next player
     const nextIndex = (currentIndex + 1) % playerIds.length;
     this.currentTurn = playerIds[nextIndex];
   }
