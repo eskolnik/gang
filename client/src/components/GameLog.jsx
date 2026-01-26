@@ -48,7 +48,7 @@ const GameLog = ({ actionLog = [] }) => {
           if (action.fromPool) {
             logText = `${action.playerName} took ${action.tokenNumber}.`;
           } else {
-            logText = `${action.playerName} took ${action.tokenNumber} from ${action.fromPlayerName}.`;
+            logText = `${action.playerName} stole ${action.tokenNumber} from ${action.fromPlayerName}.`;
           }
 
           return (

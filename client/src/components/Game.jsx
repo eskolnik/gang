@@ -4,6 +4,7 @@ import Table from './Table';
 import { HandEvaluator } from '../game/utils/handEvaluator';
 import SettingsMenu from './SettingsMenu';
 import './Game.css';
+import GameLog from './GameLog';
 
 const GAME_PHASES = {
   WAITING: 'waiting',
@@ -438,7 +439,7 @@ const Game = ({ onReturnToLobby }) => {
 
 
       {/* BOTTOM RIGHT: Status/Game Log */}
-      {/* {statusText && <div className="game-status">{statusText}</div>} */}
+      
 
       {/* Game Deleted Modal */}
       {gameDeleted && (
@@ -473,6 +474,8 @@ const Game = ({ onReturnToLobby }) => {
 
       {/* Settings Menu */}
       <SettingsMenu />
+
+      <GameLog actionLog={gameState.actionLog}/>
     </div>
   );
 };
