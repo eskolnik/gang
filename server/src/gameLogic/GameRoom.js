@@ -452,6 +452,16 @@ export class GameRoom {
       }
     }
 
+    // If all OTHER players have tokens, set turn to the player who returned
+    const playerIds = Array.from(this.players.keys());
+    const allOthersHaveTokens = playerIds
+      .filter(pid => pid !== playerId)
+      .every(pid => this.tokenAssignments[pid] !== undefined);
+
+    if (allOthersHaveTokens) {
+      this.currentTurn = playerId;
+    }
+
     // Update last action timestamp
     this.lastAction = Date.now();
 
