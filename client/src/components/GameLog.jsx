@@ -45,7 +45,9 @@ const GameLog = ({ actionLog = [] }) => {
           const phaseColor = PHASE_COLORS[action.phase] || '#ffffff';
 
           let logText;
-          if (action.fromPool) {
+          if (action.action === 'returned') {
+            logText = `${action.playerName} returned ${action.tokenNumber}.`;
+          } else if (action.fromPool) {
             logText = `${action.playerName} took ${action.tokenNumber}.`;
           } else {
             logText = `${action.playerName} stole ${action.tokenNumber} from ${action.fromPlayerName}.`;
