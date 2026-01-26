@@ -47,6 +47,7 @@ export class GameRoom {
     this.seriesLosses = options.seriesLosses || 0; // Number of rounds lost in the series
     this.lastGameResult = null; // Last game result for rejoining players
     this.dealerIndex = options.dealerIndex || 0; // Index of the dealer (rotates in best-of-5)
+    this.stateVersion = options.stateVersion || 0; // Sequence number for state updates (prevents stale updates)
   }
 
   /**
@@ -707,7 +708,8 @@ export class GameRoom {
       dealerId: dealerId,
       gameMode: this.gameMode,
       seriesWins: this.seriesWins,
-      seriesLosses: this.seriesLosses
+      seriesLosses: this.seriesLosses,
+      stateVersion: this.stateVersion
     };
   }
 
@@ -769,6 +771,9 @@ export class GameRoom {
    * Save game state to database
    */
   save() {
+    // Increment state version on every save (every state change)
+    this.stateVersion++;
+
     saveGameRoom(this);
 
     // Also save all players
@@ -811,7 +816,11 @@ export class GameRoom {
     const room = new GameRoom(gameData.roomId, {
       maxPlayers: gameData.maxPlayers,
       minPlayers: gameData.minPlayers,
-      createdAt: gameData.createdAt
+      createdAt: gameData.createdAt,
+      gameMode: gameData.gameMode || 'single',
+      seriesWins: gameData.seriesWins || 0,
+      seriesLosses: gameData.seriesLosses || 0,
+      stateVersion: gameData.stateVersion || 0
     });
 
     // Restore game state
@@ -824,6 +833,10 @@ export class GameRoom {
     room.bettingRoundHistory = gameData.bettingRoundHistory;
     room.actionLog = gameData.actionLog || [];
     room.lastAction = gameData.lastAction;
+    room.gameMode = gameData.gameMode || 'single';
+    room.seriesWins = gameData.seriesWins || 0;
+    room.seriesLosses = gameData.seriesLosses || 0;
+    room.stateVersion = gameData.stateVersion || 0;
 
     // Load players
     const players = loadPlayersByRoom(roomId);

@@ -58,7 +58,8 @@ function createTables() {
       last_action INTEGER,
       game_mode TEXT DEFAULT 'single',
       series_wins INTEGER DEFAULT 0,
-      series_losses INTEGER DEFAULT 0
+      series_losses INTEGER DEFAULT 0,
+      state_version INTEGER DEFAULT 0
     )
   `);
 
@@ -164,6 +165,17 @@ function createTables() {
     // Set existing games to empty action log
     db.exec(`UPDATE game_rooms SET action_log = '[]' WHERE action_log IS NULL`);
     console.log('✅ action_log column added successfully');
+  }
+
+  // Check if we need to add state_version column to game_rooms
+  const hasStateVersionColumn = roomTableInfo.some(col => col.name === 'state_version');
+
+  if (!hasStateVersionColumn && roomTableInfo.length > 0) {
+    console.log('🔄 Adding state_version column to game_rooms...');
+    db.exec(`ALTER TABLE game_rooms ADD COLUMN state_version INTEGER DEFAULT 0`);
+    // Set existing games to version 0
+    db.exec(`UPDATE game_rooms SET state_version = 0 WHERE state_version IS NULL`);
+    console.log('✅ state_version column added successfully');
   }
 
   console.log('✅ Database tables created/verified');

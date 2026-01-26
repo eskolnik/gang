@@ -19,6 +19,7 @@ export class NetworkManager {
     this.playerName = null;
     this.gameState = null;
     this.eventHandlers = new Map();
+    this.lastProcessedVersion = 0; // Track last processed state version to prevent stale updates
 
     NetworkManager.instance = this;
   }
@@ -59,7 +60,14 @@ export class NetworkManager {
 
     // Game-specific events
     this.socket.on('gameStateUpdate', (state) => {
-      console.log('📢 Game state update:', state.phase);
+      // Skip stale updates (can happen due to network latency)
+      if (state.stateVersion && state.stateVersion <= this.lastProcessedVersion) {
+        console.warn(`⚠️  Ignoring stale state update (version ${state.stateVersion}, last processed: ${this.lastProcessedVersion})`);
+        return;
+      }
+
+      console.log('📢 Game state update:', state.phase, `(version ${state.stateVersion})`);
+      this.lastProcessedVersion = state.stateVersion || 0;
       this.gameState = state;
       this.emit('gameStateUpdate', state);
     });
@@ -111,6 +119,7 @@ export class NetworkManager {
           this.playerId = response.playerId;
           this.playerName = playerName;
           this.gameState = response.gameState;
+          this.lastProcessedVersion = 0; // Reset version counter for new game
 
           // Save session to localStorage
           saveSession({
@@ -147,6 +156,7 @@ export class NetworkManager {
           this.playerId = response.playerId;
           this.playerName = playerName;
           this.gameState = response.gameState;
+          this.lastProcessedVersion = 0; // Reset version counter for new game
 
           // Save session to localStorage
           saveSession({
@@ -185,6 +195,9 @@ export class NetworkManager {
           this.playerName = response.playerName;
           this.gameState = response.gameState;
 
+          // Initialize to server's current state version (not 0)
+          this.lastProcessedVersion = response.gameState?.stateVersion || 0;
+
           // Update session timestamp
           saveSession({
             roomId: this.roomId,
@@ -192,7 +205,7 @@ export class NetworkManager {
             playerName: this.playerName
           });
 
-          console.log('✅ Rejoined game:', this.roomId);
+          console.log('✅ Rejoined game:', this.roomId, `(version ${this.lastProcessedVersion})`);
           resolve(response);
         } else {
           console.error('❌ Failed to rejoin game:', response.error);
