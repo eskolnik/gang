@@ -215,7 +215,7 @@ const Lobby = ({ onStartGame }) => {
         <div className="lobby-container lobby-container-centered">
           {/* Header */}
           <h1 className="lobby-title">DA GANG</h1>
-          <h4 className="lobby-subtitle">A game about friendship and cooperation</h4>
+          <h4 className="lobby-subtitle">Be a gang. Do crimes.</h4>
 
           {/* Connection Status */}
           {statusType == "error" && (
@@ -226,14 +226,13 @@ const Lobby = ({ onStartGame }) => {
 
           {/* Player Name Input - Large and Centered */}
           <div className="name-entry-form">
-            <label htmlFor="player-name">Enter Your Name:</label>
+            <label htmlFor="player-name">Enter your name:</label>
             <input
               id="player-name"
               type="text"
               value={tempName}
               onChange={handlePlayerNameChange}
               onKeyPress={handleNameKeyPress}
-              placeholder="Your name"
               autoFocus
               maxLength={20}
             />
@@ -267,7 +266,7 @@ const Lobby = ({ onStartGame }) => {
 
         {/* Player Name Display with Edit Button */}
         <div className="name-section">
-          <label>Your Name:</label>
+          <label>Name:</label>
           <div className="name-display">
             <span className="player-name-text">{playerName}</span>
             <button
