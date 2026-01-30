@@ -918,6 +918,7 @@ const Table = ({
               offsetY={-phantom.offsetY}
               animating={true}
               canClick={false}
+              useStars={!useNumberedTokens}
             />
           </div>
         );
@@ -956,6 +957,7 @@ const Table = ({
               animating={true}
               shrinking={true}
               canClick={false}
+              useStars={!useNumberedTokens}
             />
           </div>
         );
