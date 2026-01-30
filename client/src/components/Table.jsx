@@ -30,7 +30,7 @@ const Table = ({
   showFinalResult = false,
   visibleCommunityCards = 0,
 }) => {
-  const { useStarTokens } = useSettings();
+  const { useNumberedTokens } = useSettings();
   const [lastTokenAssignments, setLastTokenAssignments] = useState({});
   const [visualTokenAssignments, setVisualTokenAssignments] = useState({}); // What we actually render
   const [visualTokenPool, setVisualTokenPool] = useState([]); // What we actually show in pool
@@ -531,7 +531,7 @@ const Table = ({
                             gameState.phase.includes("betting")
                           }
                           onClick={onTokenClick}
-                          useStars={useStarTokens}
+                          useStars={!useNumberedTokens}
                           canReturn={
                             playerSlots[0].isMe &&
                             gameState.phase.includes("betting")
@@ -557,7 +557,7 @@ const Table = ({
                             gameState.phase.includes("betting")
                           }
                           onClick={onTokenClick}
-                          useStars={useStarTokens}
+                          useStars={!useNumberedTokens}
                           canReturn={
                             playerSlots[1].isMe &&
                             gameState.phase.includes("betting")
@@ -589,7 +589,7 @@ const Table = ({
                         gameState.phase.includes("betting")
                       }
                       onClick={onTokenClick}
-                      useStars={useStarTokens}
+                      useStars={!useNumberedTokens}
                       canReturn={
                         playerSlots[2].isMe &&
                         gameState.phase.includes("betting")
@@ -659,7 +659,7 @@ const Table = ({
                                   appearing={isAppearing}
                                   canClick={gameState.currentTurn === myPlayerId}
                                   onClick={() => onTokenClick(tokenNum)}
-                                  useStars={useStarTokens}
+                                  useStars={!useNumberedTokens}
                                 />
                               ) : (
                                 // Empty slot to maintain spacing
@@ -742,7 +742,7 @@ const Table = ({
                         gameState.phase.includes("betting")
                       }
                       onClick={onTokenClick}
-                      useStars={useStarTokens}
+                      useStars={!useNumberedTokens}
                       canReturn={
                         playerSlots[3].isMe &&
                         gameState.phase.includes("betting")
@@ -772,7 +772,7 @@ const Table = ({
                         gameState.phase.includes("betting")
                       }
                       onClick={onTokenClick}
-                      useStars={useStarTokens}
+                      useStars={!useNumberedTokens}
                       canReturn={
                         playerSlots[4].isMe &&
                         gameState.phase.includes("betting")
@@ -798,7 +798,7 @@ const Table = ({
                         gameState.phase.includes("betting")
                       }
                       onClick={onTokenClick}
-                      useStars={useStarTokens}
+                      useStars={!useNumberedTokens}
                       canReturn={
                         playerSlots[5].isMe &&
                         gameState.phase.includes("betting")
@@ -1237,18 +1237,16 @@ const TokenDisplay = ({
       {useStars ? (
         <div className="token-stars">
           {getStarPositions(number).map((pos, i) => (
-            <span
+            <i
               key={i}
-              className="token-star"
+              className="token-star fa-solid fa-star"
               style={{
                 position: 'absolute',
                 left: '50%',
                 top: '50%',
                 transform: `translate(calc(-50% + ${pos.x}px), calc(-50% + ${pos.y}px))`
               }}
-            >
-              ★
-            </span>
+            />
           ))}
         </div>
       ) : (

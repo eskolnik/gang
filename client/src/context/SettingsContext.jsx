@@ -15,9 +15,17 @@ export const SettingsProvider = ({ children }) => {
     return saved && CARD_FACE_OPTIONS[saved] ? saved : 'white';
   });
 
-  const [useStarTokens, setUseStarTokens] = useState(() => {
-    const saved = localStorage.getItem('useStarTokens');
-    return saved === 'true';
+  const [useNumberedTokens, setUseNumberedTokens] = useState(() => {
+    const saved = localStorage.getItem('useNumberedTokens');
+    // Migrate from old setting name
+    if (saved === null) {
+      const oldSaved = localStorage.getItem('useStarTokens');
+      if (oldSaved !== null) {
+        // Invert the old setting: if they had stars enabled, numbered should be disabled
+        return oldSaved === 'false';
+      }
+    }
+    return saved === 'true'; // Default is false (stars are default)
   });
 
   useEffect(() => {
@@ -25,15 +33,15 @@ export const SettingsProvider = ({ children }) => {
   }, [cardFaceId]);
 
   useEffect(() => {
-    localStorage.setItem('useStarTokens', useStarTokens);
-  }, [useStarTokens]);
+    localStorage.setItem('useNumberedTokens', useNumberedTokens);
+  }, [useNumberedTokens]);
 
   const value = {
     cardFaceId,
     setCardFaceId,
     CARD_FACE_OPTIONS,
-    useStarTokens,
-    setUseStarTokens
+    useNumberedTokens,
+    setUseNumberedTokens
   };
 
   return (

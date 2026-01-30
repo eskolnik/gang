@@ -4,7 +4,7 @@ import './SettingsMenu.css';
 
 const SettingsMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { cardFaceId, setCardFaceId, CARD_FACE_OPTIONS, useStarTokens, setUseStarTokens } = useSettings();
+  const { cardFaceId, setCardFaceId, CARD_FACE_OPTIONS, useNumberedTokens, setUseNumberedTokens } = useSettings();
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
@@ -14,8 +14,8 @@ const SettingsMenu = () => {
     setCardFaceId(optionId);
   };
 
-  const handleStarTokensChange = () => {
-    setUseStarTokens(!useStarTokens);
+  const handleNumberedTokensChange = () => {
+    setUseNumberedTokens(!useNumberedTokens);
   };
 
   return (
@@ -53,10 +53,10 @@ const SettingsMenu = () => {
             <label className="settings-checkbox-option">
               <input
                 type="checkbox"
-                checked={useStarTokens}
-                onChange={handleStarTokensChange}
+                checked={useNumberedTokens}
+                onChange={handleNumberedTokensChange}
               />
-              <span>Use stars on tokens</span>
+              <span>Use numbered tokens</span>
             </label>
           </div>
         </div>
