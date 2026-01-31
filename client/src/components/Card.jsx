@@ -35,10 +35,15 @@ const Card = ({ card, isInBestHand = false, size = 'normal' }) => {
 };
 
 export const CardBack = ({ size = 'small' }) => {
+  const { cardBackId, CARD_BACK_OPTIONS } = useSettings();
   const sizeClass = size === 'small' ? 'card-back-small' : '';
+  const cardBackImage = CARD_BACK_OPTIONS[cardBackId]?.image || CARD_BACK_OPTIONS.default.image;
 
   return (
-    <div className={`card-back ${sizeClass}`} />
+    <div
+      className={`card-back ${sizeClass}`}
+      style={{ backgroundImage: `url(${cardBackImage})` }}
+    />
   );
 };
 

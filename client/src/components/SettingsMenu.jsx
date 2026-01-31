@@ -4,7 +4,16 @@ import './SettingsMenu.css';
 
 const SettingsMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { cardFaceId, setCardFaceId, CARD_FACE_OPTIONS, useNumberedTokens, setUseNumberedTokens } = useSettings();
+  const {
+    cardFaceId,
+    setCardFaceId,
+    CARD_FACE_OPTIONS,
+    cardBackId,
+    setCardBackId,
+    CARD_BACK_OPTIONS,
+    useNumberedTokens,
+    setUseNumberedTokens
+  } = useSettings();
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
@@ -12,6 +21,10 @@ const SettingsMenu = () => {
 
   const handleCardFaceChange = (optionId) => {
     setCardFaceId(optionId);
+  };
+
+  const handleCardBackChange = (optionId) => {
+    setCardBackId(optionId);
   };
 
   const handleNumberedTokensChange = () => {
@@ -43,6 +56,33 @@ const SettingsMenu = () => {
                     value={id}
                     checked={cardFaceId === id}
                     onChange={() => handleCardFaceChange(id)}
+                  />
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="settings-section">
+            <div className="settings-section-header">
+              <h4>Card Back: {CARD_BACK_OPTIONS[cardBackId]?.name}</h4>
+              <div
+                className="card-back-large-preview"
+                style={{ backgroundImage: `url(${CARD_BACK_OPTIONS[cardBackId]?.image})` }}
+              />
+            </div>
+            <div className="card-back-options">
+              {Object.entries(CARD_BACK_OPTIONS).map(([id, { name, image }]) => (
+                <label key={id} className="card-back-option">
+                  <input
+                    type="radio"
+                    name="cardBack"
+                    value={id}
+                    checked={cardBackId === id}
+                    onChange={() => handleCardBackChange(id)}
+                  />
+                  <div
+                    className="card-back-preview"
+                    style={{ backgroundImage: `url(${image})` }}
                   />
                 </label>
               ))}
