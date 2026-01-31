@@ -239,7 +239,7 @@ const Lobby = ({ onStartGame }) => {
             <button
               className="btn btn-primary btn-done"
               onClick={handleNameDone}
-              disabled={!tempName.trim()}
+              disabled={!tempName?.trim()}
             >
               Done
             </button>

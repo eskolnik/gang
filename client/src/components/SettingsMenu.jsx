@@ -53,6 +53,7 @@ const SettingsMenu = () => {
               <CardStylePreviews
                 backImage={getCardImages().backImage}
                 faceImage={getCardImages().faceImage}
+                faceColor={getCardImages().faceColor}
                 shouldUseWhiteText={useWhiteText()}
               />
             </div>
@@ -112,11 +113,9 @@ const SettingsMenu = () => {
 const CardStylePreviews = ({
   backImage,
   faceImage,
+  faceColor,
   shouldUseWhiteText = false,
 }) => {
-  const { getCardImages } = useSettings();
-  const { faceColor } = getCardImages();
-
   const previewTextClass =
     "preview-card-text" +
     (shouldUseWhiteText ? " preview-card-text__dark-face" : "");

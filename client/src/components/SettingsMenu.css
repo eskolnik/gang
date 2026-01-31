@@ -207,10 +207,10 @@
   font-size: 20px;
   color: #000000;
   text-shadow: 0 0 2px rgba(255, 255, 255, 0.8);
+}
 
-  &.preview-card-text__dark-face {
-    color: white;
-  }
+.preview-card-text.preview-card-text__dark-face {
+  color: white;
 }
 
 .card-style-options {
