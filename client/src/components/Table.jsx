@@ -98,31 +98,13 @@ const Table = ({
     const phantomTokens = [];
     const ANIMATION_DURATION = 700; // Slower animation
 
-    // Detect if this is a round start (new betting round with tokens appearing)
-    // Key indicators:
-    // 1. No one has tokens (assignments empty)
-    // 2. Pool has full set of tokens (one per player)
-    // 3. We're in a betting phase
-    // This is ALWAYS a round start if these conditions are met, regardless of previous state
-    const playerCount = players?.length || 0;
-    const isBettingPhase = gameState.phase?.startsWith('betting');
-    const isRoundStart = currentPool.length === playerCount &&
-                         Object.keys(currentAssignments).length === 0 &&
-                         isBettingPhase;
-
-    if (isRoundStart) {
-      // At round start, tokens should only use flip animation, not sliding
-      // Mark all tokens as appearing and update visual state immediately
-      if (!appearingTokens.length) {
-        setAppearingTokens(currentPool);
-        // Clear appearing animation after it completes
-        setTimeout(() => {
-          setAppearingTokens([]);
-        }, 700);
-      }
-      setVisualTokenAssignments({});
+    // Skip all token movement logic if tokens are currently appearing (flip animation)
+    // This prevents sliding animations from triggering during round start
+    if (appearingTokens.length > 0) {
+      // Just update to current state without animations
+      setVisualTokenAssignments(currentAssignments);
       setVisualTokenPool(currentPool);
-      setLastTokenAssignments({});
+      setLastTokenAssignments(currentAssignments);
       return;
     }
 
@@ -245,6 +227,30 @@ const Table = ({
     const currentPhase = gameState.phase;
     const ARCHIVE_DURATION = 700;
 
+    // Detect transition into any betting phase (waiting -> betting_1 or betting_X -> betting_Y)
+    const isEnteringBettingPhase = currentPhase?.startsWith('betting') &&
+                                   (!lastPhase || lastPhase === 'waiting' || lastPhase.startsWith('betting'));
+
+    if (isEnteringBettingPhase && lastPhase !== currentPhase) {
+      // Check if this is a new round with tokens appearing
+      const tokensInNewPool = gameState.tokenPool || [];
+      const playerCount = players?.length || 0;
+      const noAssignments = Object.keys(gameState.tokenAssignments || {}).length === 0;
+
+      if (tokensInNewPool.length === playerCount && noAssignments) {
+        // New round starting - tokens should appear with flip animation
+        setAppearingTokens(tokensInNewPool);
+        setVisualTokenPool(tokensInNewPool);
+        setVisualTokenAssignments({});
+        setLastTokenAssignments({});
+
+        // Clear appearing animation after it completes
+        setTimeout(() => {
+          setAppearingTokens([]);
+        }, 700);
+      }
+    }
+
     // Detect transition from one betting round to the next
     const phaseTransitions = {
       'betting_1': { next: 'betting_2', roundIndex: 0 },
@@ -337,7 +343,7 @@ const Table = ({
     }
 
     setLastPhase(currentPhase);
-  }, [gameState?.phase, lastPhase, visualTokenAssignments, gameState?.bettingRoundHistory, gameState?.tokenPool]);
+  }, [gameState?.phase, lastPhase, visualTokenAssignments, gameState?.bettingRoundHistory, gameState?.tokenPool, gameState?.tokenAssignments, players]);
 
   // Initialize visual token history from game state (only on mount and when not animating)
   useEffect(() => {
