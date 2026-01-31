@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { useSettings } from '../context/SettingsContext';
-import './SettingsMenu.css';
+import { useState } from "react";
+import { useSettings } from "../context/SettingsContext";
+import "./SettingsMenu.css";
 
 const SettingsMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -12,7 +12,8 @@ const SettingsMenu = () => {
     CARD_STYLE_OPTIONS,
     getCardImages,
     useNumberedTokens,
-    setUseNumberedTokens
+    setUseNumberedTokens,
+    useWhiteText,
   } = useSettings();
 
   const toggleMenu = () => {
@@ -34,53 +35,49 @@ const SettingsMenu = () => {
   return (
     <div className="settings-menu">
       <button className="settings-button" onClick={toggleMenu}>
-        <i className='fas fa-gear'/>
+        <i className="fas fa-gear" />
       </button>
 
       {isOpen && (
         <div className="settings-dropdown">
           <div className="settings-header">
             <h3>Settings</h3>
-            <button className="close-button" onClick={toggleMenu}>✕</button>
+            <button className="close-button" onClick={toggleMenu}>
+              ✕
+            </button>
           </div>
 
           <div className="settings-section">
             <div className="settings-section-header">
               <h4>Card Style: {CARD_STYLE_OPTIONS[cardStyleId]?.name}</h4>
-              <div className="card-style-previews">
-                <div
-                  className="card-back-large-preview"
-                  style={{ backgroundImage: `url(${getCardImages().backImage})` }}
-                  title="Card Back"
-                />
-                <div
-                  className="card-face-large-preview"
-                  style={{
-                    backgroundImage: getCardImages().faceImage ? `url(${getCardImages().faceImage})` : 'none',
-                    background: getCardImages().faceColor || '#ffffff'
-                  }}
-                  title="Card Face"
-                >
-                  <span className="preview-card-text">A♠</span>
-                </div>
-              </div>
+              <CardStylePreviews
+                backImage={getCardImages().backImage}
+                faceImage={getCardImages().faceImage}
+                shouldUseWhiteText={useWhiteText()}
+              />
             </div>
             <div className="card-style-options">
-              {Object.entries(CARD_STYLE_OPTIONS).map(([id, { name, image1, image2 }]) => (
-                <label key={id} className="card-style-option">
-                  <input
-                    type="radio"
-                    name="cardStyle"
-                    value={id}
-                    checked={cardStyleId === id}
-                    onChange={() => handleCardStyleChange(id)}
-                  />
-                  <div
-                    className="card-style-preview"
-                    style={{ backgroundImage: `url(${swapFrontBack ? (image2 || image1) : image1})` }}
-                  />
-                </label>
-              ))}
+              {Object.entries(CARD_STYLE_OPTIONS).map(
+                ([id, { name, image1, image2 }]) => (
+                  <label key={id} className="card-style-option">
+                    <input
+                      type="radio"
+                      name="cardStyle"
+                      value={id}
+                      checked={cardStyleId === id}
+                      onChange={() => handleCardStyleChange(id)}
+                    />
+                    <div
+                      className="card-style-preview"
+                      style={{
+                        backgroundImage: `url(${
+                          swapFrontBack ? image2 || image1 : image1
+                        })`,
+                      }}
+                    />
+                  </label>
+                )
+              )}
             </div>
           </div>
 
@@ -108,6 +105,48 @@ const SettingsMenu = () => {
           </div>
         </div>
       )}
+    </div>
+  );
+};
+
+const CardStylePreviews = ({
+  backImage,
+  faceImage,
+  shouldUseWhiteText = false,
+}) => {
+  const { getCardImages } = useSettings();
+  const { faceColor } = getCardImages();
+
+  const previewTextClass =
+    "preview-card-text" +
+    (shouldUseWhiteText ? " preview-card-text__dark-face" : "");
+
+  // Determine face styling - use image if available, otherwise use color
+  const faceStyle = {};
+  if (faceImage) {
+    faceStyle.backgroundImage = `url(${faceImage})`;
+  } else if (faceColor) {
+    if (faceColor.startsWith('radial-gradient') || faceColor.startsWith('linear-gradient')) {
+      faceStyle.background = faceColor;
+    } else {
+      faceStyle.backgroundColor = faceColor;
+    }
+  }
+
+  return (
+    <div className="card-style-previews">
+      <div
+        className="card-style-preview-large"
+        style={{ backgroundImage: `url(${backImage})` }}
+        title="Card Back"
+      />
+      <div
+        className="card-style-preview-large"
+        style={faceStyle}
+        title="Card Face"
+      >
+        <span className={previewTextClass}>A♠</span>
+      </div>
     </div>
   );
 };

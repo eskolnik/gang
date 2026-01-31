@@ -2,17 +2,19 @@ import { createContext, useContext, useState, useEffect } from 'react';
 
 const SettingsContext = createContext(null);
 
+const DEFAULT_CARD_STYLE = 'ole_west'
+
 // Card style options: pairs face and back images
 // image1 is used for back by default, image2 is used for face by default
 // When swapped: image2 is back, image1 is face
 const CARD_STYLE_OPTIONS = {
-  standard: {
-    name: 'Standard',
-    image1: '/assets/card_back_1.jpg',
-    image2: null, // Solid color background
-    faceColor: '#ffffff',
-    disableSwap: true // Can't swap standard cards
-  },
+  // standard: {
+  //   name: 'Standard',
+  //   image1: '/assets/card_back_1.jpg',
+  //   image2: null, // Solid color background
+  //   faceColor: '#ffffff',
+  //   disableSwap: true // Can't swap standard cards
+  // },
   bowling_alley_carpet: {
     name: 'Bowling Alley Carpet',
     image1: '/assets/card_back_bowling_alley_carpet_1.png',
@@ -30,8 +32,8 @@ const CARD_STYLE_OPTIONS = {
   },
   ole_west: {
     name: 'Ole West',
-    image1: '/assets/card_back_ole_west_1.png',
-    image2: '/assets/card_back_ole_west_2.png'
+    image1: '/assets/card_back_ole_west_2.png',
+    image2: '/assets/card_back_ole_west_1.png'
   },
   persona: {
     name: 'Persona',
@@ -67,7 +69,7 @@ export const SettingsProvider = ({ children }) => {
       const oldFace = localStorage.getItem('cardFace');
       // Migrate white/pale_blue to standard
       if (oldFace === 'white' || oldFace === 'pale_blue') {
-        return 'standard';
+        return DEFAULT_CARD_STYLE;
       }
       if (oldFace && CARD_STYLE_OPTIONS[oldFace]) {
         return oldFace;
@@ -75,9 +77,9 @@ export const SettingsProvider = ({ children }) => {
     }
     // Migrate white to standard if somehow saved
     if (saved === 'white' || saved === 'pale_blue') {
-      return 'standard';
+      return DEFAULT_CARD_STYLE;
     }
-    return saved && CARD_STYLE_OPTIONS[saved] ? saved : 'standard';
+    return saved && CARD_STYLE_OPTIONS[saved] ? saved : DEFAULT_CARD_STYLE;
   });
 
   const [swapFrontBack, setSwapFrontBack] = useState(() => {
