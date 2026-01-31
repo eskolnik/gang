@@ -13,7 +13,7 @@ const Card = ({ card, isInBestHand = false, size = 'normal' }) => {
 
   if (!card) return null;
 
-  const { faceImage, faceColor } = getCardImages();
+  const { faceImage } = getCardImages();
   const needsWhiteText = useWhiteText();
   const sizeClass = size === 'small' ? 'card-small' : '';
 
@@ -26,25 +26,15 @@ const Card = ({ card, isInBestHand = false, size = 'normal' }) => {
     return needsWhiteText ? '#ffffff' : '#000000';
   };
 
-  // Determine card face styling
-  const cardStyle = {};
-  if (faceImage) {
-    cardStyle.backgroundImage = `url(${faceImage})`;
-    cardStyle.backgroundSize = 'cover';
-    cardStyle.backgroundPosition = 'center';
-    cardStyle.backgroundRepeat = 'no-repeat';
-  } else if (faceColor) {
-    if (faceColor.startsWith('radial-gradient') || faceColor.startsWith('linear-gradient')) {
-      cardStyle.background = faceColor;
-    } else {
-      cardStyle.backgroundColor = faceColor;
-    }
-  }
-
   return (
     <div
       className={`card ${isInBestHand ? 'card-highlighted' : ''} ${sizeClass}`}
-      style={cardStyle}
+      style={{
+        backgroundImage: `url(${faceImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
     >
       <span className="card-text" style={{ color: getSuitColor(card.suit) }}>
         {card.rank}{SUIT_SYMBOLS[card.suit]}

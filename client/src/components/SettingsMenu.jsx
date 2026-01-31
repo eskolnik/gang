@@ -53,7 +53,6 @@ const SettingsMenu = () => {
               <CardStylePreviews
                 backImage={getCardImages().backImage}
                 faceImage={getCardImages().faceImage}
-                faceColor={getCardImages().faceColor}
                 shouldUseWhiteText={useWhiteText()}
               />
             </div>
@@ -113,24 +112,11 @@ const SettingsMenu = () => {
 const CardStylePreviews = ({
   backImage,
   faceImage,
-  faceColor,
   shouldUseWhiteText = false,
 }) => {
   const previewTextClass =
     "preview-card-text" +
     (shouldUseWhiteText ? " preview-card-text__dark-face" : "");
-
-  // Determine face styling - use image if available, otherwise use color
-  const faceStyle = {};
-  if (faceImage) {
-    faceStyle.backgroundImage = `url(${faceImage})`;
-  } else if (faceColor) {
-    if (faceColor.startsWith('radial-gradient') || faceColor.startsWith('linear-gradient')) {
-      faceStyle.background = faceColor;
-    } else {
-      faceStyle.backgroundColor = faceColor;
-    }
-  }
 
   return (
     <div className="card-style-previews">
@@ -141,7 +127,7 @@ const CardStylePreviews = ({
       />
       <div
         className="card-style-preview-large"
-        style={faceStyle}
+        style={{ backgroundImage: `url(${faceImage})` }}
         title="Card Face"
       >
         <span className={previewTextClass}>A♠</span>

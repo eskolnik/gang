@@ -8,13 +8,6 @@ const DEFAULT_CARD_STYLE = 'ole_west'
 // image1 is used for back by default, image2 is used for face by default
 // When swapped: image2 is back, image1 is face
 const CARD_STYLE_OPTIONS = {
-  // standard: {
-  //   name: 'Standard',
-  //   image1: '/assets/card_back_1.jpg',
-  //   image2: null, // Solid color background
-  //   faceColor: '#ffffff',
-  //   disableSwap: true // Can't swap standard cards
-  // },
   bowling_alley_carpet: {
     name: 'Bowling Alley Carpet',
     image1: '/assets/card_back_bowling_alley_carpet_1.png',
@@ -115,13 +108,12 @@ export const SettingsProvider = ({ children }) => {
   // Helper to get the current face/back images based on style and swap state
   const getCardImages = () => {
     const style = CARD_STYLE_OPTIONS[cardStyleId];
-    if (!style) return { faceImage: null, backImage: null, faceColor: '#ffffff' };
+    if (!style) return { faceImage: null, backImage: null };
 
-    const faceImage = swapFrontBack ? style.image1 : (style.image2 || null);
-    const backImage = swapFrontBack ? (style.image2 || style.image1) : style.image1;
-    const faceColor = style.faceColor;
+    const faceImage = swapFrontBack ? style.image1 : style.image2;
+    const backImage = swapFrontBack ? style.image2 : style.image1;
 
-    return { faceImage, backImage, faceColor };
+    return { faceImage, backImage };
   };
 
   // Helper to check if current face needs white text for spades/clubs
