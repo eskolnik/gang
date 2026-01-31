@@ -175,7 +175,7 @@
 .card-face-large-preview {
   width: 60px;
   height: 84px;
-  background-size: contain;
+  background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   border: 2px solid rgba(255, 255, 255, 0.5);
@@ -187,7 +187,9 @@
 }
 
 .preview-card-text {
-  font-family: Arial Black, sans-serif;
+  font-family:
+    Arial Black,
+    sans-serif;
   font-size: 20px;
   color: #000000;
   text-shadow: 0 0 2px rgba(255, 255, 255, 0.8);
