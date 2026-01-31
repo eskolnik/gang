@@ -156,27 +156,35 @@ const Table = ({
       }
     });
 
-    // Check for tokens returning to pool (but not during round transitions when they're archived)
-    Object.keys(visualTokenAssignments).forEach((playerId) => {
-      const visualToken = visualTokenAssignments[playerId];
-      const currentToken = currentAssignments[playerId];
+    // Check for tokens returning to pool (during normal betting, not round transitions)
+    // Skip this entire check if:
+    // - We're currently archiving (round transition)
+    // - Tokens are appearing (new round starting)
+    // - Current assignments are empty (indicates round just started)
+    const isRoundTransition = archivingTokens.length > 0 ||
+                              appearingTokens.length > 0 ||
+                              Object.keys(currentAssignments).length === 0;
 
-      // If player had a token but now has a different one or none, and the old token is now in pool
-      // Skip if this token is being archived or appearing (will be handled by those animations)
-      if (visualToken !== currentToken && currentPool.includes(visualToken) &&
-          archivingTokens.length === 0 && !appearingTokens.includes(visualToken)) {
-        // Calculate FROM player TO pool (specific slot for this token)
-        const { offsetX, offsetY } = calculateOffset(playerId, 'center', visualToken);
-        phantomTokens.push({
-          tokenNum: visualToken,
-          fromPlayerId: playerId,
-          toPlayerId: 'center',
-          offsetX,
-          offsetY,
-          phase: gameState.phase
-        });
-      }
-    });
+    if (!isRoundTransition) {
+      Object.keys(visualTokenAssignments).forEach((playerId) => {
+        const visualToken = visualTokenAssignments[playerId];
+        const currentToken = currentAssignments[playerId];
+
+        // If player had a token but now has a different one or none, and the old token is now in pool
+        if (visualToken !== currentToken && currentPool.includes(visualToken)) {
+          // Calculate FROM player TO pool (specific slot for this token)
+          const { offsetX, offsetY } = calculateOffset(playerId, 'center', visualToken);
+          phantomTokens.push({
+            tokenNum: visualToken,
+            fromPlayerId: playerId,
+            toPlayerId: 'center',
+            offsetX,
+            offsetY,
+            phase: gameState.phase
+          });
+        }
+      });
+    }
 
     if (phantomTokens.length > 0) {
       setAnimatingTokens(phantomTokens);
@@ -227,28 +235,19 @@ const Table = ({
     const currentPhase = gameState.phase;
     const ARCHIVE_DURATION = 700;
 
-    // Detect transition into any betting phase (waiting -> betting_1 or betting_X -> betting_Y)
-    const isEnteringBettingPhase = currentPhase?.startsWith('betting') &&
-                                   (!lastPhase || lastPhase === 'waiting' || lastPhase.startsWith('betting'));
-
-    if (isEnteringBettingPhase && lastPhase !== currentPhase) {
-      // Check if this is a new round with tokens appearing
+    // Detect transition from waiting to first betting round
+    if (lastPhase === 'waiting' && currentPhase === 'betting_1') {
+      // First round starting - tokens should appear with flip animation
       const tokensInNewPool = gameState.tokenPool || [];
-      const playerCount = players?.length || 0;
-      const noAssignments = Object.keys(gameState.tokenAssignments || {}).length === 0;
+      setAppearingTokens(tokensInNewPool);
+      setVisualTokenPool(tokensInNewPool);
+      setVisualTokenAssignments({});
+      setLastTokenAssignments({});
 
-      if (tokensInNewPool.length === playerCount && noAssignments) {
-        // New round starting - tokens should appear with flip animation
-        setAppearingTokens(tokensInNewPool);
-        setVisualTokenPool(tokensInNewPool);
-        setVisualTokenAssignments({});
-        setLastTokenAssignments({});
-
-        // Clear appearing animation after it completes
-        setTimeout(() => {
-          setAppearingTokens([]);
-        }, 700);
-      }
+      // Clear appearing animation after it completes
+      setTimeout(() => {
+        setAppearingTokens([]);
+      }, 700);
     }
 
     // Detect transition from one betting round to the next
