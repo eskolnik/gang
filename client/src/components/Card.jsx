@@ -13,7 +13,7 @@ const Card = ({ card, isInBestHand = false, size = 'normal' }) => {
 
   if (!card) return null;
 
-  const { faceImage } = getCardImages();
+  const { faceImage, font, fontWeight } = getCardImages();
   const needsWhiteText = useWhiteText();
   const sizeClass = size === 'small' ? 'card-small' : '';
 
@@ -36,7 +36,14 @@ const Card = ({ card, isInBestHand = false, size = 'normal' }) => {
         backgroundRepeat: 'no-repeat'
       }}
     >
-      <span className="card-text" style={{ color: getSuitColor(card.suit) }}>
+      <span
+        className="card-text"
+        style={{
+          color: getSuitColor(card.suit),
+          fontFamily: font || 'Arial Black, sans-serif',
+          fontWeight: fontWeight
+        }}
+      >
         {card.rank}{SUIT_SYMBOLS[card.suit]}
       </span>
     </div>

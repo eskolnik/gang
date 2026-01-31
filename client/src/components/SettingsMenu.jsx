@@ -53,6 +53,8 @@ const SettingsMenu = () => {
               <CardStylePreviews
                 backImage={getCardImages().backImage}
                 faceImage={getCardImages().faceImage}
+                font={getCardImages().font}
+                fontWeight={getCardImages().fontWeight}
                 shouldUseWhiteText={useWhiteText()}
               />
             </div>
@@ -112,6 +114,8 @@ const SettingsMenu = () => {
 const CardStylePreviews = ({
   backImage,
   faceImage,
+  font,
+  fontWeight = 400,
   shouldUseWhiteText = false,
 }) => {
   const previewTextClass =
@@ -130,7 +134,15 @@ const CardStylePreviews = ({
         style={{ backgroundImage: `url(${faceImage})` }}
         title="Card Face"
       >
-        <span className={previewTextClass}>A♠</span>
+        <span
+          className={previewTextClass}
+          style={{
+            fontFamily: font || 'Arial Black, sans-serif',
+            fontWeight: fontWeight
+          }}
+        >
+          A♠
+        </span>
       </div>
     </div>
   );

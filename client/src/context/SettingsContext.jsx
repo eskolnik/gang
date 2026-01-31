@@ -11,32 +11,39 @@ const CARD_STYLE_OPTIONS = {
   bowling_alley_carpet: {
     name: 'Bowling Alley Carpet',
     image1: '/assets/card_back_bowling_alley_carpet_1.png',
-    image2: '/assets/card_back_bowling_alley_carpet_2.png'
+    image2: '/assets/card_back_bowling_alley_carpet_2.png',
+    font: '"Titan One", sans-serif'
   },
   bunch_of_circles: {
     name: 'Bunch of Circles',
     image1: '/assets/card_back_bunch_of_circles_1.png',
-    image2: '/assets/card_back_bunch_of_circles_2.png'
+    image2: '/assets/card_back_bunch_of_circles_2.png',
+    font: '"Bigshot One", sans-serif'
   },
   cyberpunk: {
     name: 'Cyberpunk',
     image1: '/assets/card_back_cyberpunk_1.png',
-    image2: '/assets/card_back_cyberpunk_2.png'
+    image2: '/assets/card_back_cyberpunk_2.png',
+    font: '"Tomorrow", sans-serif',
+    fontWeight: 700
   },
   ole_west: {
     name: 'Ole West',
     image1: '/assets/card_back_ole_west_2.png',
-    image2: '/assets/card_back_ole_west_1.png'
+    image2: '/assets/card_back_ole_west_1.png',
+    font: '"Sancreek", sans-serif'
   },
   persona: {
     name: 'Persona',
     image1: '/assets/card_back_persona.png',
-    image2: '/assets/card_back_persona_2.png'
+    image2: '/assets/card_back_persona_2.png',
+    font: '"Blaka", sans-serif'
   },
   weeb: {
     name: 'Weeb',
     image1: '/assets/card_back_weeb_1.png',
-    image2: '/assets/card_back_weeb_2.png'
+    image2: '/assets/card_back_weeb_2.png',
+    font: '"Reggae One", sans-serif'
   }
 };
 
@@ -105,15 +112,17 @@ export const SettingsProvider = ({ children }) => {
     localStorage.setItem('useNumberedTokens', useNumberedTokens);
   }, [useNumberedTokens]);
 
-  // Helper to get the current face/back images based on style and swap state
+  // Helper to get the current face/back images and font based on style and swap state
   const getCardImages = () => {
     const style = CARD_STYLE_OPTIONS[cardStyleId];
-    if (!style) return { faceImage: null, backImage: null };
+    if (!style) return { faceImage: null, backImage: null, font: null, fontWeight: 400 };
 
     const faceImage = swapFrontBack ? style.image1 : style.image2;
     const backImage = swapFrontBack ? style.image2 : style.image1;
+    const font = style.font || null;
+    const fontWeight = style.fontWeight || 400;
 
-    return { faceImage, backImage };
+    return { faceImage, backImage, font, fontWeight };
   };
 
   // Helper to check if current face needs white text for spades/clubs
