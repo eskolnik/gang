@@ -48,3 +48,145 @@
   width: 60px;
   height: 84px;
 }
+
+/* Card Style Fonts */
+.card-text-persona {
+  font-family: "Blaka", sans-serif !important;
+}
+
+.card-text-ole-west {
+  font-family: "Sancreek", sans-serif !important;
+}
+
+.card-text-bunch-of-circles {
+  font-family: "Bigshot One", sans-serif !important;
+}
+
+.card-text-cyberpunk {
+  font-family: "Tomorrow", sans-serif !important;
+  font-weight: 700 !important;
+}
+
+.card-text-bowling-alley-carpet {
+  font-family: "Titan One", sans-serif !important;
+}
+
+.card-text-weeb {
+  font-family: "Reggae One", sans-serif !important;
+}
+
+/* Card Face Background Images */
+.card-face-persona {
+  background-image: url('/assets/card_back_persona_2.png') !important;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.card-face-persona.card-swapped {
+  background-image: url('/assets/card_back_persona.png') !important;
+}
+
+.card-face-ole-west {
+  background-image: url('/assets/card_back_ole_west_1.png') !important;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.card-face-ole-west.card-swapped {
+  background-image: url('/assets/card_back_ole_west_2.png') !important;
+}
+
+.card-face-bunch-of-circles {
+  background-image: url('/assets/card_back_bunch_of_circles_2.png') !important;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.card-face-bunch-of-circles.card-swapped {
+  background-image: url('/assets/card_back_bunch_of_circles_1.png') !important;
+}
+
+.card-face-cyberpunk {
+  background-image: url('/assets/card_back_cyberpunk_2.png') !important;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.card-face-cyberpunk.card-swapped {
+  background-image: url('/assets/card_back_cyberpunk_1.png') !important;
+}
+
+.card-face-bowling-alley-carpet {
+  background-image: url('/assets/card_back_bowling_alley_carpet_2.png') !important;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.card-face-bowling-alley-carpet.card-swapped {
+  background-image: url('/assets/card_back_bowling_alley_carpet_1.png') !important;
+}
+
+.card-face-weeb {
+  background-image: url('/assets/card_back_weeb_1.png') !important;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.card-face-weeb.card-swapped {
+  background-image: url('/assets/card_back_weeb_2.png') !important;
+}
+
+/* Card Back Background Images */
+.card-back-persona {
+  background-image: url('/assets/card_back_persona.png') !important;
+}
+
+.card-back-persona.card-swapped {
+  background-image: url('/assets/card_back_persona_2.png') !important;
+}
+
+.card-back-ole-west {
+  background-image: url('/assets/card_back_ole_west_2.png') !important;
+}
+
+.card-back-ole-west.card-swapped {
+  background-image: url('/assets/card_back_ole_west_1.png') !important;
+}
+
+.card-back-bunch-of-circles {
+  background-image: url('/assets/card_back_bunch_of_circles_1.png') !important;
+}
+
+.card-back-bunch-of-circles.card-swapped {
+  background-image: url('/assets/card_back_bunch_of_circles_2.png') !important;
+}
+
+.card-back-cyberpunk {
+  background-image: url('/assets/card_back_cyberpunk_1.png') !important;
+}
+
+.card-back-cyberpunk.card-swapped {
+  background-image: url('/assets/card_back_cyberpunk_2.png') !important;
+}
+
+.card-back-bowling-alley-carpet {
+  background-image: url('/assets/card_back_bowling_alley_carpet_1.png') !important;
+}
+
+.card-back-bowling-alley-carpet.card-swapped {
+  background-image: url('/assets/card_back_bowling_alley_carpet_2.png') !important;
+}
+
+.card-back-weeb {
+  background-image: url('/assets/card_back_weeb_2.png') !important;
+}
+
+.card-back-weeb.card-swapped {
+  background-image: url('/assets/card_back_weeb_1.png') !important;
+}

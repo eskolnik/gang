@@ -9,13 +9,17 @@ const SUIT_SYMBOLS = {
 };
 
 const Card = ({ card, isInBestHand = false, size = 'normal' }) => {
-  const { getCardImages, useWhiteText } = useSettings();
+  const { cardStyleId, swapFrontBack, useWhiteText } = useSettings();
 
   if (!card) return null;
 
-  const { faceImage, font, fontWeight } = getCardImages();
   const needsWhiteText = useWhiteText();
   const sizeClass = size === 'small' ? 'card-small' : '';
+
+  // Build CSS class names for card style
+  const faceClass = `card-face-${cardStyleId}`;
+  const textClass = `card-text-${cardStyleId}`;
+  const swapClass = swapFrontBack ? 'card-swapped' : '';
 
   // Determine suit color based on card face background
   const getSuitColor = (suit) => {
@@ -28,21 +32,11 @@ const Card = ({ card, isInBestHand = false, size = 'normal' }) => {
 
   return (
     <div
-      className={`card ${isInBestHand ? 'card-highlighted' : ''} ${sizeClass}`}
-      style={{
-        backgroundImage: `url(${faceImage})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
-      }}
+      className={`card ${isInBestHand ? 'card-highlighted' : ''} ${sizeClass} ${faceClass} ${swapClass}`}
     >
       <span
-        className="card-text"
-        style={{
-          color: getSuitColor(card.suit),
-          fontFamily: font || 'Arial Black, sans-serif',
-          fontWeight: fontWeight
-        }}
+        className={`card-text ${textClass}`}
+        style={{ color: getSuitColor(card.suit) }}
       >
         {card.rank}{SUIT_SYMBOLS[card.suit]}
       </span>
@@ -51,15 +45,13 @@ const Card = ({ card, isInBestHand = false, size = 'normal' }) => {
 };
 
 export const CardBack = ({ size = 'small' }) => {
-  const { getCardImages } = useSettings();
+  const { cardStyleId, swapFrontBack } = useSettings();
   const sizeClass = size === 'small' ? 'card-back-small' : '';
-  const { backImage } = getCardImages();
+  const backClass = `card-back-${cardStyleId}`;
+  const swapClass = swapFrontBack ? 'card-swapped' : '';
 
   return (
-    <div
-      className={`card-back ${sizeClass}`}
-      style={{ backgroundImage: `url(${backImage})` }}
-    />
+    <div className={`card-back ${sizeClass} ${backClass} ${swapClass}`} />
   );
 };
 

@@ -10,7 +10,6 @@ const SettingsMenu = () => {
     swapFrontBack,
     setSwapFrontBack,
     CARD_STYLE_OPTIONS,
-    getCardImages,
     useNumberedTokens,
     setUseNumberedTokens,
     useWhiteText,
@@ -51,10 +50,8 @@ const SettingsMenu = () => {
             <div className="settings-section-header">
               <h4>Card Style: {CARD_STYLE_OPTIONS[cardStyleId]?.name}</h4>
               <CardStylePreviews
-                backImage={getCardImages().backImage}
-                faceImage={getCardImages().faceImage}
-                font={getCardImages().font}
-                fontWeight={getCardImages().fontWeight}
+                cardStyleId={cardStyleId}
+                swapFrontBack={swapFrontBack}
                 shouldUseWhiteText={useWhiteText()}
               />
             </div>
@@ -70,12 +67,7 @@ const SettingsMenu = () => {
                       onChange={() => handleCardStyleChange(id)}
                     />
                     <div
-                      className="card-style-preview"
-                      style={{
-                        backgroundImage: `url(${
-                          swapFrontBack ? image2 || image1 : image1
-                        })`,
-                      }}
+                      className={`card-style-preview card-back-${id} ${swapFrontBack ? 'card-swapped' : ''}`}
                     />
                   </label>
                 )
@@ -112,35 +104,27 @@ const SettingsMenu = () => {
 };
 
 const CardStylePreviews = ({
-  backImage,
-  faceImage,
-  font,
-  fontWeight = 400,
+  cardStyleId,
+  swapFrontBack,
   shouldUseWhiteText = false,
 }) => {
-  const previewTextClass =
-    "preview-card-text" +
-    (shouldUseWhiteText ? " preview-card-text__dark-face" : "");
+  const backClass = `card-back-${cardStyleId}`;
+  const faceClass = `card-face-${cardStyleId}`;
+  const textClass = `card-text-${cardStyleId}`;
+  const swapClass = swapFrontBack ? 'card-swapped' : '';
+  const whiteTextClass = shouldUseWhiteText ? 'preview-card-text__dark-face' : '';
 
   return (
     <div className="card-style-previews">
       <div
-        className="card-style-preview-large"
-        style={{ backgroundImage: `url(${backImage})` }}
+        className={`card-style-preview-large ${backClass} ${swapClass}`}
         title="Card Back"
       />
       <div
-        className="card-style-preview-large"
-        style={{ backgroundImage: `url(${faceImage})` }}
+        className={`card-style-preview-large ${faceClass} ${swapClass}`}
         title="Card Face"
       >
-        <span
-          className={previewTextClass}
-          style={{
-            fontFamily: font || 'Arial Black, sans-serif',
-            fontWeight: fontWeight
-          }}
-        >
+        <span className={`preview-card-text ${textClass} ${whiteTextClass}`}>
           A♠
         </span>
       </div>
