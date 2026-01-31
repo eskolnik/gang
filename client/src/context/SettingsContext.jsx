@@ -6,17 +6,12 @@ const SettingsContext = createContext(null);
 // image1 is used for back by default, image2 is used for face by default
 // When swapped: image2 is back, image1 is face
 const CARD_STYLE_OPTIONS = {
-  white: {
-    name: 'White',
+  standard: {
+    name: 'Standard',
     image1: '/assets/card_back_1.jpg',
     image2: null, // Solid color background
-    faceColor: '#ffffff'
-  },
-  pale_blue: {
-    name: 'Pale Blue',
-    image1: '/assets/card_back_1.jpg',
-    image2: null, // Gradient background
-    faceColor: 'radial-gradient(circle, white 20%, #51a0f5)'
+    faceColor: '#ffffff',
+    disableSwap: true // Can't swap standard cards
   },
   bowling_alley_carpet: {
     name: 'Bowling Alley Carpet',
@@ -59,7 +54,9 @@ const DARK_FACE_IMAGES = [
   '/assets/card_back_bowling_alley_carpet_1.png',
   '/assets/card_back_bowling_alley_carpet_2.png',
   '/assets/card_back_weeb_1.png',
-  '/assets/card_back_weeb_2.png'
+  '/assets/card_back_weeb_2.png',
+  '/assets/card_back_cyberpunk_1.png', // Cyberpunk 1
+  '/assets/card_back_cyberpunk_2.png'  // Cyberpunk 2
 ];
 
 export const SettingsProvider = ({ children }) => {
@@ -68,11 +65,19 @@ export const SettingsProvider = ({ children }) => {
     // Migrate from old cardFace setting
     if (!saved) {
       const oldFace = localStorage.getItem('cardFace');
+      // Migrate white/pale_blue to standard
+      if (oldFace === 'white' || oldFace === 'pale_blue') {
+        return 'standard';
+      }
       if (oldFace && CARD_STYLE_OPTIONS[oldFace]) {
         return oldFace;
       }
     }
-    return saved && CARD_STYLE_OPTIONS[saved] ? saved : 'white';
+    // Migrate white to standard if somehow saved
+    if (saved === 'white' || saved === 'pale_blue') {
+      return 'standard';
+    }
+    return saved && CARD_STYLE_OPTIONS[saved] ? saved : 'standard';
   });
 
   const [swapFrontBack, setSwapFrontBack] = useState(() => {

@@ -90,6 +90,7 @@ const SettingsMenu = () => {
                 type="checkbox"
                 checked={swapFrontBack}
                 onChange={handleSwapFrontBack}
+                disabled={CARD_STYLE_OPTIONS[cardStyleId]?.disableSwap}
               />
               <span>Swap card front and back</span>
             </label>

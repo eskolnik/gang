@@ -237,6 +237,20 @@ const Table = ({
     const currentPhase = gameState.phase;
     const ARCHIVE_DURATION = 700;
 
+    // Detect transition from waiting to first round
+    if (lastPhase === 'waiting' && currentPhase === 'betting_1') {
+      // Initial round start - mark tokens as appearing
+      const tokensInNewPool = gameState.tokenPool || [];
+      if (tokensInNewPool.length > 0) {
+        setAppearingTokens(tokensInNewPool);
+        setVisualTokenPool(tokensInNewPool);
+        // Clear appearing animation after it completes
+        setTimeout(() => {
+          setAppearingTokens([]);
+        }, 700);
+      }
+    }
+
     // Detect transition from one betting round to the next
     const phaseTransitions = {
       'betting_1': { next: 'betting_2', roundIndex: 0 },
@@ -1050,9 +1064,15 @@ const PlayerInfo = ({
             gameResult && playerCards ? (
               // Game complete - show revealed or backs based on isRevealed
               isRevealed ? (
-                <div className={`pocket-cards card-flip-reveal`}>
+                <div className="pocket-cards">
                   {playerCards.map((card, i) => (
-                    <Card key={i} card={card} size="small" />
+                    <div
+                      key={i}
+                      className="card-flip-reveal"
+                      style={{ animationDelay: `${i * 0.15}s` }}
+                    >
+                      <Card card={card} size="small" />
+                    </div>
                   ))}
                 </div>
               ) : (
