@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useSettings } from "../context/SettingsContext";
+import Card, { CardBack } from "./Card";
 import "./SettingsMenu.css";
 
 const SettingsMenu = () => {
@@ -49,28 +50,27 @@ const SettingsMenu = () => {
           <div className="settings-section">
             <div className="settings-section-header">
               <h4>Card Style: {CARD_STYLE_OPTIONS[cardStyleId]?.name}</h4>
-              <CardStylePreviews
-                cardStyleId={cardStyleId}
-                swapFrontBack={swapFrontBack}
-                shouldUseWhiteText={useWhiteText()}
-              />
+              <CardStylePreviews />
             </div>
             <div className="card-style-options">
               {Object.entries(CARD_STYLE_OPTIONS).map(
-                ([id, { name, image1, image2 }]) => (
-                  <label key={id} className="card-style-option">
-                    <input
-                      type="radio"
-                      name="cardStyle"
-                      value={id}
-                      checked={cardStyleId === id}
-                      onChange={() => handleCardStyleChange(id)}
-                    />
-                    <div
-                      className={`card-style-preview card-back-${id} ${swapFrontBack ? 'card-swapped' : ''}`}
-                    />
-                  </label>
-                )
+                ([id, { name, image1, image2 }]) => {
+                  const styleId = id.replace(/_/g, '-');
+                  return (
+                    <label key={id} className="card-style-option">
+                      <input
+                        type="radio"
+                        name="cardStyle"
+                        value={id}
+                        checked={cardStyleId === id}
+                        onChange={() => handleCardStyleChange(id)}
+                      />
+                      <div
+                        className={`card-style-preview card-back-${styleId} ${swapFrontBack ? 'card-swapped' : ''}`}
+                      />
+                    </label>
+                  );
+                }
               )}
             </div>
           </div>
@@ -103,31 +103,13 @@ const SettingsMenu = () => {
   );
 };
 
-const CardStylePreviews = ({
-  cardStyleId,
-  swapFrontBack,
-  shouldUseWhiteText = false,
-}) => {
-  const backClass = `card-back-${cardStyleId}`;
-  const faceClass = `card-face-${cardStyleId}`;
-  const textClass = `card-text-${cardStyleId}`;
-  const swapClass = swapFrontBack ? 'card-swapped' : '';
-  const whiteTextClass = shouldUseWhiteText ? 'preview-card-text__dark-face' : '';
+const CardStylePreviews = () => {
+  const dummyCard = { rank: 'A', suit: 's' };
 
   return (
     <div className="card-style-previews">
-      <div
-        className={`card-style-preview-large ${backClass} ${swapClass}`}
-        title="Card Back"
-      />
-      <div
-        className={`card-style-preview-large ${faceClass} ${swapClass}`}
-        title="Card Face"
-      >
-        <span className={`preview-card-text ${textClass} ${whiteTextClass}`}>
-          A♠
-        </span>
-      </div>
+      <CardBack size="small" />
+      <Card card={dummyCard} size="small" />
     </div>
   );
 };

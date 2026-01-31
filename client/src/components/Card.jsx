@@ -16,9 +16,10 @@ const Card = ({ card, isInBestHand = false, size = 'normal' }) => {
   const needsWhiteText = useWhiteText();
   const sizeClass = size === 'small' ? 'card-small' : '';
 
-  // Build CSS class names for card style
-  const faceClass = `card-face-${cardStyleId}`;
-  const textClass = `card-text-${cardStyleId}`;
+  // Build CSS class names for card style (convert underscores to hyphens)
+  const styleId = cardStyleId.replace(/_/g, '-');
+  const faceClass = `card-face-${styleId}`;
+  const textClass = `card-text-${styleId}`;
   const swapClass = swapFrontBack ? 'card-swapped' : '';
 
   // Determine suit color based on card face background
@@ -47,7 +48,8 @@ const Card = ({ card, isInBestHand = false, size = 'normal' }) => {
 export const CardBack = ({ size = 'small' }) => {
   const { cardStyleId, swapFrontBack } = useSettings();
   const sizeClass = size === 'small' ? 'card-back-small' : '';
-  const backClass = `card-back-${cardStyleId}`;
+  const styleId = cardStyleId.replace(/_/g, '-');
+  const backClass = `card-back-${styleId}`;
   const swapClass = swapFrontBack ? 'card-swapped' : '';
 
   return (
