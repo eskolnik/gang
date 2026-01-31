@@ -2,39 +2,82 @@ import { createContext, useContext, useState, useEffect } from 'react';
 
 const SettingsContext = createContext(null);
 
-// Card face options: maps identifier to display name
-// Styling is handled in Card.css with classes like .card-face-white, .card-face-pale-blue, etc.
-const CARD_FACE_OPTIONS = {
-  white: 'White',
-  pale_blue: 'Pale Blue'
+// Card style options: pairs face and back images
+// image1 is used for back by default, image2 is used for face by default
+// When swapped: image2 is back, image1 is face
+const CARD_STYLE_OPTIONS = {
+  white: {
+    name: 'White',
+    image1: '/assets/card_back_1.jpg',
+    image2: null, // Solid color background
+    faceColor: '#ffffff'
+  },
+  pale_blue: {
+    name: 'Pale Blue',
+    image1: '/assets/card_back_1.jpg',
+    image2: null, // Gradient background
+    faceColor: 'radial-gradient(circle, white 20%, #51a0f5)'
+  },
+  bowling_alley_carpet: {
+    name: 'Bowling Alley Carpet',
+    image1: '/assets/card_back_bowling_alley_carpet_1.png',
+    image2: '/assets/card_back_bowling_alley_carpet_2.png'
+  },
+  bunch_of_circles: {
+    name: 'Bunch of Circles',
+    image1: '/assets/card_back_bunch_of_circles_1.png',
+    image2: '/assets/card_back_bunch_of_circles_2.png'
+  },
+  cyberpunk: {
+    name: 'Cyberpunk',
+    image1: '/assets/card_back_cyberpunk_1.png',
+    image2: '/assets/card_back_cyberpunk_2.png'
+  },
+  ole_west: {
+    name: 'Ole West',
+    image1: '/assets/card_back_ole_west_1.png',
+    image2: '/assets/card_back_ole_west_2.png'
+  },
+  persona: {
+    name: 'Persona',
+    image1: '/assets/card_back_persona.png',
+    image2: '/assets/card_back_persona_2.png'
+  },
+  weeb: {
+    name: 'Weeb',
+    image1: '/assets/card_back_weeb_1.png',
+    image2: '/assets/card_back_weeb_2.png'
+  }
 };
 
-// Card back options: maps identifier to display name and image path
-const CARD_BACK_OPTIONS = {
-  default: { name: 'Default', image: '/assets/card_back_1.jpg' },
-  bowling_alley_carpet_1: { name: 'Bowling Alley Carpet 1', image: '/assets/card_back_bowling_alley_carpet_1.png' },
-  bowling_alley_carpet_2: { name: 'Bowling Alley Carpet 2', image: '/assets/card_back_bowling_alley_carpet_2.png' },
-  bunch_of_circles_1: { name: 'Bunch of Circles 1', image: '/assets/card_back_bunch_of_circles_1.png' },
-  bunch_of_circles_2: { name: 'Bunch of Circles 2', image: '/assets/card_back_bunch_of_circles_2.png' },
-  cyberpunk_1: { name: 'Cyberpunk 1', image: '/assets/card_back_cyberpunk_1.png' },
-  cyberpunk_2: { name: 'Cyberpunk 2', image: '/assets/card_back_cyberpunk_2.png' },
-  ole_west_1: { name: 'Ole West 1', image: '/assets/card_back_ole_west_1.png' },
-  ole_west_2: { name: 'Ole West 2', image: '/assets/card_back_ole_west_2.png' },
-  persona: { name: 'Persona', image: '/assets/card_back_persona.png' },
-  persona_2: { name: 'Persona 2', image: '/assets/card_back_persona_2.png' },
-  weeb_1: { name: 'Weeb 1', image: '/assets/card_back_weeb_1.png' },
-  weeb_2: { name: 'Weeb 2', image: '/assets/card_back_weeb_2.png' }
-};
+// Images that require white text for spades/clubs when used as card face
+const DARK_FACE_IMAGES = [
+  '/assets/card_back_persona.png', // Persona 1
+  '/assets/card_back_ole_west_2.png', // Ole West 2
+  '/assets/card_back_bunch_of_circles_1.png',
+  '/assets/card_back_bunch_of_circles_2.png',
+  '/assets/card_back_bowling_alley_carpet_1.png',
+  '/assets/card_back_bowling_alley_carpet_2.png',
+  '/assets/card_back_weeb_1.png',
+  '/assets/card_back_weeb_2.png'
+];
 
 export const SettingsProvider = ({ children }) => {
-  const [cardFaceId, setCardFaceId] = useState(() => {
-    const saved = localStorage.getItem('cardFace');
-    return saved && CARD_FACE_OPTIONS[saved] ? saved : 'white';
+  const [cardStyleId, setCardStyleId] = useState(() => {
+    const saved = localStorage.getItem('cardStyle');
+    // Migrate from old cardFace setting
+    if (!saved) {
+      const oldFace = localStorage.getItem('cardFace');
+      if (oldFace && CARD_STYLE_OPTIONS[oldFace]) {
+        return oldFace;
+      }
+    }
+    return saved && CARD_STYLE_OPTIONS[saved] ? saved : 'white';
   });
 
-  const [cardBackId, setCardBackId] = useState(() => {
-    const saved = localStorage.getItem('cardBack');
-    return saved && CARD_BACK_OPTIONS[saved] ? saved : 'default';
+  const [swapFrontBack, setSwapFrontBack] = useState(() => {
+    const saved = localStorage.getItem('swapFrontBack');
+    return saved === 'true';
   });
 
   const [useNumberedTokens, setUseNumberedTokens] = useState(() => {
@@ -51,24 +94,43 @@ export const SettingsProvider = ({ children }) => {
   });
 
   useEffect(() => {
-    localStorage.setItem('cardFace', cardFaceId);
-  }, [cardFaceId]);
+    localStorage.setItem('cardStyle', cardStyleId);
+  }, [cardStyleId]);
 
   useEffect(() => {
-    localStorage.setItem('cardBack', cardBackId);
-  }, [cardBackId]);
+    localStorage.setItem('swapFrontBack', swapFrontBack);
+  }, [swapFrontBack]);
 
   useEffect(() => {
     localStorage.setItem('useNumberedTokens', useNumberedTokens);
   }, [useNumberedTokens]);
 
+  // Helper to get the current face/back images based on style and swap state
+  const getCardImages = () => {
+    const style = CARD_STYLE_OPTIONS[cardStyleId];
+    if (!style) return { faceImage: null, backImage: null, faceColor: '#ffffff' };
+
+    const faceImage = swapFrontBack ? style.image1 : (style.image2 || null);
+    const backImage = swapFrontBack ? (style.image2 || style.image1) : style.image1;
+    const faceColor = style.faceColor;
+
+    return { faceImage, backImage, faceColor };
+  };
+
+  // Helper to check if current face needs white text for spades/clubs
+  const useWhiteText = () => {
+    const { faceImage } = getCardImages();
+    return faceImage && DARK_FACE_IMAGES.includes(faceImage);
+  };
+
   const value = {
-    cardFaceId,
-    setCardFaceId,
-    CARD_FACE_OPTIONS,
-    cardBackId,
-    setCardBackId,
-    CARD_BACK_OPTIONS,
+    cardStyleId,
+    setCardStyleId,
+    swapFrontBack,
+    setSwapFrontBack,
+    CARD_STYLE_OPTIONS,
+    getCardImages,
+    useWhiteText,
     useNumberedTokens,
     setUseNumberedTokens
   };

@@ -148,33 +148,17 @@
   color: rgba(255, 255, 255, 0.9);
 }
 
-.card-face-preview {
-  appearance: none;
-  background-color: #fff;
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  /* box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); */
-
-  &.card-face-preview-white {
-    background-color: #ffffff;
-  }
-
-  &.card-face-preview-pale_blue {
-    background-color: #51a0f5;
-  }
-  &:checked {
-    box-shadow: 0px 0px 2px 2px rgba(98, 254, 1, 1);
-  }
-}
-
-/* Card Back Section */
+/* Card Style Section */
 .settings-section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 10px;
+}
+
+.card-style-previews {
+  display: flex;
+  gap: 10px;
 }
 
 .card-back-large-preview {
@@ -188,7 +172,28 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-.card-back-options {
+.card-face-large-preview {
+  width: 60px;
+  height: 84px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preview-card-text {
+  font-family: Arial Black, sans-serif;
+  font-size: 20px;
+  color: #000000;
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.8);
+}
+
+.card-style-options {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
   gap: 10px;
@@ -197,7 +202,7 @@
   padding: 5px;
 }
 
-.card-back-option {
+.card-style-option {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -205,13 +210,13 @@
   position: relative;
 }
 
-.card-back-option input[type="radio"] {
+.card-style-option input[type="radio"] {
   position: absolute;
   opacity: 0;
   cursor: pointer;
 }
 
-.card-back-preview {
+.card-style-preview {
   width: 40px;
   height: 56px;
   background-size: cover;
@@ -222,12 +227,12 @@
   transition: all 0.2s ease;
 }
 
-.card-back-option:hover .card-back-preview {
+.card-style-option:hover .card-style-preview {
   border-color: rgba(255, 255, 255, 0.6);
   transform: scale(1.05);
 }
 
-.card-back-option input[type="radio"]:checked + .card-back-preview {
+.card-style-option input[type="radio"]:checked + .card-style-preview {
   border-color: #62fe01;
   box-shadow: 0 0 4px 2px rgba(98, 254, 1, 0.6);
 }

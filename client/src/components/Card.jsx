@@ -8,26 +8,45 @@ const SUIT_SYMBOLS = {
   s: '♠'
 };
 
-const SUIT_COLORS = {
-  h: '#ff0000', // red
-  d: '#ff0000', // red
-  c: '#000000', // black
-  s: '#000000'  // black
-};
-
 const Card = ({ card, isInBestHand = false, size = 'normal' }) => {
-  const { cardFaceId } = useSettings();
+  const { getCardImages, useWhiteText } = useSettings();
 
   if (!card) return null;
 
+  const { faceImage, faceColor } = getCardImages();
+  const needsWhiteText = useWhiteText();
   const sizeClass = size === 'small' ? 'card-small' : '';
-  const faceClass = `card-face-${cardFaceId}`;
+
+  // Determine suit color based on card face background
+  const getSuitColor = (suit) => {
+    if (suit === 'h' || suit === 'd') {
+      return '#ff0000'; // red suits always red
+    }
+    // Black suits: white on dark backgrounds, black on light backgrounds
+    return needsWhiteText ? '#ffffff' : '#000000';
+  };
+
+  // Determine card face styling
+  const cardStyle = {};
+  if (faceImage) {
+    cardStyle.backgroundImage = `url(${faceImage})`;
+    cardStyle.backgroundSize = 'cover';
+    cardStyle.backgroundPosition = 'center';
+    cardStyle.backgroundRepeat = 'no-repeat';
+  } else if (faceColor) {
+    if (faceColor.startsWith('radial-gradient') || faceColor.startsWith('linear-gradient')) {
+      cardStyle.background = faceColor;
+    } else {
+      cardStyle.backgroundColor = faceColor;
+    }
+  }
 
   return (
     <div
-      className={`card ${isInBestHand ? 'card-highlighted' : ''} ${sizeClass} ${faceClass}`}
+      className={`card ${isInBestHand ? 'card-highlighted' : ''} ${sizeClass}`}
+      style={cardStyle}
     >
-      <span className="card-text" style={{ color: SUIT_COLORS[card.suit] }}>
+      <span className="card-text" style={{ color: getSuitColor(card.suit) }}>
         {card.rank}{SUIT_SYMBOLS[card.suit]}
       </span>
     </div>
@@ -35,14 +54,14 @@ const Card = ({ card, isInBestHand = false, size = 'normal' }) => {
 };
 
 export const CardBack = ({ size = 'small' }) => {
-  const { cardBackId, CARD_BACK_OPTIONS } = useSettings();
+  const { getCardImages } = useSettings();
   const sizeClass = size === 'small' ? 'card-back-small' : '';
-  const cardBackImage = CARD_BACK_OPTIONS[cardBackId]?.image || CARD_BACK_OPTIONS.default.image;
+  const { backImage } = getCardImages();
 
   return (
     <div
       className={`card-back ${sizeClass}`}
-      style={{ backgroundImage: `url(${cardBackImage})` }}
+      style={{ backgroundImage: `url(${backImage})` }}
     />
   );
 };

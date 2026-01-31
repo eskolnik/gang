@@ -5,12 +5,12 @@ import './SettingsMenu.css';
 const SettingsMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
   const {
-    cardFaceId,
-    setCardFaceId,
-    CARD_FACE_OPTIONS,
-    cardBackId,
-    setCardBackId,
-    CARD_BACK_OPTIONS,
+    cardStyleId,
+    setCardStyleId,
+    swapFrontBack,
+    setSwapFrontBack,
+    CARD_STYLE_OPTIONS,
+    getCardImages,
     useNumberedTokens,
     setUseNumberedTokens
   } = useSettings();
@@ -19,12 +19,12 @@ const SettingsMenu = () => {
     setIsOpen(!isOpen);
   };
 
-  const handleCardFaceChange = (optionId) => {
-    setCardFaceId(optionId);
+  const handleCardStyleChange = (optionId) => {
+    setCardStyleId(optionId);
   };
 
-  const handleCardBackChange = (optionId) => {
-    setCardBackId(optionId);
+  const handleSwapFrontBack = () => {
+    setSwapFrontBack(!swapFrontBack);
   };
 
   const handleNumberedTokensChange = () => {
@@ -45,17 +45,39 @@ const SettingsMenu = () => {
           </div>
 
           <div className="settings-section">
-            <h4>Card Style: {CARD_FACE_OPTIONS[cardFaceId]}</h4>
-            <div className="settings-options">
-              {Object.entries(CARD_FACE_OPTIONS).map(([id, displayName]) => (
-                <label key={id} className="settings-option">
+            <div className="settings-section-header">
+              <h4>Card Style: {CARD_STYLE_OPTIONS[cardStyleId]?.name}</h4>
+              <div className="card-style-previews">
+                <div
+                  className="card-back-large-preview"
+                  style={{ backgroundImage: `url(${getCardImages().backImage})` }}
+                  title="Card Back"
+                />
+                <div
+                  className="card-face-large-preview"
+                  style={{
+                    backgroundImage: getCardImages().faceImage ? `url(${getCardImages().faceImage})` : 'none',
+                    background: getCardImages().faceColor || '#ffffff'
+                  }}
+                  title="Card Face"
+                >
+                  <span className="preview-card-text">A♠</span>
+                </div>
+              </div>
+            </div>
+            <div className="card-style-options">
+              {Object.entries(CARD_STYLE_OPTIONS).map(([id, { name, image1, image2 }]) => (
+                <label key={id} className="card-style-option">
                   <input
                     type="radio"
-                    name="cardFace"
-                    className={`card-face-preview card-face-preview-${id}`}
+                    name="cardStyle"
                     value={id}
-                    checked={cardFaceId === id}
-                    onChange={() => handleCardFaceChange(id)}
+                    checked={cardStyleId === id}
+                    onChange={() => handleCardStyleChange(id)}
+                  />
+                  <div
+                    className="card-style-preview"
+                    style={{ backgroundImage: `url(${swapFrontBack ? (image2 || image1) : image1})` }}
                   />
                 </label>
               ))}
@@ -63,30 +85,14 @@ const SettingsMenu = () => {
           </div>
 
           <div className="settings-section">
-            <div className="settings-section-header">
-              <h4>Card Back: {CARD_BACK_OPTIONS[cardBackId]?.name}</h4>
-              <div
-                className="card-back-large-preview"
-                style={{ backgroundImage: `url(${CARD_BACK_OPTIONS[cardBackId]?.image})` }}
+            <label className="settings-checkbox-option">
+              <input
+                type="checkbox"
+                checked={swapFrontBack}
+                onChange={handleSwapFrontBack}
               />
-            </div>
-            <div className="card-back-options">
-              {Object.entries(CARD_BACK_OPTIONS).map(([id, { name, image }]) => (
-                <label key={id} className="card-back-option">
-                  <input
-                    type="radio"
-                    name="cardBack"
-                    value={id}
-                    checked={cardBackId === id}
-                    onChange={() => handleCardBackChange(id)}
-                  />
-                  <div
-                    className="card-back-preview"
-                    style={{ backgroundImage: `url(${image})` }}
-                  />
-                </label>
-              ))}
-            </div>
+              <span>Swap card front and back</span>
+            </label>
           </div>
 
           <div className="settings-section">

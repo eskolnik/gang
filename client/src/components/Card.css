@@ -31,15 +31,6 @@
   font-size: clamp(18px, 3vw, 24px);
 }
 
-/* Card Face Backgrounds */
-.card-face-white {
-  background-color: #ffffff;
-}
-
-.card-face-pale_blue {
-  background: radial-gradient(circle, white 20%, #51a0f5);
-}
-
 /* Card Back */
 .card-back {
   width: 60px;
