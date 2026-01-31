@@ -41,8 +41,8 @@ const CARD_STYLE_OPTIONS = {
   },
   weeb: {
     name: 'Weeb',
-    image1: '/assets/card_back_weeb_1.png',
-    image2: '/assets/card_back_weeb_2.png',
+    image1: '/assets/card_back_weeb_2.png',
+    image2: '/assets/card_back_weeb_1.png',
     font: '"Reggae One", sans-serif'
   }
 };
